@@ -21,6 +21,10 @@ export type Guide = {
   relatedSubcategories: string[];
   /** Couverture (M-EDI-*) — placeholder DA si absente (H32). */
   cover?: StaticImageData;
+  /** E-E-A-T (D-037) : auteur, relecture pro (H27), dates. */
+  author?: { name: string; role: string; reviewedBy: string; updated: string };
+  /** Corps de l'article — sections ancrées (sommaire). */
+  content?: { heading: string; paragraphs: string[] }[];
 };
 
 export const guides: Guide[] = [
@@ -34,6 +38,47 @@ export const guides: Guide[] = [
     readingMinutes: 12,
     relatedSubcategories: ["colliers-harnais"],
     cover: coverHarnais,
+    author: {
+      name: "Camille Aubert",
+      role: "Rédactrice — comportement canin",
+      reviewedBy: "Relu par Marc Delorme, éducateur canin diplômé",
+      updated: "2026-07-01",
+    },
+    content: [
+      {
+        heading: "Coupe en Y ou coupe en H : la vraie différence",
+        paragraphs: [
+          "La coupe en Y libère entièrement l'épaule : la sangle passe sur le sternum puis entre les pattes avant, sans barrer l'articulation. C'est la coupe que nous recommandons pour la marche quotidienne, la randonnée et les chiens qui tirent — l'amplitude du mouvement est préservée et les frottements disparaissent.",
+          "La coupe en H, elle, entoure le poitrail de deux sangles parallèles. Bien réglée, elle convient aux trajets urbains calmes et aux chiens fins qui « sortent » des harnais en Y. Mal réglée, elle appuie sur l'épaule à chaque foulée : si vous voyez la sangle bouger sur l'omoplate en mouvement, changez de coupe.",
+        ],
+      },
+      {
+        heading: "Les trois mesures qui comptent",
+        paragraphs: [
+          "Tour de poitrail (le plus large, juste derrière les pattes avant), tour de cou bas (là où repose un collier), et longueur de sternum. Mesurez au repos, sans serrer, et ajoutez deux doigts d'aisance. Entre deux tailles, prenez toujours la plus grande : un harnais se règle vers le bas, jamais vers le haut.",
+          "Un harnais est à la bonne taille quand vous passez deux doigts à plat sous chaque sangle, ni plus ni moins, et qu'aucune sangle ne touche l'aisselle.",
+        ],
+      },
+      {
+        heading: "Matières : ce qui dure et ce qui frotte",
+        paragraphs: [
+          "Le textile technique (ripstop, maille rembourrée) sèche vite et se lave en machine — idéal pour les chiens actifs. Le cuir doublé de lainage est superbe en ville mais craint la pluie prolongée. Évitez les néoprènes bas de gamme : ils gardent l'humidité contre la peau et échauffent.",
+          "Vérifiez les coutures aux points de traction (anneau dorsal, boucles) : des coutures en X ou en W tiennent des années, une simple ligne droite non.",
+        ],
+      },
+      {
+        heading: "Anti-traction : anneau avant ou éducation ?",
+        paragraphs: [
+          "L'anneau ventral réoriente le chien qui tire — utile en transition, mais ce n'est pas une solution seule. Combinez-le avec un travail de marche en laisse : c'est l'avis de tous les éducateurs que nous consultons. Un harnais ne remplace jamais l'éducation, il la facilite.",
+        ],
+      },
+      {
+        heading: "Les erreurs qui coûtent un retour",
+        paragraphs: [
+          "Choisir la taille sur le poids seul (deux chiens de 20 kg peuvent avoir 15 cm d'écart de poitrail), serrer pour compenser une taille trop grande, ou garder le harnais d'un chiot en croissance plus de quelques mois. En cas de doute, mesurez — notre guide « Comment mesurer votre animal » prend cinq minutes.",
+        ],
+      },
+    ],
   },
   {
     slug: "comment-mesurer-votre-animal",

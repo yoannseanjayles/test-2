@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
-import { UnderConstruction } from "@/components/layout/UnderConstruction/UnderConstruction";
+import { CookiePreferences } from "./CookiePreferences";
 
 export const metadata: Metadata = { title: "Cookies" };
 
-export default function Page() {
+/** Préférences cookies — CMP interne (D-041), modifiables à tout moment. */
+export default function CookiesPage() {
   return (
-    <UnderConstruction
-      title="Cookies"
-      milestone="jalon 4"
-      description="La politique cookies et la CMP interne (D-041) arrivent au jalon 4."
-    />
+    <div className="mx-auto max-w-xl px-4 py-12 lg:px-6">
+      <h1 className="font-display text-h1 font-[560] text-bark-900">Cookies</h1>
+      <p className="mt-3 text-body text-bark-700">
+        Choisissez ce que vous acceptez — modifiable à tout moment ici. Les
+        cookies essentiels (panier, session) ne peuvent pas être désactivés.
+      </p>
+      <CookiePreferences />
+    </div>
   );
 }
