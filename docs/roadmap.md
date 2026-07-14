@@ -22,8 +22,8 @@
 | | 3.2 Bibliothèque de prompts | Media Prompt Library | ✅ Validé — **Phase 3 clôturée** |
 | **4 — Design System** | 4.0 Recherche | Best Practices Summary | ✅ Validé |
 | | 4.1 Design System | Design Guidelines | ✅ Validé — **Phase 4 clôturée** |
-| **5 — Front-end** | 5.0 Recherche | Best Practices Summary | 🟡 En validation |
-| | 5.1 Développement | Front-end documenté | ⬜ À venir |
+| **5 — Front-end** | 5.0 Recherche | Best Practices Summary | ✅ Validé (D-048) |
+| | 5.1 Développement | Front-end documenté | 🟡 En cours — jalon 1/4 (socle + layout) |
 | **6 — Back-end** | 6.0 Recherche | Best Practices Summary | ⬜ À venir |
 | | 6.1 Développement | Documentation technique | ⬜ À venir |
 | **7 — Administration** | 7.0 Recherche | Best Practices Summary | ⬜ À venir |
@@ -31,11 +31,14 @@
 
 ## Phase en cours
 
-**Phase 2 — Définition des pages.** La phase fonctionne en cycles par page : recherche (2.0) → spécification (2.1) → validation. Ordre proposé (D-019) : Accueil → Fiche produit → Listing/catégorie → Panier → Checkout → Compte → Guides → Confiance/légal.
+**Phase 5 — Front-end (5.1 Développement).** Stack validée (D-048). Développement par jalons avec 4 points de validation HITL :
 
-**Phase 5 — Front-end** : recherche 5.0 rédigée, en attente de validation HITL.
+1. 🟡 **Jalon 1 — Socle + layout** : projet Next.js 15, tokens 4.1, polices, primitives UI, Storybook, Header/MegaMenu/MobileNav/Footer.
+2. ⬜ Jalon 2 — Cœur catalogue : Accueil, Fiche produit, Listing.
+3. ⬜ Jalon 3 — Tunnel : Panier (drawer + page), Checkout.
+4. ⬜ Jalon 4 — Compte + contenus : Compte client, Guides, Confiance/légal.
 
 ## Prochaines étapes
 
-1. Validation HITL de la recherche front-end (5.0) — inclut le choix de stack.
-2. Développement 5.1 : socle (tokens, composants), puis pages par ordre D-019.
+1. Livrer le jalon 1 (socle + layout) et le soumettre en validation HITL.
+2. Jalon 2 : pages du cœur catalogue sur mock API typée (H33/H37).
