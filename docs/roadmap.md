@@ -7,8 +7,8 @@
 | **1 — Architecture** | 1.0 Recherche | Best Practices Summary | ✅ Validé |
 | | 1.1 Vision produit | Vision Produit | ✅ Validé |
 | | 1.2 Sitemap | Sitemap | ✅ Validé |
-| | 1.3 Parcours utilisateurs | User Flows | 🟡 En validation |
-| **2 — Définition des pages** | 2.0 Recherche | Best Practices Summary | ⬜ À venir |
+| | 1.3 Parcours utilisateurs | User Flows | ✅ Validé |
+| **2 — Définition des pages** | 2.0 Recherche (page Accueil) | Best Practices Summary | 🟡 En validation |
 | | 2.1 Conception des pages (une par une) | Spécifications de pages | ⬜ À venir |
 | **3 — Génération des médias** | 3.0 Recherche | Best Practices Summary | ⬜ À venir |
 | | 3.1 Inventaire des médias | Media Inventory | ⬜ À venir |
@@ -24,9 +24,11 @@
 
 ## Phase en cours
 
-**Phase 1.3 — Parcours utilisateurs** : livrable rédigé, en attente de validation HITL.
+**Phase 2 — Définition des pages.** La phase fonctionne en cycles par page : recherche (2.0) → spécification (2.1) → validation. Ordre proposé (D-019) : Accueil → Fiche produit → Listing/catégorie → Panier → Checkout → Compte → Guides → Confiance/légal.
+
+Page en cours : **Accueil** — recherche 2.0 rédigée, en attente de validation HITL.
 
 ## Prochaines étapes
 
-1. Validation HITL des User Flows (1.3) — clôture de la Phase 1.
-2. Phase 2.0 : recherche des bonnes pratiques par page, puis conception page par page (2.1).
+1. Validation HITL de la recherche Accueil (2.0) et de l'ordre des pages (D-019).
+2. Spécification de la page Accueil (2.1).

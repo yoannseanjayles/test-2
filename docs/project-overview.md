@@ -22,9 +22,7 @@ E-commerce **premium** spécialisé dans les **accessoires pour animaux** (chien
 
 | Élément | Statut |
 |---|---|
-| Phase 1.0 — Recherche architecture | ✅ Validé (HITL) |
-| Phase 1.1 — Vision produit | ✅ Validé (HITL) |
-| Phase 1.2 — Sitemap | ✅ Validé (HITL) |
-| Phase 1.3 — Parcours utilisateurs | 🟡 En attente de validation |
+| Phase 1 — Architecture (1.0 → 1.3) | ✅ Clôturée (HITL) |
+| Phase 2 — Définition des pages | 🟡 En cours — page Accueil (recherche 2.0 en validation) |
 
 Voir `docs/roadmap.md` pour le détail de l'avancement.
