@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { Search, ShoppingBag, User } from "lucide-react";
+import { Search, User } from "lucide-react";
 import { animalCategories, primaryLinks } from "@/lib/navigation";
 import { MegaMenu } from "./MegaMenu";
 import { MobileMenu } from "./MobileMenu";
+import { CartLink } from "./CartLink";
 
 const iconLinks = [
   { label: "Rechercher", href: "/recherche", Icon: Search },
   { label: "Mon compte", href: "/compte", Icon: User },
-  { label: "Panier", href: "/panier", Icon: ShoppingBag },
 ];
 
 /**
@@ -54,6 +54,7 @@ export function Header() {
               <Icon aria-hidden="true" className="size-5" />
             </Link>
           ))}
+          <CartLink />
         </div>
       </div>
     </header>

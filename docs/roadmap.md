@@ -33,8 +33,8 @@
 
 **Phase 5 — Front-end (5.1 Développement).** Stack validée (D-048). Développement par jalons avec 4 points de validation HITL :
 
-1. 🟡 **Jalon 1 — Socle + layout** : livré, **en validation HITL** — projet Next.js 15 (build vert, 12 tests dont axe), tokens 4.1 en `@theme`, 3 polices variables self-hostées, primitives UI (Button, FormField, Badge, Accordion) + stories Storybook, AnnouncementBar/Header/MegaMenu/MobileMenu/MobileNav/Footer, accueil provisoire de démonstration.
-2. ⬜ Jalon 2 — Cœur catalogue : Accueil, Fiche produit, Listing.
+1. ✅ **Jalon 1 — Socle + layout** : validé HITL (captures rendues) — projet Next.js 15, tokens 4.1 en `@theme`, 3 polices variables self-hostées, primitives UI + stories Storybook, layout boutique complet.
+2. 🟡 **Jalon 2 — Cœur catalogue** : livré, **en validation HITL** — mock API typée (catalogue démo 24 produits H33, contrats H37), Accueil complet (spec 2.1, JSON-LD Organization/WebSite), pages animal (gabarit A), listings à facettes avec état en query-string et canonique nue (gabarit B, D-027/D-028), nouveautés, fiche produit complète (variantes, guide des tailles, restock H15, curation D-025, avis, JSON-LD Product), panier minimal (badge header), placeholders pour les routes des jalons 3/4.
 3. ⬜ Jalon 3 — Tunnel : Panier (drawer + page), Checkout.
 4. ⬜ Jalon 4 — Compte + contenus : Compte client, Guides, Confiance/légal.
 
