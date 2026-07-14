@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { Suspense } from "react";
 import { Breadcrumb, ListingExplorer } from "@/components/commerce";
-import { getFeatured, getNewProducts } from "@/lib/catalog";
+import { fetchFeatured, fetchNewProducts } from "@/lib/api";
 import { media } from "@/lib/media";
 import { breadcrumbJsonLd, itemListJsonLd } from "@/lib/jsonld";
 
@@ -14,8 +14,8 @@ export const metadata: Metadata = {
 };
 
 /** Variante du gabarit B (spec Listing) : facette Univers, tri « Nouveautés ». */
-export default function NouveautesPage() {
-  const prods = getNewProducts();
+export default async function NouveautesPage() {
+  const [prods, fallback] = await Promise.all([fetchNewProducts(), fetchFeatured(3)]);
   const crumbs = [{ name: "Nouveautés", path: "/nouveautes" }];
 
   return (
@@ -54,7 +54,7 @@ export default function NouveautesPage() {
       <Suspense>
         <ListingExplorer
           products={prods}
-          fallback={getFeatured(3)}
+          fallback={fallback}
           withUniverseFacet
           defaultSort="nouveautes"
         />

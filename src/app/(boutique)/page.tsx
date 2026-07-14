@@ -11,7 +11,8 @@ import {
 } from "@/components/commerce";
 import { NewsletterForm } from "@/components/layout/Footer/NewsletterForm";
 import { animalCategories } from "@/lib/navigation";
-import { getFeatured, products, type Review } from "@/lib/catalog";
+import type { Review } from "@/lib/catalog";
+import { fetchFeatured, fetchProducts } from "@/lib/api";
 import { guides } from "@/lib/guides";
 import { media, universeCards } from "@/lib/media";
 import { organizationJsonLd, webSiteJsonLd } from "@/lib/jsonld";
@@ -35,8 +36,8 @@ const heroTones: Record<string, "caramel" | "sage" | "terracotta"> = {
 };
 
 /** Accueil — spec 2.1 (10 sections, D-020/D-021/D-022). */
-export default function HomePage() {
-  const featured = getFeatured(8);
+export default async function HomePage() {
+  const [featured, products] = await Promise.all([fetchFeatured(8), fetchProducts()]);
   const featuredGuide = guides.find((g) => g.pillar);
   const secondaryGuides = guides.filter((g) => g !== featuredGuide).slice(0, 2);
 

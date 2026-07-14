@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { BadgeCheck } from "lucide-react";
 import { Breadcrumb, ProductCard, SectionHeading } from "@/components/commerce";
 import { guides } from "@/lib/guides";
-import { getProducts } from "@/lib/catalog";
+import { fetchProducts } from "@/lib/api";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { formatMonth } from "@/lib/format";
 
@@ -35,8 +35,10 @@ export default async function GuidePage({ params }: { params: Promise<Params> })
     { name: "Guides & Conseils", path: "/guides" },
     { name: guide.title, path: `/guides/${guide.slug}` },
   ];
-  const relatedProducts = guide.relatedSubcategories
-    .flatMap((sub) => getProducts(undefined, sub))
+  const relatedProducts = (
+    await Promise.all(guide.relatedSubcategories.map((sub) => fetchProducts(undefined, sub)))
+  )
+    .flat()
     .sort((a, b) => a.curatedRank - b.curatedRank)
     .slice(0, 3);
 

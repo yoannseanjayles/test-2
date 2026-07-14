@@ -24,8 +24,8 @@
 | | 4.1 Design System | Design Guidelines | ✅ Validé — **Phase 4 clôturée** |
 | **5 — Front-end** | 5.0 Recherche | Best Practices Summary | ✅ Validé (D-048) |
 | | 5.1 Développement | Front-end documenté | ✅ Validé — **Phase 5 clôturée** (4 jalons HITL) |
-| **6 — Back-end** | 6.0 Recherche | Best Practices Summary | 🟡 En validation |
-| | 6.1 Développement | Documentation technique | ⬜ À venir |
+| **6 — Back-end** | 6.0 Recherche | Best Practices Summary | ✅ Validé (D-051) |
+| | 6.1 Développement | Documentation technique | 🟡 En cours — jalon 1/4 (socle données) |
 | **7 — Administration** | 7.0 Recherche | Best Practices Summary | ⬜ À venir |
 | | 7.1 Développement | Back-office fonctionnel | ⬜ À venir |
 
@@ -40,5 +40,5 @@
 
 ## Prochaines étapes
 
-1. Validation HITL de la recherche back-end (6.0) — inclut le choix de stack serveur.
-2. Développement 6.1 : base de données + API, auth réelle, paiement Stripe/PayPal, e-mails transactionnels.
+1. Validation HITL du jalon 1 (socle données : schéma Drizzle, seed H33, bascule mock→base, parité testée).
+2. Jalon 2 : Better Auth + compte réel. Prévoir la création de la base Neon et son rattachement Vercel (DATABASE_URL).

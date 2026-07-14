@@ -2,15 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Breadcrumb, ListingExplorer, SeoTextBlock } from "@/components/commerce";
-import {
-  animalLabels,
-  getFeatured,
-  getProducts,
-  getSubcategories,
-  getSubcategory,
-  isAnimal,
-  subcategories,
-} from "@/lib/catalog";
+import { animalLabels, isAnimal, subcategories } from "@/lib/catalog";
+import { fetchFeatured, fetchProducts, fetchSubcategories, fetchSubcategory } from "@/lib/api";
 import { getGuideForSubcategory } from "@/lib/guides";
 import { breadcrumbJsonLd, itemListJsonLd } from "@/lib/jsonld";
 
@@ -27,7 +20,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { animal, sousCategorie } = await params;
   if (!isAnimal(animal)) return {};
-  const subcat = getSubcategory(animal, sousCategorie);
+  const subcat = await fetchSubcategory(animal, sousCategorie);
   if (!subcat) return {};
   const animalName = animal === "nac" ? "NAC" : animal;
   return {
@@ -47,14 +40,14 @@ export default async function SubcategoryPage({
 }) {
   const { animal, sousCategorie } = await params;
   if (!isAnimal(animal)) notFound();
-  const subcat = getSubcategory(animal, sousCategorie);
+  const subcat = await fetchSubcategory(animal, sousCategorie);
   if (!subcat) notFound();
 
-  const prods = getProducts(animal, sousCategorie);
+  const prods = await fetchProducts(animal, sousCategorie);
   const label = animalLabels[animal];
   const animalName = animal === "nac" ? "NAC" : animal;
   const guide = getGuideForSubcategory(sousCategorie);
-  const siblings = getSubcategories(animal).filter((s) => s.slug !== sousCategorie);
+  const siblings = (await fetchSubcategories(animal)).filter((s) => s.slug !== sousCategorie);
 
   const crumbs = [
     { name: label, path: `/${animal}` },
@@ -87,7 +80,7 @@ export default async function SubcategoryPage({
       <Suspense>
         <ListingExplorer
           products={prods}
-          fallback={getFeatured(3, animal)}
+          fallback={await fetchFeatured(3, animal)}
           editorialGuide={guide}
         />
       </Suspense>

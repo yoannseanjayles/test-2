@@ -10,16 +10,8 @@ import {
   ReviewCard,
   SectionHeading,
 } from "@/components/commerce";
-import {
-  animalLabels,
-  averageRating,
-  getProduct,
-  getProductBySlug,
-  getProducts,
-  getSubcategory,
-  isAnimal,
-  products,
-} from "@/lib/catalog";
+import { animalLabels, averageRating, isAnimal, products } from "@/lib/catalog";
+import { fetchProduct, fetchProducts, fetchProductsBySlugs, fetchSubcategory } from "@/lib/api";
 import { getGuideForSubcategory } from "@/lib/guides";
 import { breadcrumbJsonLd, productJsonLd } from "@/lib/jsonld";
 
@@ -40,8 +32,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { animal, sousCategorie, produit } = await params;
   if (!isAnimal(animal)) return {};
-  const product = getProduct(animal, sousCategorie, produit);
-  const subcat = getSubcategory(animal, sousCategorie);
+  const product = await fetchProduct(animal, sousCategorie, produit);
+  const subcat = await fetchSubcategory(animal, sousCategorie);
   if (!product || !subcat) return {};
   const animalName = animal === "nac" ? "NAC" : animal;
   return {
@@ -56,8 +48,10 @@ export async function generateMetadata({
 export default async function ProductPage({ params }: { params: Promise<Params> }) {
   const { animal, sousCategorie, produit } = await params;
   if (!isAnimal(animal)) notFound();
-  const product = getProduct(animal, sousCategorie, produit);
-  const subcat = getSubcategory(animal, sousCategorie);
+  const [product, subcat] = await Promise.all([
+    fetchProduct(animal, sousCategorie, produit),
+    fetchSubcategory(animal, sousCategorie),
+  ]);
   if (!product || !subcat) notFound();
 
   const crumbs = [
@@ -66,11 +60,9 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
     { name: product.name, path: `/${animal}/${sousCategorie}/${produit}` },
   ];
 
-  const pairsWith = product.pairsWith
-    .map((slug) => getProductBySlug(slug))
-    .filter((p) => p !== undefined);
+  const pairsWith = await fetchProductsBySlugs(product.pairsWith);
   const guide = getGuideForSubcategory(sousCategorie);
-  const alsoLike = getProducts(animal)
+  const alsoLike = (await fetchProducts(animal))
     .filter((p) => p.slug !== product.slug && !product.pairsWith.includes(p.slug))
     .sort((a, b) => {
       const sameSubcatFirst =
