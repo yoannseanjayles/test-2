@@ -53,7 +53,7 @@ async function applySchema(client: { exec: (sql: string) => Promise<unknown> }) 
 
     CREATE TABLE IF NOT EXISTS "user" (
       id text PRIMARY KEY, name text NOT NULL, email text NOT NULL UNIQUE,
-      email_verified boolean NOT NULL DEFAULT false, image text,
+      email_verified boolean NOT NULL DEFAULT false, image text, role text,
       created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now());
     CREATE TABLE IF NOT EXISTS "session" (
       id text PRIMARY KEY, expires_at timestamp NOT NULL, token text NOT NULL UNIQUE,

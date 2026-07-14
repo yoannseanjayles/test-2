@@ -26,7 +26,8 @@
 | | 5.1 Développement | Front-end documenté | ✅ Validé — **Phase 5 clôturée** (4 jalons HITL) |
 | **6 — Back-end** | 6.0 Recherche | Best Practices Summary | ✅ Validé (D-051) |
 | | 6.1 Développement | Documentation technique | ✅ Validé — **Phase 6 clôturée** (4 jalons HITL) |
-| **7 — Administration** | 7.0 Recherche | Best Practices Summary | 🟡 En validation |
+| **7 — Administration** | 7.0 Recherche | Best Practices Summary | ✅ Validé (D-052) |
+| | 7.1 Développement | Back-office fonctionnel | 🟡 En cours — jalon 1/4 (socle + catalogue) |
 | | 7.1 Développement | Back-office fonctionnel | ⬜ À venir |
 
 ## Phase en cours
