@@ -16,7 +16,8 @@ const iconLinks = [
  */
 export function Header() {
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-cream-100/95 backdrop-blur-sm">
+    // Pas de backdrop-blur ici : backdrop-filter ferait du header le containing block des drawers `fixed` (menu mobile).
+    <header className="sticky top-0 z-40 border-b border-border bg-cream-100">
       <div className="relative mx-auto flex max-w-page items-center gap-2 px-4 py-3 lg:px-6">
         <MobileMenu />
 
