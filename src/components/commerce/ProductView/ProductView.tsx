@@ -11,7 +11,7 @@ import {
   type ProductSize,
 } from "@/lib/catalog";
 import { formatPrice } from "@/lib/format";
-import { useCart } from "@/lib/cart";
+import { useCart, useCartDrawer } from "@/lib/cart";
 import { productImages } from "@/lib/media";
 import { Badge, Button, FormField } from "@/components/ui";
 import { Placeholder } from "../Placeholder/Placeholder";
@@ -48,6 +48,7 @@ export function ProductView({ product }: { product: Product }) {
   const [guideOpen, setGuideOpen] = useState(false);
   const guideRef = useRef<HTMLDivElement>(null);
   const addCartLine = useCart((state) => state.add);
+  const openDrawer = useCartDrawer((state) => state.openDrawer);
 
   const realImages = productImages[product.slug];
   const rating = averageRating(product);
@@ -79,6 +80,8 @@ export function ProductView({ product }: { product: Product }) {
     if (size.stock === 0) return;
     addCartLine({ slug: product.slug, size: size.name, color: color.name });
     setAdded(true);
+    // Ouverture du mini-panier à chaque ajout (D-029), après la micro-confirmation.
+    setTimeout(openDrawer, 600);
   };
 
   const buyButton = outOfStock ? (

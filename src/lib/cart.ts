@@ -2,12 +2,16 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { getProductBySlug } from "@/lib/catalog";
 
 /**
- * Panier client minimal du jalon 2 : ajout + compteur (badge header).
- * Le drawer, la page panier et la persistance serveur (D-029/D-030)
- * arrivent au jalon 3 ; le stockage local préfigure le cookie 30 j invité.
+ * Panier client (jalon 3) — drawer à chaque ajout (D-029), persistance
+ * locale préfigurant le cookie 30 j invité (D-030, fusion serveur en Phase 6).
+ * Prix TTC en centimes (H18).
  */
+
+/** Seuil de livraison offerte (H12). */
+export const FREE_SHIPPING_CENTS = 7900;
 
 export type CartLine = {
   slug: string;
@@ -16,22 +20,24 @@ export type CartLine = {
   quantity: number;
 };
 
+const sameLine = (a: CartLine, b: Omit<CartLine, "quantity">) =>
+  a.slug === b.slug && a.size === b.size && a.color === b.color;
+
 type CartState = {
   lines: CartLine[];
   add: (line: Omit<CartLine, "quantity">) => void;
-  count: () => number;
+  setQuantity: (line: Omit<CartLine, "quantity">, quantity: number) => void;
+  remove: (line: Omit<CartLine, "quantity">) => void;
+  clear: () => void;
 };
 
 export const useCart = create<CartState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       lines: [],
       add: (line) =>
         set((state) => {
-          const existing = state.lines.find(
-            (l) =>
-              l.slug === line.slug && l.size === line.size && l.color === line.color,
-          );
+          const existing = state.lines.find((l) => sameLine(l, line));
           if (existing) {
             return {
               lines: state.lines.map((l) =>
@@ -41,8 +47,47 @@ export const useCart = create<CartState>()(
           }
           return { lines: [...state.lines, { ...line, quantity: 1 }] };
         }),
-      count: () => get().lines.reduce((acc, l) => acc + l.quantity, 0),
+      setQuantity: (line, quantity) =>
+        set((state) => ({
+          lines:
+            quantity <= 0
+              ? state.lines.filter((l) => !sameLine(l, line))
+              : state.lines.map((l) => (sameLine(l, line) ? { ...l, quantity } : l)),
+        })),
+      remove: (line) =>
+        set((state) => ({ lines: state.lines.filter((l) => !sameLine(l, line)) })),
+      clear: () => set({ lines: [] }),
     }),
     { name: "chien-et-chat-cart" },
   ),
 );
+
+/** État UI du mini-panier (ouvert à chaque ajout, D-029). */
+type CartDrawerState = {
+  isOpen: boolean;
+  openDrawer: () => void;
+  closeDrawer: () => void;
+};
+
+export const useCartDrawer = create<CartDrawerState>((set) => ({
+  isOpen: false,
+  openDrawer: () => set({ isOpen: true }),
+  closeDrawer: () => set({ isOpen: false }),
+}));
+
+/** Sous-total TTC en centimes — jointure catalogue (les lignes ne stockent pas de prix). */
+export function cartSubtotal(lines: CartLine[]): number {
+  return lines.reduce((acc, line) => {
+    const product = getProductBySlug(line.slug);
+    return acc + (product ? product.price * line.quantity : 0);
+  }, 0);
+}
+
+export function cartCount(lines: CartLine[]): number {
+  return lines.reduce((acc, l) => acc + l.quantity, 0);
+}
+
+/** Reste à ajouter pour la livraison offerte (0 = seuil atteint). */
+export function freeShippingRemaining(subtotalCents: number): number {
+  return Math.max(0, FREE_SHIPPING_CENTS - subtotalCents);
+}
