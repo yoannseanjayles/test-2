@@ -20,8 +20,8 @@
 | **3 — Génération des médias** | 3.0 Recherche | Best Practices Summary | ✅ Validé |
 | | 3.1 Inventaire des médias | Media Inventory | ✅ Validé |
 | | 3.2 Bibliothèque de prompts | Media Prompt Library | ✅ Validé — **Phase 3 clôturée** |
-| **4 — Design System** | 4.0 Recherche | Best Practices Summary | 🟡 En validation |
-| | 4.1 Design System | Design Guidelines | ⬜ À venir |
+| **4 — Design System** | 4.0 Recherche | Best Practices Summary | ✅ Validé |
+| | 4.1 Design System | Design Guidelines | 🟡 En validation |
 | **5 — Front-end** | 5.0 Recherche | Best Practices Summary | ⬜ À venir |
 | | 5.1 Développement | Front-end documenté | ⬜ À venir |
 | **6 — Back-end** | 6.0 Recherche | Best Practices Summary | ⬜ À venir |
@@ -33,9 +33,9 @@
 
 **Phase 2 — Définition des pages.** La phase fonctionne en cycles par page : recherche (2.0) → spécification (2.1) → validation. Ordre proposé (D-019) : Accueil → Fiche produit → Listing/catégorie → Panier → Checkout → Compte → Guides → Confiance/légal.
 
-**Phase 4 — Design System** : recherche 4.0 rédigée, en attente de validation HITL.
+**Phase 4 — Design System** : Design Guidelines (4.1) rédigées, en attente de validation HITL — dernière étape de la phase.
 
 ## Prochaines étapes
 
-1. Validation HITL de la recherche Design System (4.0).
-2. Design Guidelines (4.1) — DA, palette, typo, grille, composants, motion.
+1. Validation HITL des Design Guidelines (4.1) — clôture de la Phase 4.
+2. Phase 5.0 : recherche front-end (stack, architecture, perf, SEO, a11y).
