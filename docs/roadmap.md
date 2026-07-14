@@ -22,8 +22,9 @@
 | | 3.2 Bibliothèque de prompts | Media Prompt Library | ✅ Validé — **Phase 3 clôturée** |
 | **4 — Design System** | 4.0 Recherche | Best Practices Summary | ✅ Validé |
 | | 4.1 Design System | Design Guidelines | ✅ Validé — **Phase 4 clôturée** |
-| **5 — Front-end** | 5.0 Recherche | Best Practices Summary | 🟡 En validation |
-| | 5.1 Développement | Front-end documenté | ⬜ À venir |
+| **5 — Front-end** | 5.0 Recherche | Best Practices Summary | ✅ Validé |
+| | 5.1 Développement — Jalon 1 : socle + layout | Front-end documenté | 🟡 En validation |
+| | 5.1 Jalons 2–4 : catalogue, tunnel, compte+contenus | Front-end documenté | ⬜ À venir |
 | **6 — Back-end** | 6.0 Recherche | Best Practices Summary | ⬜ À venir |
 | | 6.1 Développement | Documentation technique | ⬜ À venir |
 | **7 — Administration** | 7.0 Recherche | Best Practices Summary | ⬜ À venir |
