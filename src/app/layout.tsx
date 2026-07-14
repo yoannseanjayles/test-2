@@ -5,8 +5,8 @@ import "@/styles/theme.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Pelage — accessoires d'exception pour chiens, chats et NAC",
-    template: "%s — Pelage",
+    default: "chien et chat — accessoires d'exception pour chiens, chats et NAC",
+    template: "%s — chien et chat",
   },
   description:
     "Accessoires choisis avec exigence pour chiens, chats et NAC : matières nobles, conseils d'experts, livraison offerte dès 79 €.",

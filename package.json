@@ -1,8 +1,8 @@
 {
-  "name": "pelage",
+  "name": "chien-et-chat",
   "version": "0.1.0",
   "private": true,
-  "description": "Pelage — e-commerce premium d'accessoires pour animaux (front-end Next.js 15)",
+  "description": "chien et chat — e-commerce premium d'accessoires pour animaux (front-end Next.js 15)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

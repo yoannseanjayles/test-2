@@ -43,6 +43,6 @@ export const useCart = create<CartState>()(
         }),
       count: () => get().lines.reduce((acc, l) => acc + l.quantity, 0),
     }),
-    { name: "pelage-cart" },
+    { name: "chien-et-chat-cart" },
   ),
 );

@@ -66,7 +66,7 @@ export function MobileMenu() {
             className="absolute inset-y-0 left-0 flex w-full max-w-sm flex-col overflow-y-auto rounded-r-lg bg-cream-50 shadow-overlay"
           >
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
-              <span className="font-display text-h3 text-bark-900">Pelage</span>
+              <span className="font-display text-h3 text-bark-900">chien et chat</span>
               <button
                 type="button"
                 aria-label="Fermer le menu"

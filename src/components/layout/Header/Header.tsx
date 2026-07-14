@@ -25,7 +25,7 @@ export function Header() {
           href="/"
           className="font-display px-2 text-2xl font-semibold text-bark-900 lg:text-[1.75rem]"
         >
-          Pelage
+          chien et chat
         </Link>
 
         <nav aria-label="Navigation principale" className="ml-6 hidden lg:block">

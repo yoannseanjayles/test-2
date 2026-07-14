@@ -7,7 +7,7 @@ import { breadcrumbJsonLd, itemListJsonLd } from "@/lib/jsonld";
 export const metadata: Metadata = {
   title: "Nouveautés — les dernières pièces sélectionnées",
   description:
-    "Les dernières entrées au catalogue Pelage, toutes espèces confondues : chaque nouveauté a passé la même sélection exigeante.",
+    "Les dernières entrées au catalogue chien et chat, toutes espèces confondues : chaque nouveauté a passé la même sélection exigeante.",
   alternates: { canonical: "/nouveautes" },
 };
 

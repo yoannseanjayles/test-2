@@ -52,7 +52,7 @@ export function Footer() {
 
         <div className="mt-12 flex flex-col gap-3 border-t border-cream-500 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="font-display text-body text-bark-900">
-            Pelage <span className="text-bark-700">— accessoires d'exception</span>
+            chien et chat <span className="text-bark-700">— accessoires d'exception</span>
           </p>
           <ul className="flex gap-6">
             {legalLinks.map((link) => (

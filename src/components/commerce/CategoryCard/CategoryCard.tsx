@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image, { type StaticImageData } from "next/image";
 import { Placeholder, type PlaceholderTone } from "../Placeholder/Placeholder";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +9,8 @@ type CategoryCardProps = {
   description?: string;
   productCount?: number;
   tone?: PlaceholderTone;
+  /** Visuel réel (inventaire 3.1) — placeholder DA sinon (H32). */
+  image?: StaticImageData;
   className?: string;
 };
 
@@ -18,6 +21,7 @@ export function CategoryCard({
   description,
   productCount,
   tone = "cream",
+  image,
   className,
 }: CategoryCardProps) {
   return (
@@ -29,7 +33,19 @@ export function CategoryCard({
         className,
       )}
     >
-      <Placeholder tone={tone} ratio="4 / 3" />
+      {image ? (
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: "4 / 3" }}>
+          <Image
+            src={image}
+            alt=""
+            fill
+            sizes="(min-width: 1024px) 25vw, 50vw"
+            className="object-cover transition-transform duration-250 group-hover:scale-[1.03]"
+          />
+        </div>
+      ) : (
+        <Placeholder tone={tone} ratio="4 / 3" />
+      )}
       <div className="flex items-baseline justify-between gap-2 p-4">
         <div>
           <h3 className="font-heading text-h3 font-semibold text-bark-900 transition-colors duration-150 group-hover:text-action">

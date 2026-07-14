@@ -5,8 +5,8 @@ import { averageRating, isOutOfStock, productPath, type Product } from "@/lib/ca
  * tant que le domaine n'est pas choisi (Phase 6).
  */
 
-const SITE_URL = "https://www.pelage.example";
-const SITE_NAME = "Pelage";
+const SITE_URL = "https://www.chienetchat.example";
+const SITE_NAME = "chien et chat";
 
 export function organizationJsonLd() {
   return {

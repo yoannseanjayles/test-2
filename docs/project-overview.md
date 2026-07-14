@@ -25,7 +25,7 @@ E-commerce **premium** spécialisé dans les **accessoires pour animaux** (chien
 | Phase 1 — Architecture (1.0 → 1.3) | ✅ Clôturée (HITL) |
 | Phase 2 — Définition des pages (8 groupes, ~60 composants au registre) | ✅ Clôturée (HITL) |
 | Phase 3 — Génération des médias (~230 visuels, ~60 prompts, DA verrouillée) | ✅ Clôturée (HITL) |
-| Phase 4 — Design System (marque « Pelage », guidelines entérinées sur artefact) | ✅ Clôturée (HITL) |
+| Phase 4 — Design System (guidelines entérinées sur artefact ; marque renommée « chien et chat », D-049) | ✅ Clôturée (HITL) |
 | Phase 5 — Front-end | 🟡 En cours — stack validée (D-048), développement 5.1 jalon 1 (socle + layout) |
 
 Voir `docs/roadmap.md` pour le détail de l'avancement.

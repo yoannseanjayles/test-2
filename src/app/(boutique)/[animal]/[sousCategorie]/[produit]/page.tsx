@@ -124,7 +124,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             Pourquoi nous l'avons choisi
           </h2>
           <p className="mt-3 text-body text-bark-700">{product.curatorNote}</p>
-          <p className="text-body-sm mt-3 font-semibold text-bark-900">— L'équipe Pelage</p>
+          <p className="text-body-sm mt-3 font-semibold text-bark-900">— L'équipe chien et chat</p>
         </section>
 
         {/* S5 — Caractéristiques en accordéons (D-024 : pas d'onglets) */}

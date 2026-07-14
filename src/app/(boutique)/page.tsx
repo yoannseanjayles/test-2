@@ -1,6 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
-import { BadgeCheck, Leaf, MessagesSquare, PawPrint } from "lucide-react";
+import { BadgeCheck, Leaf, MessagesSquare } from "lucide-react";
 import {
   CategoryCard,
   EditorialCard,
@@ -12,10 +13,11 @@ import { NewsletterForm } from "@/components/layout/Footer/NewsletterForm";
 import { animalCategories } from "@/lib/navigation";
 import { getFeatured, products, type Review } from "@/lib/catalog";
 import { guides } from "@/lib/guides";
+import { media, universeCards } from "@/lib/media";
 import { organizationJsonLd, webSiteJsonLd } from "@/lib/jsonld";
 
 export const metadata: Metadata = {
-  title: "Accessoires premium pour chiens, chats & NAC — Pelage",
+  title: "Accessoires premium pour chiens, chats & NAC — chien et chat",
   description:
     "Une sélection exigeante de colliers, couchages et jouets — choisis pour leur qualité, dessinés pour durer. Livraison offerte dès 79 €.",
 };
@@ -61,10 +63,21 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteJsonLd()) }}
       />
 
-      {/* S3 — Hero statique (D-020) : visuel lifestyle H32 remplacé par un aplat DA. */}
-      <section className="bg-gradient-to-br from-cream-300 via-caramel-100 to-sage-100">
-        <div className="mx-auto flex min-h-[60vh] max-w-page flex-col justify-center px-4 py-16 lg:min-h-[75vh] lg:px-6">
-          <PawPrint aria-hidden="true" className="mb-6 size-10 text-caramel-700 opacity-60" strokeWidth={1.75} />
+      {/* S3 — Hero statique (D-020) : M-HOME-01, texte posé sur l'espace négatif gauche du visuel. */}
+      <section className="relative overflow-hidden">
+        <Image
+          src={media.heroHome}
+          alt="Un golden retriever installé sur un couchage sauge, collier et laisse en cuir caramel suspendus au mur"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-[70%_center]"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-gradient-to-r from-cream-100/95 via-cream-100/60 to-transparent lg:via-cream-100/30"
+        />
+        <div className="relative mx-auto flex min-h-[60vh] max-w-page flex-col justify-center px-4 py-16 lg:min-h-[75vh] lg:px-6">
           <h1 className="font-display max-w-3xl text-display font-[560] text-bark-900">
             Des accessoires d'exception pour ceux qui comptent le plus.
           </h1>
@@ -98,6 +111,7 @@ export default function HomePage() {
                     .map((c) => c.label)
                     .join(", ")}…`}
                   tone={heroTones[category.href.slice(1)] ?? "cream"}
+                  image={universeCards[category.href.slice(1) as keyof typeof universeCards]}
                 />
               </li>
             ))}
@@ -130,11 +144,11 @@ export default function HomePage() {
             </h2>
             <p className="mt-6 max-w-xl text-body text-bark-700">
               Entre les marketplaces saturées et les avis invérifiables, choisir
-              un bon accessoire est devenu un travail à plein temps. Nous le
-              faisons pour vous : chaque produit du catalogue a été testé,
-              comparé et validé par notre équipe et ses experts. Ce que nous ne
-              mettrions pas entre les pattes de nos propres animaux n'entre pas
-              ici.
+              un bon accessoire est devenu un travail à plein temps. Chez chien
+              et chat, nous le faisons pour vous : chaque produit du catalogue a
+              été testé, comparé et validé par notre équipe et ses experts. Ce
+              que nous ne mettrions pas entre les pattes de nos propres animaux
+              n'entre pas ici.
             </p>
             <Link
               href="/notre-histoire"
@@ -152,10 +166,14 @@ export default function HomePage() {
               ))}
             </ul>
           </div>
-          <div aria-hidden="true" className="order-1 overflow-hidden rounded-lg lg:order-2">
-            <div className="flex aspect-[4/3] items-center justify-center bg-gradient-to-tr from-caramel-100 to-cream-100">
-              <PawPrint className="size-12 text-caramel-700 opacity-40" strokeWidth={1.75} />
-            </div>
+          <div className="order-1 overflow-hidden rounded-lg lg:order-2">
+            <Image
+              src={media.blocMarque}
+              alt="Mains d'artisan cousant un collier en cuir caramel sur un établi en bois"
+              sizes="(min-width: 1024px) 50vw, 100vw"
+              className="h-auto w-full object-cover"
+              style={{ aspectRatio: "4 / 3" }}
+            />
           </div>
         </div>
       </section>
