@@ -1,0 +1,179 @@
+@import "tailwindcss";
+
+/*
+ * Pelage — Design tokens (source unique)
+ * Réf. docs/phase-4-design-system/4.1-design-guidelines.md (D-044/D-045/D-047)
+ * Couches : primitives (:root) → sémantiques (:root) → utilitaires Tailwind (@theme inline)
+ */
+
+:root {
+  color-scheme: light; /* H36 : pas de dark mode au lancement */
+
+  /* ---- Primitives ---- */
+  --cream-50: #fdfbf7;
+  --cream-100: #f5f1ea;
+  --cream-300: #ede8e0;
+  --cream-500: #e3dccf;
+  --cream-700: #c9bfac;
+  --cream-900: #8a8378;
+
+  --bark-300: #b5aea4;
+  --bark-500: #7a736a;
+  --bark-700: #4a443d;
+  --bark-900: #2b2620;
+
+  --caramel-100: #f3e2cc;
+  --caramel-300: #ddb88a;
+  --caramel-500: #c08a4f;
+  --caramel-700: #9a6a38;
+  --caramel-900: #6b4926;
+
+  --sage-100: #e0e8dd;
+  --sage-300: #b3c4ac;
+  --sage-500: #7f9877;
+  --sage-700: #55704f;
+  --sage-900: #364933;
+
+  --terra-100: #f4dcd0;
+  --terra-300: #dfa98d;
+  --terra-500: #c67b54;
+  --terra-700: #a05a38;
+  --terra-900: #6f3e27;
+
+  --pine-100: #d8e4df;
+  --pine-300: #9dbdb1;
+  --pine-500: #5c8a78;
+  --pine-700: #2f5d50;
+  --pine-900: #1f4038;
+
+  /* ---- Sémantiques ---- */
+  --bg-page: var(--cream-100);
+  --bg-surface: var(--cream-50);
+  --bg-raised: var(--cream-300);
+  --text-ink: var(--bark-900);      /* 13.6:1 sur bg-page */
+  --text-ink-soft: var(--bark-700); /* 7.9:1 */
+  --text-ink-faint: var(--bark-500);
+  --line: var(--cream-500);
+  --action: var(--pine-700);        /* CTA — blanc dessus : 6.5:1 */
+  --action-strong: var(--pine-900);
+  --accent: var(--terra-500);       /* jamais du texte seul */
+}
+
+@theme inline {
+  /* Familles (variables injectées par next/font dans layout.tsx) */
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-heading: var(--font-work-sans), system-ui, sans-serif;
+  --font-body: var(--font-nunito-sans), system-ui, sans-serif;
+
+  /* Primitives exposées en utilitaires */
+  --color-cream-50: var(--cream-50);
+  --color-cream-100: var(--cream-100);
+  --color-cream-300: var(--cream-300);
+  --color-cream-500: var(--cream-500);
+  --color-cream-700: var(--cream-700);
+  --color-cream-900: var(--cream-900);
+  --color-bark-300: var(--bark-300);
+  --color-bark-500: var(--bark-500);
+  --color-bark-700: var(--bark-700);
+  --color-bark-900: var(--bark-900);
+  --color-caramel-100: var(--caramel-100);
+  --color-caramel-300: var(--caramel-300);
+  --color-caramel-500: var(--caramel-500);
+  --color-caramel-700: var(--caramel-700);
+  --color-caramel-900: var(--caramel-900);
+  --color-sage-100: var(--sage-100);
+  --color-sage-300: var(--sage-300);
+  --color-sage-500: var(--sage-500);
+  --color-sage-700: var(--sage-700);
+  --color-sage-900: var(--sage-900);
+  --color-terra-100: var(--terra-100);
+  --color-terra-300: var(--terra-300);
+  --color-terra-500: var(--terra-500);
+  --color-terra-700: var(--terra-700);
+  --color-terra-900: var(--terra-900);
+  --color-pine-100: var(--pine-100);
+  --color-pine-300: var(--pine-300);
+  --color-pine-500: var(--pine-500);
+  --color-pine-700: var(--pine-700);
+  --color-pine-900: var(--pine-900);
+
+  /* Sémantiques */
+  --color-page: var(--bg-page);
+  --color-surface: var(--bg-surface);
+  --color-raised: var(--bg-raised);
+  --color-ink: var(--text-ink);
+  --color-ink-soft: var(--text-ink-soft);
+  --color-ink-faint: var(--text-ink-faint);
+  --color-line: var(--line);
+  --color-action: var(--action);
+  --color-action-strong: var(--action-strong);
+  --color-accent: var(--accent);
+
+  /* Feedback — accordé chaud, ≥ 4.5:1 sur surface */
+  --color-success: #3e7a4e;
+  --color-error: #b3402e;
+  --color-warning: #b67a1f;
+  --color-info: #3e6b8a;
+
+  /* Rayons (4.1 §4) */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  /* Ombres — deux niveaux seulement */
+  --shadow-card: 0 1px 3px rgba(43, 38, 32, 0.08);
+  --shadow-overlay: 0 8px 30px rgba(43, 38, 32, 0.16);
+
+  /* Motion (4.1 §8) */
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+body {
+  background: var(--bg-page);
+  color: var(--text-ink);
+  font-family: var(--font-nunito-sans), system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Focus visible universel (4.1 §10) — jamais supprimé */
+:focus-visible {
+  outline: 2px solid var(--pine-500);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Reduced motion : règle système non négociable */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Lecture longue (guides) — ProseStyles */
+.prose-pelage {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  max-width: 68ch;
+}
+.prose-pelage h2 {
+  font-family: var(--font-work-sans), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 1.5rem;
+  margin: 2rem 0 0.75rem;
+}
+.prose-pelage h3 {
+  font-family: var(--font-work-sans), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 1.1875rem;
+  margin: 1.5rem 0 0.5rem;
+}
+.prose-pelage p {
+  margin: 0 0 1rem;
+}
