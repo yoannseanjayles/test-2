@@ -41,6 +41,6 @@
 ## Prochaines étapes
 
 1. ✅ Jalon 1 — Socle données : validé HITL (bascule mock→base, parité testée).
-2. 🟡 Jalon 2 — Auth réelle : livré, **en validation HITL** — Better Auth (inscription/connexion e-mail, sessions en base, déconnexion), « Mes animaux » persistés par compte via server actions (max 5 H24), singletons base/auth partagés entre bundles. Parcours inscription→session→animal vérifié au navigateur.
-3. 🟡 Jalon 3 — Paiement + commandes : livré, **en validation HITL** — tables orders/order_lines, placeOrder en server action avec recalcul serveur intégral des prix (D-033), rattachement compte/invité (D-014), Stripe PaymentIntent + webhook signé pilotant les statuts (D-016) quand les clés sont posées, mode démonstration explicite sinon ; commandes du compte et suivi invité lus depuis la base. Parcours achat→base→suivi vérifié au navigateur.
+2. ✅ Jalon 2 — Auth réelle : validé HITL — Better Auth (inscription/connexion e-mail, sessions en base, déconnexion), « Mes animaux » persistés par compte via server actions (max 5 H24), singletons base/auth partagés entre bundles. Parcours inscription→session→animal vérifié au navigateur.
+3. ✅ Jalon 3 — Paiement + commandes : validé HITL — tables orders/order_lines, placeOrder en server action avec recalcul serveur intégral des prix (D-033), rattachement compte/invité (D-014), Stripe PaymentIntent + webhook signé pilotant les statuts (D-016) quand les clés sont posées, mode démonstration explicite sinon ; commandes du compte et suivi invité lus depuis la base. Parcours achat→base→suivi vérifié au navigateur.
 4. Jalon 4 — Contenus, e-mails transactionnels, restock/relance (H15/H40), recherche, RGPD.
