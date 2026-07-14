@@ -8,14 +8,8 @@ import {
   SectionHeading,
   Breadcrumb,
 } from "@/components/commerce";
-import {
-  animalLabels,
-  getFeatured,
-  getProducts,
-  getSubcategories,
-  isAnimal,
-  type Animal,
-} from "@/lib/catalog";
+import { animalLabels, isAnimal, type Animal } from "@/lib/catalog";
+import { fetchFeatured, fetchProducts, fetchSubcategories } from "@/lib/api";
 import { getGuidesFor } from "@/lib/guides";
 import { categoryImages, universeBanners } from "@/lib/media";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
@@ -59,8 +53,11 @@ export default async function AnimalPage({ params }: { params: Promise<Params> }
   if (!isAnimal(animal)) notFound();
 
   const label = animalLabels[animal];
-  const subcats = getSubcategories(animal);
-  const bestSellers = getFeatured(4, animal);
+  const [subcats, animalProducts] = await Promise.all([
+    fetchSubcategories(animal),
+    fetchProducts(animal),
+  ]);
+  const bestSellers = animalProducts.slice(0, 4);
   const animalGuides = getGuidesFor(animal, 3);
 
   return (
@@ -110,7 +107,7 @@ export default async function AnimalPage({ params }: { params: Promise<Params> }
               <CategoryCard
                 href={`/${animal}/${subcat.slug}`}
                 label={subcat.label}
-                productCount={getProducts(animal, subcat.slug).length}
+                productCount={animalProducts.filter((p) => p.subcategory === subcat.slug).length}
                 tone={tones[animal][index % tones[animal].length]}
                 image={categoryImages[`${animal}/${subcat.slug}`]}
               />

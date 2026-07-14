@@ -19,6 +19,7 @@ import {
   type ShippingMethodId,
 } from "@/lib/checkout";
 import { getProductBySlug } from "@/lib/catalog";
+import { placeOrder as placeOrderAction } from "@/lib/orders";
 import { formatPrice } from "@/lib/format";
 import { Button, FormField } from "@/components/ui";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,7 @@ export function CheckoutFlow() {
   const [address, setAddress] = useState<AddressValues | null>(null);
   const [shippingMethod, setShippingMethod] = useState<ShippingMethodId>("domicile");
   const [placing, setPlacing] = useState(false);
+  const [payError, setPayError] = useState("");
   useEffect(() => setHydrated(true), []);
 
   const subtotal = cartSubtotal(lines);
@@ -80,10 +82,23 @@ export function CheckoutFlow() {
     );
   }
 
-  const placeOrder = () => {
+  // Enregistrement serveur : prix et total recalculés depuis la base (D-033).
+  const placeOrder = async () => {
     setPlacing(true);
-    const order = {
-      number: `CC-${String(Date.now()).slice(-6)}`,
+    setPayError("");
+    const result = await placeOrderAction({
+      email: contact!.email,
+      address: address! as unknown as Record<string, string>,
+      shippingMethod,
+      lines,
+    });
+    if (!result.ok) {
+      setPlacing(false);
+      setPayError(result.error ?? "Impossible d'enregistrer la commande.");
+      return;
+    }
+    setOrder({
+      number: result.number!,
       placedAt: new Date().toISOString(),
       email: contact!.email,
       address: address!,
@@ -91,9 +106,10 @@ export function CheckoutFlow() {
       lines,
       subtotal,
       shipping,
-      total,
-    };
-    setOrder(order);
+      total: result.total!,
+    });
+    // clientSecret présent = Stripe configuré : le Payment Element prend le
+    // relais (confirmation via webhook). Sinon : commande démo enregistrée.
     clearCart();
     router.push("/checkout/confirmation");
   };
@@ -331,8 +347,10 @@ export function CheckoutFlow() {
                   </p>
                 </div>
                 <Button className="mt-4 w-full" onClick={placeOrder} loading={placing}>
-                  Payer {formatPrice(total)} (démonstration)
+                  Payer {formatPrice(total)}
+                  {process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ? "" : " (démonstration)"}
                 </Button>
+                <p aria-live="assertive" className="mt-2 text-body-sm text-error">{payError}</p>
               </div>
             )}
           </section>

@@ -1,7 +1,7 @@
 "use client";
 
 import { AccountShell } from "@/components/account/AccountShell";
-import { useAuth } from "@/lib/account";
+import { signOut, useSession } from "@/lib/auth-client";
 import { Button, FormField } from "@/components/ui";
 import { useState } from "react";
 
@@ -15,7 +15,7 @@ export default function InfoPage() {
 }
 
 function Info() {
-  const { user, signOut } = useAuth();
+  const user = useSession().data?.user;
   const [saved, setSaved] = useState(false);
   return (
     <div className="flex max-w-xl flex-col gap-6">
@@ -29,7 +29,7 @@ function Info() {
         <h2 className="font-heading text-h3 font-semibold text-bark-900">Coordonnées</h2>
         <div className="mt-4 flex flex-col gap-4">
           <FormField label="Adresse e-mail" type="email" defaultValue={user?.email} required />
-          <FormField label="Prénom" defaultValue={user?.firstName} required />
+          <FormField label="Prénom" defaultValue={user?.name} required />
           <label className="flex items-center gap-3 text-body-sm text-bark-700">
             <input type="checkbox" className="size-4 accent-pine-700" defaultChecked />
             Recevoir la newsletter mensuelle (conseils et nouveautés)
@@ -53,7 +53,7 @@ function Info() {
             variant="ghost"
             onClick={() => {
               localStorage.clear();
-              signOut();
+              void signOut();
             }}
           >
             Supprimer mon compte (démo)

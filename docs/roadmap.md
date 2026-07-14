@@ -24,8 +24,8 @@
 | | 4.1 Design System | Design Guidelines | ✅ Validé — **Phase 4 clôturée** |
 | **5 — Front-end** | 5.0 Recherche | Best Practices Summary | ✅ Validé (D-048) |
 | | 5.1 Développement | Front-end documenté | ✅ Validé — **Phase 5 clôturée** (4 jalons HITL) |
-| **6 — Back-end** | 6.0 Recherche | Best Practices Summary | 🟡 En validation |
-| | 6.1 Développement | Documentation technique | ⬜ À venir |
+| **6 — Back-end** | 6.0 Recherche | Best Practices Summary | ✅ Validé (D-051) |
+| | 6.1 Développement | Documentation technique | 🟡 En cours — jalon 1/4 (socle données) |
 | **7 — Administration** | 7.0 Recherche | Best Practices Summary | ⬜ À venir |
 | | 7.1 Développement | Back-office fonctionnel | ⬜ À venir |
 
@@ -40,5 +40,7 @@
 
 ## Prochaines étapes
 
-1. Validation HITL de la recherche back-end (6.0) — inclut le choix de stack serveur.
-2. Développement 6.1 : base de données + API, auth réelle, paiement Stripe/PayPal, e-mails transactionnels.
+1. ✅ Jalon 1 — Socle données : validé HITL (bascule mock→base, parité testée).
+2. ✅ Jalon 2 — Auth réelle : validé HITL — Better Auth (inscription/connexion e-mail, sessions en base, déconnexion), « Mes animaux » persistés par compte via server actions (max 5 H24), singletons base/auth partagés entre bundles. Parcours inscription→session→animal vérifié au navigateur.
+3. ✅ Jalon 3 — Paiement + commandes : validé HITL — tables orders/order_lines, placeOrder en server action avec recalcul serveur intégral des prix (D-033), rattachement compte/invité (D-014), Stripe PaymentIntent + webhook signé pilotant les statuts (D-016) quand les clés sont posées, mode démonstration explicite sinon ; commandes du compte et suivi invité lus depuis la base. Parcours achat→base→suivi vérifié au navigateur.
+4. Jalon 4 — Contenus, e-mails transactionnels, restock/relance (H15/H40), recherche, RGPD.
