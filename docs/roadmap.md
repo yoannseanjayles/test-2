@@ -13,8 +13,9 @@
 | | 2.0/2.1 — Fiche produit | Recherche + spécification | ✅ Validé |
 | | 2.0/2.1 — Listing/catégorie | Recherche + spécification | ✅ Validé |
 | | 2.0/2.1 — Panier | Recherche + spécification | ✅ Validé |
-| | 2.0/2.1 — Checkout | Recherche + spécification | 🟡 Recherche en validation |
-| | 2.x Pages suivantes (D-019) : Compte, Guides, Confiance | Spécifications de pages | ⬜ À venir |
+| | 2.0/2.1 — Checkout | Recherche + spécification | ✅ Validé |
+| | 2.0/2.1 — Compte client | Recherche + spécification | 🟡 Recherche en validation |
+| | 2.x Pages suivantes (D-019) : Guides, Confiance | Spécifications de pages | ⬜ À venir |
 | **3 — Génération des médias** | 3.0 Recherche | Best Practices Summary | ⬜ À venir |
 | | 3.1 Inventaire des médias | Media Inventory | ⬜ À venir |
 | | 3.2 Bibliothèque de prompts | Media Prompt Library | ⬜ À venir |
@@ -31,9 +32,9 @@
 
 **Phase 2 — Définition des pages.** La phase fonctionne en cycles par page : recherche (2.0) → spécification (2.1) → validation. Ordre proposé (D-019) : Accueil → Fiche produit → Listing/catégorie → Panier → Checkout → Compte → Guides → Confiance/légal.
 
-Page en cours : **Checkout** — recherche 2.0 rédigée, en attente de validation HITL.
+Page en cours : **Compte client** — recherche 2.0 rédigée, en attente de validation HITL.
 
 ## Prochaines étapes
 
-1. Validation HITL de la recherche Checkout (2.0).
-2. Spécification du Checkout (2.1), puis Compte client.
+1. Validation HITL de la recherche Compte client (2.0).
+2. Spécification du Compte client (2.1), puis Guides & contenus.
