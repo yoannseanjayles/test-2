@@ -1,5 +1,6 @@
 import "server-only";
 import * as schema from "./schema";
+import * as authSchema from "./auth-schema";
 import { seedIfEmpty } from "./seed";
 
 /**
@@ -16,12 +17,12 @@ async function createDb() {
   if (process.env.DATABASE_URL) {
     const { neon } = await import("@neondatabase/serverless");
     const { drizzle } = await import("drizzle-orm/neon-http");
-    return drizzle(neon(process.env.DATABASE_URL), { schema });
+    return drizzle(neon(process.env.DATABASE_URL), { schema: { ...schema, ...authSchema } });
   }
   const { PGlite } = await import("@electric-sql/pglite");
   const { drizzle } = await import("drizzle-orm/pglite");
   const client = new PGlite(); // en mémoire : reconstruit à chaque build/boot
-  const db = drizzle(client, { schema });
+  const db = drizzle(client, { schema: { ...schema, ...authSchema } });
   await applySchema(client);
   await seedIfEmpty(db);
   return db;
@@ -49,15 +50,45 @@ async function applySchema(client: { exec: (sql: string) => Promise<unknown> }) 
       context text NOT NULL, date text NOT NULL,
       verified boolean NOT NULL DEFAULT true,
       created_at timestamp NOT NULL DEFAULT now());
+
+    CREATE TABLE IF NOT EXISTS "user" (
+      id text PRIMARY KEY, name text NOT NULL, email text NOT NULL UNIQUE,
+      email_verified boolean NOT NULL DEFAULT false, image text,
+      created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now());
+    CREATE TABLE IF NOT EXISTS "session" (
+      id text PRIMARY KEY, expires_at timestamp NOT NULL, token text NOT NULL UNIQUE,
+      created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now(),
+      ip_address text, user_agent text,
+      user_id text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE);
+    CREATE TABLE IF NOT EXISTS "account" (
+      id text PRIMARY KEY, account_id text NOT NULL, provider_id text NOT NULL,
+      user_id text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+      access_token text, refresh_token text, id_token text,
+      access_token_expires_at timestamp, refresh_token_expires_at timestamp,
+      scope text, password text,
+      created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now());
+    CREATE TABLE IF NOT EXISTS "verification" (
+      id text PRIMARY KEY, identifier text NOT NULL, value text NOT NULL,
+      expires_at timestamp NOT NULL,
+      created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now());
+    CREATE TABLE IF NOT EXISTS pets (
+      id text PRIMARY KEY,
+      user_id text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+      name text NOT NULL, species text NOT NULL, gabarit text NOT NULL,
+      created_at timestamp NOT NULL DEFAULT now());
     CREATE INDEX IF NOT EXISTS idx_products_animal_subcategory
       ON products (animal, subcategory);
   `);
 }
 
-let dbPromise: Promise<Database> | null = null;
+/**
+ * Singleton par processus via globalThis : les bundles Next (routes API,
+ * server actions, pages) chargent chacun leur copie du module — sans ce
+ * partage, chaque copie ouvrirait sa propre PGlite en mémoire.
+ */
+const globalStore = globalThis as unknown as { __chienEtChatDb?: Promise<Database> };
 
-/** Singleton par processus (réutilisé entre requêtes RSC). */
 export function getDb(): Promise<Database> {
-  dbPromise ??= createDb();
-  return dbPromise;
+  globalStore.__chienEtChatDb ??= createDb();
+  return globalStore.__chienEtChatDb;
 }

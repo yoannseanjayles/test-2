@@ -4,7 +4,9 @@ import Link from "next/link";
 import { PawPrint, Package, RotateCcw } from "lucide-react";
 import { AccountShell } from "@/components/account/AccountShell";
 import { useOrder } from "@/lib/checkout";
-import { usePets, orderStatuses } from "@/lib/account";
+import { orderStatuses } from "@/lib/account";
+import { listPets, type PetDto } from "./animaux/actions";
+import { useEffect, useState } from "react";
 import { useCart, useCartDrawer } from "@/lib/cart";
 import { formatPrice } from "@/lib/format";
 import { Badge, Button } from "@/components/ui";
@@ -20,7 +22,10 @@ export default function AccountDashboard() {
 
 function Dashboard() {
   const order = useOrder((state) => state.lastOrder);
-  const pets = usePets((state) => state.pets);
+  const [pets, setPets] = useState<PetDto[]>([]);
+  useEffect(() => {
+    listPets().then(setPets).catch(() => setPets([]));
+  }, []);
   const add = useCart((state) => state.add);
   const openDrawer = useCartDrawer((state) => state.openDrawer);
 

@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
-import { useAuth } from "@/lib/account";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, type ReactNode } from "react";
+import { signIn, signOut, signUp, useSession } from "@/lib/auth-client";
 import { Button, FormField } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -16,46 +16,18 @@ const navItems = [
 ];
 
 /**
- * Coquille de l'espace client (spec 2.1 Compte, D-035) : connexion démo si
- * déconnecté, sinon navigation latérale + contenu. Auth réelle en Phase 6.
+ * Coquille de l'espace client (D-035) — authentification réelle Better Auth
+ * (6.1 jalon 2) : inscription/connexion e-mail, session en base, déconnexion.
  */
 export function AccountShell({ title, children }: { title: string; children: ReactNode }) {
   const pathname = usePathname();
-  const { user, signIn, signOut } = useAuth();
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => setHydrated(true), []);
+  const { data: session, isPending } = useSession();
 
-  if (!hydrated) {
+  if (isPending) {
     return <div className="mx-auto max-w-page px-4 py-16 lg:px-6" aria-busy="true" />;
   }
 
-  if (!user) {
-    return (
-      <div className="mx-auto max-w-md px-4 py-12 lg:py-16">
-        <h1 className="font-display text-h1 font-[560] text-bark-900">Connexion</h1>
-        <p className="mt-3 text-body-sm text-bark-700">
-          Espace de démonstration : entrez un e-mail et un prénom pour explorer
-          l'espace client. L'authentification réelle arrive en Phase 6.
-        </p>
-        <form
-          className="mt-6 flex flex-col gap-4"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const data = new FormData(event.currentTarget);
-            signIn({
-              email: String(data.get("email") ?? ""),
-              firstName: String(data.get("firstName") ?? ""),
-            });
-          }}
-        >
-          <FormField label="Adresse e-mail" name="email" type="email" required autoComplete="email" />
-          <FormField label="Prénom" name="firstName" required autoComplete="given-name" />
-          <FormField label="Mot de passe" name="password" type="password" required autoComplete="current-password" help="Démo : non vérifié." />
-          <Button type="submit">Se connecter</Button>
-        </form>
-      </div>
-    );
-  }
+  if (!session) return <AuthForm />;
 
   return (
     <div className="mx-auto max-w-page px-4 py-10 lg:px-6">
@@ -82,7 +54,7 @@ export function AccountShell({ title, children }: { title: string; children: Rea
             <li className="mt-2 border-t border-border pt-2">
               <button
                 type="button"
-                onClick={signOut}
+                onClick={() => signOut()}
                 className="text-label flex min-h-11 w-full items-center rounded-md px-4 text-bark-500 hover:bg-cream-300 hover:text-error"
               >
                 Se déconnecter
@@ -92,6 +64,74 @@ export function AccountShell({ title, children }: { title: string; children: Rea
         </nav>
         <div className="min-w-0">{children}</div>
       </div>
+    </div>
+  );
+}
+
+function AuthForm() {
+  const router = useRouter();
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+    setLoading(true);
+    const data = new FormData(event.currentTarget);
+    const email = String(data.get("email") ?? "");
+    const password = String(data.get("password") ?? "");
+    const result =
+      mode === "signup"
+        ? await signUp.email({ email, password, name: String(data.get("firstName") ?? "") })
+        : await signIn.email({ email, password });
+    setLoading(false);
+    if (result.error) {
+      setError(
+        result.error.status === 401 || result.error.status === 403
+          ? "E-mail ou mot de passe incorrect."
+          : (result.error.message ?? "Une erreur est survenue — réessayez."),
+      );
+      return;
+    }
+    router.refresh();
+  };
+
+  return (
+    <div className="mx-auto max-w-md px-4 py-12 lg:py-16">
+      <h1 className="font-display text-h1 font-[560] text-bark-900">
+        {mode === "signin" ? "Connexion" : "Créer un compte"}
+      </h1>
+      <p className="mt-3 text-body-sm text-bark-700">
+        Suivi de commande, retours en un clic et profil animal — le compte
+        reste optionnel pour commander.
+      </p>
+      <form className="mt-6 flex flex-col gap-4" onSubmit={submit}>
+        {mode === "signup" && (
+          <FormField label="Prénom" name="firstName" required autoComplete="given-name" />
+        )}
+        <FormField label="Adresse e-mail" name="email" type="email" required autoComplete="email" />
+        <FormField
+          label="Mot de passe"
+          name="password"
+          type="password"
+          required
+          minLength={8}
+          autoComplete={mode === "signup" ? "new-password" : "current-password"}
+          help={mode === "signup" ? "8 caractères minimum." : undefined}
+        />
+        <Button type="submit" loading={loading}>
+          {mode === "signin" ? "Se connecter" : "Créer mon compte"}
+        </Button>
+        <p aria-live="assertive" className="text-body-sm text-error">{error}</p>
+      </form>
+      <button
+        type="button"
+        onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+        className="text-label mt-2 min-h-11 text-action underline-offset-4 hover:underline"
+      >
+        {mode === "signin" ? "Pas encore de compte ? Créez-le ici." : "Déjà un compte ? Connectez-vous."}
+      </button>
     </div>
   );
 }

@@ -1,15 +1,15 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import { PawPrint, Trash2 } from "lucide-react";
 import { AccountShell } from "@/components/account/AccountShell";
-import { MAX_PETS, usePets } from "@/lib/account";
+import { addPet, listPets, removePet, type PetDto } from "./actions";
 import { animalLabels, gabaritLabels, type Animal, type Gabarit } from "@/lib/catalog";
 import { Button, FormField } from "@/components/ui";
-import { useState } from "react";
 
 /**
- * « Mes animaux » (D-036) : gabarit aligné sur le filtre listing (D-027),
- * bénéfice explicité, max 5 (H24), photo privée non gérée en démo (H25).
+ * « Mes animaux » (D-036) — persistés en base par compte (6.1 jalon 2),
+ * max 5 (H24), gabarit aligné sur le filtre listing (D-027).
  */
 export default function PetsPage() {
   return (
@@ -20,8 +20,16 @@ export default function PetsPage() {
 }
 
 function Pets() {
-  const { pets, addPet, removePet } = usePets();
+  const [pets, setPets] = useState<PetDto[] | null>(null);
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const refresh = useCallback(() => {
+    listPets().then(setPets).catch(() => setPets([]));
+  }, []);
+  useEffect(refresh, [refresh]);
+
+  if (pets === null) return <p aria-busy="true" className="text-body-sm text-bark-700">Chargement…</p>;
 
   return (
     <div className="flex flex-col gap-6">
@@ -49,7 +57,7 @@ function Pets() {
               <button
                 type="button"
                 aria-label={`Retirer ${pet.name}`}
-                onClick={() => removePet(pet.id)}
+                onClick={() => removePet(pet.id).then(refresh)}
                 className="flex size-9 items-center justify-center rounded-sm text-bark-500 hover:bg-cream-300 hover:text-error"
               >
                 <Trash2 aria-hidden="true" className="size-4" />
@@ -59,24 +67,25 @@ function Pets() {
         </ul>
       )}
 
-      {pets.length < MAX_PETS ? (
+      {pets.length < 5 ? (
         <form
           className="rounded-lg bg-cream-50 p-6 shadow-card"
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
             event.preventDefault();
             const form = event.currentTarget;
             const data = new FormData(form);
-            const ok = addPet({
+            setSaving(true);
+            const result = await addPet({
               name: String(data.get("name") ?? ""),
               species: data.get("species") as Animal,
               gabarit: data.get("gabarit") as Gabarit,
             });
-            if (!ok) {
-              setError(`Maximum ${MAX_PETS} animaux par compte.`);
-              return;
+            setSaving(false);
+            setError(result.error ?? "");
+            if (result.ok) {
+              form.reset();
+              refresh();
             }
-            setError("");
-            form.reset();
           }}
         >
           <h2 className="font-heading text-h3 font-semibold text-bark-900">Ajouter un animal</h2>
@@ -99,12 +108,12 @@ function Pets() {
               </select>
             </label>
           </div>
-          <Button type="submit" className="mt-4">Ajouter</Button>
+          <Button type="submit" className="mt-4" loading={saving}>Ajouter</Button>
           <p aria-live="polite" className="mt-2 text-body-sm text-error">{error}</p>
         </form>
       ) : (
         <p className="text-body-sm text-bark-700">
-          Maximum {MAX_PETS} animaux par compte — retirez-en un pour en ajouter un autre.
+          Maximum 5 animaux par compte — retirez-en un pour en ajouter un autre.
         </p>
       )}
     </div>

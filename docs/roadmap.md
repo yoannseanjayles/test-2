@@ -40,5 +40,6 @@
 
 ## Prochaines étapes
 
-1. Validation HITL du jalon 1 (socle données : schéma Drizzle, seed H33, bascule mock→base, parité testée).
-2. Jalon 2 : Better Auth + compte réel. Prévoir la création de la base Neon et son rattachement Vercel (DATABASE_URL).
+1. ✅ Jalon 1 — Socle données : validé HITL (bascule mock→base, parité testée).
+2. 🟡 Jalon 2 — Auth réelle : livré, **en validation HITL** — Better Auth (inscription/connexion e-mail, sessions en base, déconnexion), « Mes animaux » persistés par compte via server actions (max 5 H24), singletons base/auth partagés entre bundles. Parcours inscription→session→animal vérifié au navigateur.
+3. Jalon 3 — Paiement + commandes (Stripe test requis). Prévoir la base Neon + BETTER_AUTH_SECRET sur Vercel avant mise en production du back-end.
