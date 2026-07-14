@@ -1,0 +1,20 @@
+import { announcementMessages } from "@/lib/navigation";
+
+/**
+ * Bandeau fin de réassurance au-dessus du header (sitemap 1.2).
+ * Statique — pas de rotation automatique (esprit D-020) : 1 message mobile,
+ * 3 messages séparés desktop. Jamais injecté après coup (CLS, 5.0 §3).
+ */
+export function AnnouncementBar() {
+  return (
+    <div className="bg-pine-700 text-cream-50">
+      <p className="text-label mx-auto flex max-w-page items-center justify-center gap-8 px-4 py-2 text-center">
+        {announcementMessages.map((message, index) => (
+          <span key={message} className={index > 0 ? "hidden lg:inline" : undefined}>
+            {message}
+          </span>
+        ))}
+      </p>
+    </div>
+  );
+}
