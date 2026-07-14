@@ -9,6 +9,7 @@ import { getSessionUser } from "@/lib/auth";
 import { addressSchema, contactSchema } from "@/lib/checkout-schemas";
 import { shippingMethods, shippingPrice, type ShippingMethodId } from "@/lib/shipping";
 import type { CartLine } from "@/lib/cart";
+import { sendOrderConfirmation } from "@/lib/email";
 
 /**
  * Commandes (6.1 jalon 3) — le total est TOUJOURS recalculé serveur depuis
@@ -100,6 +101,20 @@ export async function placeOrder(input: {
     quantity: l.quantity,
     unitPrice: bySlug.get(l.slug)!.price,
   })));
+
+  void sendOrderConfirmation({
+    number,
+    email: contact.data.email,
+    total,
+    lines: input.lines.map((l) => ({
+      productSlug: l.slug,
+      productName: bySlug.get(l.slug)!.name,
+      size: l.size,
+      color: l.color,
+      quantity: l.quantity,
+      unitPrice: bySlug.get(l.slug)!.price,
+    })),
+  });
 
   return { ok: true, number, total, clientSecret };
 }

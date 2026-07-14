@@ -27,6 +27,7 @@ E-commerce **premium** spécialisé dans les **accessoires pour animaux** (chien
 | Phase 3 — Génération des médias (~230 visuels, ~60 prompts, DA verrouillée) | ✅ Clôturée (HITL) |
 | Phase 4 — Design System (guidelines entérinées sur artefact ; marque renommée « chien et chat », D-049) | ✅ Clôturée (HITL) |
 | Phase 5 — Front-end (4 jalons : socle/layout, catalogue, tunnel, compte/contenus — 74 pages, tests, médias intégrés) | ✅ Clôturée (HITL) |
-| Phase 6 — Back-end | 🟡 En cours — recherche 6.0 en validation |
+| Phase 6 — Back-end (Postgres/Drizzle, Better Auth, commandes + Stripe, engagement, recherche) | ✅ Clôturée (HITL) |
+| Phase 7 — Administration | 🟡 En cours — recherche 7.0 en validation |
 
 Voir `docs/roadmap.md` pour le détail de l'avancement.
