@@ -6,8 +6,8 @@
 |---|---|---|---|
 | **1 — Architecture** | 1.0 Recherche | Best Practices Summary | ✅ Validé |
 | | 1.1 Vision produit | Vision Produit | ✅ Validé |
-| | 1.2 Sitemap | Sitemap | 🟡 En validation |
-| | 1.3 Parcours utilisateurs | User Flows | ⬜ À venir |
+| | 1.2 Sitemap | Sitemap | ✅ Validé |
+| | 1.3 Parcours utilisateurs | User Flows | 🟡 En validation |
 | **2 — Définition des pages** | 2.0 Recherche | Best Practices Summary | ⬜ À venir |
 | | 2.1 Conception des pages (une par une) | Spécifications de pages | ⬜ À venir |
 | **3 — Génération des médias** | 3.0 Recherche | Best Practices Summary | ⬜ À venir |
@@ -24,9 +24,9 @@
 
 ## Phase en cours
 
-**Phase 1.2 — Sitemap** : livrable rédigé, en attente de validation HITL.
+**Phase 1.3 — Parcours utilisateurs** : livrable rédigé, en attente de validation HITL.
 
 ## Prochaines étapes
 
-1. Validation HITL du Sitemap (1.2).
-2. User Flows (1.3), puis Phase 2 (définition des pages).
+1. Validation HITL des User Flows (1.3) — clôture de la Phase 1.
+2. Phase 2.0 : recherche des bonnes pratiques par page, puis conception page par page (2.1).

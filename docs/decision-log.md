@@ -15,3 +15,6 @@ Historique des décisions importantes, avec justification. Les décisions sont n
 | D-009 | 2026-07-14 | Objectifs 12 mois : conversion ≥ 2,5 %, panier ≥ 70 €, réachat 6 mois ≥ 25 %, abandon checkout ≤ 55 %, CWV 100 % Good, WCAG 2.2 AA | Objectifs mesurables pour arbitrer les choix produit/design/tech des phases suivantes | ✅ Validée (HITL 1.1) |
 | D-010 | 2026-07-14 | H4 : nom de code projet « Pelage » ; naming réel traité en Phase 4 (DA) | Permet d'avancer sans bloquer sur le naming | ✅ Validée (HITL 1.1) |
 | D-011 | 2026-07-14 | H5 : livraison FR/BE/CH/LU au lancement ; H6 : avis clients natifs (pas de solution tierce) | Périmètre de lancement resserré, coûts maîtrisés | ✅ Validée (HITL 1.1) |
+| D-012 | 2026-07-14 | Sitemap : 8 sous-catégories chien, 7 chat, 3 NAC ; URLs `/{animal}/{sous-categorie}/{produit}` ; profondeur ≤ 3 | Applique D-001/D-002 ; noms affinables avec le catalogue réel (H7) | ✅ Validée (HITL 1.2) |
+| D-013 | 2026-07-14 | Pas de page « Promotions » au lancement ; pas d'arborescence transverse « par usage » (`/colliers`) | Cohérence premium (D-008) ; évite le contenu dupliqué SEO — l'entrée par usage est servie par les facettes | ✅ Validée (HITL 1.2) |
+| D-014 | 2026-07-14 | Création de compte proposée uniquement *après* l'achat (checkout invité par défaut) | 24 % d'abandon quand le compte est forcé (D-004) | ✅ Validée (HITL 1.2) |
