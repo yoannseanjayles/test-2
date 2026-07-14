@@ -2,17 +2,20 @@
 
 import { useState, type FormEvent } from "react";
 import { Button, FormField } from "@/components/ui";
+import { subscribeNewsletter } from "@/lib/engagement";
 
 /**
  * Capture e-mail en pied de page (D-021 : jamais de pop-up à l'arrivée).
- * Branchée sur l'API réelle en Phase 6 (H37) — confirmation locale en attendant.
+ * Inscriptions persistées en base (6.1 jalon 4).
  */
 export function NewsletterForm() {
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setSubmitted(true);
+    const email = String(new FormData(event.currentTarget).get("email") ?? "");
+    const result = await subscribeNewsletter(email);
+    if (result.ok) setSubmitted(true);
   };
 
   return (

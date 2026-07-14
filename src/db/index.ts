@@ -89,6 +89,11 @@ async function applySchema(client: { exec: (sql: string) => Promise<unknown> }) 
       product_slug text NOT NULL, product_name text NOT NULL,
       size text NOT NULL, color text NOT NULL,
       quantity integer NOT NULL, unit_price integer NOT NULL);
+    CREATE TABLE IF NOT EXISTS restock_alerts (
+      id text PRIMARY KEY, product_slug text NOT NULL, size text NOT NULL,
+      email text NOT NULL, created_at timestamp NOT NULL DEFAULT now());
+    CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+      email text PRIMARY KEY, created_at timestamp NOT NULL DEFAULT now());
     CREATE INDEX IF NOT EXISTS idx_products_animal_subcategory
       ON products (animal, subcategory);
   `);

@@ -84,3 +84,17 @@ export const orderLines = pgTable("order_lines", {
   quantity: integer("quantity").notNull(),
   unitPrice: integer("unit_price").notNull(),
 });
+
+/** Alertes de restock (H15) et newsletter (consentement horodaté, D-041). */
+export const restockAlerts = pgTable("restock_alerts", {
+  id: text("id").primaryKey(),
+  productSlug: text("product_slug").notNull(),
+  size: text("size").notNull(),
+  email: text("email").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const newsletterSubscribers = pgTable("newsletter_subscribers", {
+  email: text("email").primaryKey(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});

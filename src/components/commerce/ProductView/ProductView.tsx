@@ -13,6 +13,7 @@ import {
 import { formatPrice } from "@/lib/format";
 import { useCart, useCartDrawer } from "@/lib/cart";
 import { productImages } from "@/lib/media";
+import { subscribeRestock } from "@/lib/engagement";
 import { Badge, Button, FormField } from "@/components/ui";
 import { Placeholder } from "../Placeholder/Placeholder";
 import { RatingStars } from "../RatingStars/RatingStars";
@@ -260,14 +261,14 @@ export function ProductView({ product }: { product: Product }) {
 
         {/* Rupture de la taille sélectionnée : alerte restock (H15) */}
         {selectedOutOfStock && !outOfStock && (
-          <RestockAlert sizeName={size.name} />
+          <RestockAlert sizeName={size.name} productSlug={product.slug} />
         )}
 
         <div className="mt-6">{buyButton}</div>
         <p aria-live="polite" className="sr-only">
           {added ? `${product.name} ajouté au panier` : ""}
         </p>
-        {outOfStock && <RestockAlert sizeName="ce produit" />}
+        {outOfStock && <RestockAlert sizeName="ce produit" productSlug={product.slug} />}
 
         {/* Réassurance adjacente */}
         <ul className="mt-6 flex flex-col gap-2 border-t border-border pt-5">
@@ -377,15 +378,21 @@ export function ProductView({ product }: { product: Product }) {
   );
 }
 
-/** Capture e-mail de restock (H15) — branchée sur l'API en Phase 6. */
-function RestockAlert({ sizeName }: { sizeName: string }) {
+/** Capture e-mail de restock (H15) — persistée en base (6.1 jalon 4). */
+function RestockAlert({ sizeName, productSlug }: { sizeName: string; productSlug?: string }) {
   const [subscribed, setSubscribed] = useState(false);
   return (
     <form
       className="mt-4 rounded-md bg-cream-300 p-4"
-      onSubmit={(event) => {
+      onSubmit={async (event) => {
         event.preventDefault();
-        setSubscribed(true);
+        const email = String(new FormData(event.currentTarget).get("email") ?? "");
+        const result = await subscribeRestock({
+          productSlug: productSlug ?? "",
+          size: sizeName,
+          email,
+        });
+        if (result.ok) setSubscribed(true);
       }}
     >
       <p className="text-body-sm text-bark-900">
@@ -397,6 +404,7 @@ function RestockAlert({ sizeName }: { sizeName: string }) {
       <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end">
         <FormField
           label="Votre e-mail"
+          name="email"
           type="email"
           required
           placeholder="prenom@exemple.fr"
