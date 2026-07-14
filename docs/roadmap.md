@@ -17,9 +17,9 @@
 | | 2.0/2.1 — Compte client | Recherche + spécification | ✅ Validé |
 | | 2.0/2.1 — Guides & contenus | Recherche + spécification | ✅ Validé |
 | | 2.0/2.1 — Confiance & légal (dernier groupe) | Recherche + spécification | ✅ Validé — **Phase 2 clôturée** |
-| **3 — Génération des médias** | 3.0 Recherche | Best Practices Summary | 🟡 En validation |
-| | 3.1 Inventaire des médias | Media Inventory | ⬜ À venir |
-| | 3.2 Bibliothèque de prompts | Media Prompt Library | ⬜ À venir |
+| **3 — Génération des médias** | 3.0 Recherche | Best Practices Summary | ✅ Validé |
+| | 3.1 Inventaire des médias | Media Inventory | ✅ Validé |
+| | 3.2 Bibliothèque de prompts | Media Prompt Library | 🟡 En validation |
 | **4 — Design System** | 4.0 Recherche | Best Practices Summary | ⬜ À venir |
 | | 4.1 Design System | Design Guidelines | ⬜ À venir |
 | **5 — Front-end** | 5.0 Recherche | Best Practices Summary | ⬜ À venir |
@@ -33,9 +33,9 @@
 
 **Phase 2 — Définition des pages.** La phase fonctionne en cycles par page : recherche (2.0) → spécification (2.1) → validation. Ordre proposé (D-019) : Accueil → Fiche produit → Listing/catégorie → Panier → Checkout → Compte → Guides → Confiance/légal.
 
-**Phase 3 — Génération des médias** : recherche 3.0 rédigée, en attente de validation HITL.
+**Phase 3 — Génération des médias** : Media Prompt Library (3.2) rédigée, en attente de validation HITL — dernière étape de la phase.
 
 ## Prochaines étapes
 
-1. Validation HITL de la recherche médias (3.0).
-2. Media Inventory (3.1), puis Media Prompt Library (3.2).
+1. Validation HITL de la Media Prompt Library (3.2) — clôture de la Phase 3.
+2. Phase 4.0 : recherche Design System.
