@@ -23,22 +23,22 @@
 | **4 — Design System** | 4.0 Recherche | Best Practices Summary | ✅ Validé |
 | | 4.1 Design System | Design Guidelines | ✅ Validé — **Phase 4 clôturée** |
 | **5 — Front-end** | 5.0 Recherche | Best Practices Summary | ✅ Validé (D-048) |
-| | 5.1 Développement | Front-end documenté | 🟡 En cours — jalon 1/4 (socle + layout) |
-| **6 — Back-end** | 6.0 Recherche | Best Practices Summary | ⬜ À venir |
+| | 5.1 Développement | Front-end documenté | ✅ Validé — **Phase 5 clôturée** (4 jalons HITL) |
+| **6 — Back-end** | 6.0 Recherche | Best Practices Summary | 🟡 En validation |
 | | 6.1 Développement | Documentation technique | ⬜ À venir |
 | **7 — Administration** | 7.0 Recherche | Best Practices Summary | ⬜ À venir |
 | | 7.1 Développement | Back-office fonctionnel | ⬜ À venir |
 
 ## Phase en cours
 
-**Phase 5 — Front-end (5.1 Développement).** Stack validée (D-048). Développement par jalons avec 4 points de validation HITL :
+**Phase 6 — Back-end.** Recherche 6.0 rédigée, en attente de validation HITL. Bilan Phase 5 (clôturée) :
 
 1. ✅ **Jalon 1 — Socle + layout** : validé HITL (captures rendues) — projet Next.js 15, tokens 4.1 en `@theme`, 3 polices variables self-hostées, primitives UI + stories Storybook, layout boutique complet.
-2. 🟡 **Jalon 2 — Cœur catalogue** : livré, **en validation HITL** — mock API typée (catalogue démo 24 produits H33, contrats H37), Accueil complet (spec 2.1, JSON-LD Organization/WebSite), pages animal (gabarit A), listings à facettes avec état en query-string et canonique nue (gabarit B, D-027/D-028), nouveautés, fiche produit complète (variantes, guide des tailles, restock H15, curation D-025, avis, JSON-LD Product), panier minimal (badge header), placeholders pour les routes des jalons 3/4.
-3. 🟡 **Jalon 3 — Tunnel** : livré, **en validation HITL** — mini-panier drawer à chaque ajout + FreeShippingBar (D-029), page panier (quantités, code promo replié D-030, alerte stock faible, état vide illustré), layout tunnel épuré (D-032), checkout 3 étapes sur une URL (invité par défaut D-014, express en tête, stepper éditable, validation à la sortie du champ D-033, React Hook Form + Zod), 3 modes de livraison (H21), paiement simulé (PSP Phase 6, H20), confirmation avec création de compte post-achat (D-014). Parcours vérifié de bout en bout au navigateur.
-4. ⬜ Jalon 4 — Compte + contenus : Compte client, Guides, Confiance/légal.
+2. ✅ **Jalon 2 — Cœur catalogue** : validé HITL — mock API typée (catalogue démo 24 produits H33, contrats H37), Accueil complet (spec 2.1, JSON-LD Organization/WebSite), pages animal (gabarit A), listings à facettes avec état en query-string et canonique nue (gabarit B, D-027/D-028), nouveautés, fiche produit complète (variantes, guide des tailles, restock H15, curation D-025, avis, JSON-LD Product), panier minimal (badge header), placeholders pour les routes des jalons 3/4.
+3. ✅ **Jalon 3 — Tunnel** : validé HITL — mini-panier drawer à chaque ajout + FreeShippingBar (D-029), page panier (quantités, code promo replié D-030, alerte stock faible, état vide illustré), layout tunnel épuré (D-032), checkout 3 étapes sur une URL (invité par défaut D-014, express en tête, stepper éditable, validation à la sortie du champ D-033, React Hook Form + Zod), 3 modes de livraison (H21), paiement simulé (PSP Phase 6, H20), confirmation avec création de compte post-achat (D-014). Parcours vérifié de bout en bout au navigateur.
+4. ✅ **Jalon 4 — Compte + contenus** : validé HITL — espace client complet, gabarit article E-E-A-T, confiance & légal, CMP cookies. **Phase 5 clôturée.**
 
 ## Prochaines étapes
 
-1. Livrer le jalon 1 (socle + layout) et le soumettre en validation HITL.
-2. Jalon 2 : pages du cœur catalogue sur mock API typée (H33/H37).
+1. Validation HITL de la recherche back-end (6.0) — inclut le choix de stack serveur.
+2. Développement 6.1 : base de données + API, auth réelle, paiement Stripe/PayPal, e-mails transactionnels.

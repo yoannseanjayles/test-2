@@ -10,8 +10,8 @@ import { getProductBySlug } from "@/lib/catalog";
  * Prix TTC en centimes (H18).
  */
 
-/** Seuil de livraison offerte (H12). */
-export const FREE_SHIPPING_CENTS = 7900;
+export { FREE_SHIPPING_CENTS } from "@/lib/shipping";
+import { FREE_SHIPPING_CENTS } from "@/lib/shipping";
 
 export type CartLine = {
   slug: string;

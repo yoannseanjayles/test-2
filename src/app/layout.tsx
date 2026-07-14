@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { fraunces, nunitoSans, workSans } from "@/styles/fonts";
+import { CookieBanner } from "@/components/layout/CookieBanner/CookieBanner";
 import "@/styles/theme.css";
 
 export const metadata: Metadata = {
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           Aller au contenu
         </a>
         {children}
+        <CookieBanner />
       </body>
     </html>
   );

@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { FREE_SHIPPING_CENTS, type CartLine } from "@/lib/cart";
+import type { CartLine } from "@/lib/cart";
 
 /**
  * Checkout 3 étapes (D-032/D-033) — schémas Zod partagés avec l'API en
@@ -35,20 +35,8 @@ export const addressSchema = z.object({
 export type ContactValues = z.infer<typeof contactSchema>;
 export type AddressValues = z.infer<typeof addressSchema>;
 
-/** 3 modes de livraison (H21). Le seuil D-029 s'applique à domicile et relais. */
-export const shippingMethods = [
-  { id: "domicile", label: "À domicile", detail: "2–3 jours ouvrés", price: 490, freeAboveThreshold: true },
-  { id: "relais", label: "En point relais", detail: "3–4 jours ouvrés", price: 390, freeAboveThreshold: true },
-  { id: "express", label: "Express", detail: "24 h ouvrées", price: 990, freeAboveThreshold: false },
-] as const;
-
-export type ShippingMethodId = (typeof shippingMethods)[number]["id"];
-
-export function shippingPrice(methodId: ShippingMethodId, subtotal: number): number {
-  const method = shippingMethods.find((m) => m.id === methodId)!;
-  if (method.freeAboveThreshold && subtotal >= FREE_SHIPPING_CENTS) return 0;
-  return method.price;
-}
+export { shippingMethods, shippingPrice, type ShippingMethodId } from "@/lib/shipping";
+import type { ShippingMethodId } from "@/lib/shipping";
 
 export type Order = {
   number: string;
