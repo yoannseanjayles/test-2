@@ -1,4 +1,9 @@
+import type { StaticImageData } from "next/image";
 import type { Animal } from "@/lib/catalog";
+import coverHarnais from "@/media/M-EDI-03.jpeg";
+import coverCoinRepos from "@/media/M-EDI-04.jpeg";
+import coverMesurer from "@/media/M-EDI-11.jpeg";
+import coverLapin from "@/media/M-HOME-05.jpeg";
 
 /**
  * Guides mock (topic clusters D-037 : 2 piliers + satellites au lancement).
@@ -14,6 +19,8 @@ export type Guide = {
   pillar: boolean;
   readingMinutes: number;
   relatedSubcategories: string[];
+  /** Couverture (M-EDI-*) — placeholder DA si absente (H32). */
+  cover?: StaticImageData;
 };
 
 export const guides: Guide[] = [
@@ -26,6 +33,7 @@ export const guides: Guide[] = [
     pillar: true,
     readingMinutes: 12,
     relatedSubcategories: ["colliers-harnais"],
+    cover: coverHarnais,
   },
   {
     slug: "comment-mesurer-votre-animal",
@@ -36,6 +44,7 @@ export const guides: Guide[] = [
     pillar: false,
     readingMinutes: 5,
     relatedSubcategories: ["colliers-harnais", "manteaux-textile"],
+    cover: coverMesurer,
   },
   {
     slug: "amenager-un-coin-repos",
@@ -46,6 +55,7 @@ export const guides: Guide[] = [
     pillar: false,
     readingMinutes: 7,
     relatedSubcategories: ["couchages-paniers"],
+    cover: coverCoinRepos,
   },
   {
     slug: "griffades-comprendre-et-canaliser",
@@ -66,6 +76,7 @@ export const guides: Guide[] = [
     pillar: false,
     readingMinutes: 6,
     relatedSubcategories: ["habitat-couchage", "jeux-activite"],
+    cover: coverLapin,
   },
 ];
 

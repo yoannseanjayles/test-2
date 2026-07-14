@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image, { type StaticImageData } from "next/image";
 import { Hammer } from "lucide-react";
 
 type UnderConstructionProps = {
@@ -6,13 +7,29 @@ type UnderConstructionProps = {
   /** Jalon 5.1 auquel la page est planifiée (roadmap). */
   milestone: string;
   description?: string;
+  /** Illustration d'état (M-ILL-*) si la série en prévoit une pour cette page. */
+  illustration?: StaticImageData;
 };
 
 /** Page provisoire : la route existe (zéro lien mort), le contenu arrive au jalon indiqué. */
-export function UnderConstruction({ title, milestone, description }: UnderConstructionProps) {
+export function UnderConstruction({
+  title,
+  milestone,
+  description,
+  illustration,
+}: UnderConstructionProps) {
   return (
     <div className="mx-auto flex max-w-page flex-col items-start px-4 py-16 lg:px-6 lg:py-24">
-      <Hammer aria-hidden="true" className="size-8 text-caramel-700 opacity-60" strokeWidth={1.75} />
+      {illustration ? (
+        <Image
+          src={illustration}
+          alt=""
+          sizes="288px"
+          className="h-auto w-72 rounded-lg"
+        />
+      ) : (
+        <Hammer aria-hidden="true" className="size-8 text-caramel-700 opacity-60" strokeWidth={1.75} />
+      )}
       <h1 className="font-display mt-6 text-h1 font-[560] text-bark-900">{title}</h1>
       <p className="mt-4 max-w-xl text-body text-bark-700">
         {description ??

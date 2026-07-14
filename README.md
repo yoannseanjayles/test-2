@@ -1,4 +1,4 @@
-# Pelage
+# chien et chat
 
 E-commerce premium d'accessoires pour animaux (chiens, chats, NAC) — projet conçu et documenté par phases avec validation humaine (HITL) à chaque livrable.
 

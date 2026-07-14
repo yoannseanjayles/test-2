@@ -3,6 +3,7 @@ import { AnnouncementBar } from "@/components/layout/AnnouncementBar/Announcemen
 import { Header } from "@/components/layout/Header/Header";
 import { MobileNav } from "@/components/layout/MobileNav/MobileNav";
 import { Footer } from "@/components/layout/Footer/Footer";
+import { CartDrawer } from "@/components/commerce/CartDrawer/CartDrawer";
 
 /** Layout boutique : bandeau + header + contenu + footer, barre basse mobile (sitemap 1.2). */
 export default function BoutiqueLayout({ children }: { children: ReactNode }) {
@@ -15,6 +16,7 @@ export default function BoutiqueLayout({ children }: { children: ReactNode }) {
       </main>
       <Footer />
       <MobileNav />
+      <CartDrawer />
     </>
   );
 }

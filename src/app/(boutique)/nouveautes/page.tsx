@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { Suspense } from "react";
 import { Breadcrumb, ListingExplorer } from "@/components/commerce";
 import { getFeatured, getNewProducts } from "@/lib/catalog";
+import { media } from "@/lib/media";
 import { breadcrumbJsonLd, itemListJsonLd } from "@/lib/jsonld";
 
 export const metadata: Metadata = {
   title: "Nouveautés — les dernières pièces sélectionnées",
   description:
-    "Les dernières entrées au catalogue Pelage, toutes espèces confondues : chaque nouveauté a passé la même sélection exigeante.",
+    "Les dernières entrées au catalogue chien et chat, toutes espèces confondues : chaque nouveauté a passé la même sélection exigeante.",
   alternates: { canonical: "/nouveautes" },
 };
 
@@ -31,7 +33,17 @@ export default function NouveautesPage() {
         <Breadcrumb items={crumbs} />
       </div>
 
-      <header className="max-w-3xl py-8">
+      <header className="py-8">
+        {/* Bandeau M-CAT-19 : flat-lay saisonnier, espace négatif à gauche. */}
+        <div className="relative mb-8 overflow-hidden rounded-lg" style={{ aspectRatio: "4 / 1" }}>
+          <Image
+            src={media.bandeauNouveautes}
+            alt=""
+            fill
+            sizes="(min-width: 1360px) 1312px, 100vw"
+            className="object-cover"
+          />
+        </div>
         <h1 className="font-display text-h1 font-[560] text-bark-900">Nouveautés</h1>
         <p className="mt-3 text-body text-bark-700">
           Les dernières pièces entrées au catalogue — sélectionnées avec la même

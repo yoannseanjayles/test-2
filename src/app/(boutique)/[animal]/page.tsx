@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import {
   CategoryCard,
@@ -16,6 +17,7 @@ import {
   type Animal,
 } from "@/lib/catalog";
 import { getGuidesFor } from "@/lib/guides";
+import { categoryImages, universeBanners } from "@/lib/media";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import type { PlaceholderTone } from "@/components/commerce";
 
@@ -76,12 +78,25 @@ export default async function AnimalPage({ params }: { params: Promise<Params> }
         <Breadcrumb items={[{ name: label, path: `/${animal}` }]} />
       </div>
 
-      {/* 1. En-tête d'univers */}
-      <header className="max-w-3xl py-8 lg:py-12">
-        <h1 className="font-display text-h1 font-[560] text-bark-900">
-          Accessoires pour {animal === "nac" ? "NAC" : animal}
-        </h1>
-        <p className="mt-4 text-body text-bark-700">{intros[animal]}</p>
+      {/* 1. En-tête d'univers + visuel de bandeau discret */}
+      <header className="py-8 lg:py-12">
+        {universeBanners[animal] && (
+          <div className="relative mb-8 overflow-hidden rounded-lg" style={{ aspectRatio: "4 / 1" }}>
+            <Image
+              src={universeBanners[animal]}
+              alt=""
+              fill
+              sizes="(min-width: 1360px) 1312px, 100vw"
+              className="object-cover object-[center_60%]"
+            />
+          </div>
+        )}
+        <div className="max-w-3xl">
+          <h1 className="font-display text-h1 font-[560] text-bark-900">
+            Accessoires pour {animal === "nac" ? "NAC" : animal}
+          </h1>
+          <p className="mt-4 text-body text-bark-700">{intros[animal]}</p>
+        </div>
       </header>
 
       {/* 2. Grille de sous-catégories (D-012) */}
@@ -97,6 +112,7 @@ export default async function AnimalPage({ params }: { params: Promise<Params> }
                 label={subcat.label}
                 productCount={getProducts(animal, subcat.slug).length}
                 tone={tones[animal][index % tones[animal].length]}
+                image={categoryImages[`${animal}/${subcat.slug}`]}
               />
             </li>
           ))}

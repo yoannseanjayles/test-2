@@ -8,4 +8,6 @@ export { ReviewCard } from "./ReviewCard/ReviewCard";
 export { Breadcrumb, type Crumb } from "./Breadcrumb/Breadcrumb";
 export { ListingExplorer } from "./ListingExplorer/ListingExplorer";
 export { ProductView } from "./ProductView/ProductView";
+export { FreeShippingBar } from "./FreeShippingBar/FreeShippingBar";
+export { CartDrawer } from "./CartDrawer/CartDrawer";
 export { SeoTextBlock } from "./SeoTextBlock/SeoTextBlock";

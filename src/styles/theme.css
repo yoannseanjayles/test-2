@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
- * Tokens Pelage — source unique, générée depuis les Design Guidelines 4.1 (D-045/D-047).
+ * Tokens chien et chat — source unique, générée depuis les Design Guidelines 4.1 (D-045/D-047).
  * Trois couches : primitives (gammes) → sémantiques (color-*, usage) → composants (Tailwind).
  */
 @theme {
