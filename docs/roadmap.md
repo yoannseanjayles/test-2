@@ -8,8 +8,9 @@
 | | 1.1 Vision produit | Vision Produit | ✅ Validé |
 | | 1.2 Sitemap | Sitemap | ✅ Validé |
 | | 1.3 Parcours utilisateurs | User Flows | ✅ Validé |
-| **2 — Définition des pages** | 2.0 Recherche (page Accueil) | Best Practices Summary | 🟡 En validation |
-| | 2.1 Conception des pages (une par une) | Spécifications de pages | ⬜ À venir |
+| **2 — Définition des pages** | 2.0 Recherche (page Accueil) | Best Practices Summary | ✅ Validé |
+| | 2.1 Spécification — Accueil | Spécification de page | 🟡 En validation |
+| | 2.x Pages suivantes (D-019) : Fiche produit, Listing, Panier, Checkout, Compte, Guides, Confiance | Spécifications de pages | ⬜ À venir |
 | **3 — Génération des médias** | 3.0 Recherche | Best Practices Summary | ⬜ À venir |
 | | 3.1 Inventaire des médias | Media Inventory | ⬜ À venir |
 | | 3.2 Bibliothèque de prompts | Media Prompt Library | ⬜ À venir |
