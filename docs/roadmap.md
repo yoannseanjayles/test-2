@@ -10,8 +10,9 @@
 | | 1.3 Parcours utilisateurs | User Flows | ✅ Validé |
 | **2 — Définition des pages** | 2.0 Recherche (page Accueil) | Best Practices Summary | ✅ Validé |
 | | 2.1 Spécification — Accueil | Spécification de page | ✅ Validé |
-| | 2.0/2.1 — Fiche produit | Recherche + spécification | 🟡 Recherche en validation |
-| | 2.x Pages suivantes (D-019) : Listing, Panier, Checkout, Compte, Guides, Confiance | Spécifications de pages | ⬜ À venir |
+| | 2.0/2.1 — Fiche produit | Recherche + spécification | ✅ Validé |
+| | 2.0/2.1 — Listing/catégorie | Recherche + spécification | 🟡 Recherche en validation |
+| | 2.x Pages suivantes (D-019) : Panier, Checkout, Compte, Guides, Confiance | Spécifications de pages | ⬜ À venir |
 | **3 — Génération des médias** | 3.0 Recherche | Best Practices Summary | ⬜ À venir |
 | | 3.1 Inventaire des médias | Media Inventory | ⬜ À venir |
 | | 3.2 Bibliothèque de prompts | Media Prompt Library | ⬜ À venir |
@@ -28,9 +29,9 @@
 
 **Phase 2 — Définition des pages.** La phase fonctionne en cycles par page : recherche (2.0) → spécification (2.1) → validation. Ordre proposé (D-019) : Accueil → Fiche produit → Listing/catégorie → Panier → Checkout → Compte → Guides → Confiance/légal.
 
-Page en cours : **Fiche produit** — recherche 2.0 rédigée, en attente de validation HITL.
+Page en cours : **Listing/catégorie** — recherche 2.0 rédigée, en attente de validation HITL.
 
 ## Prochaines étapes
 
-1. Validation HITL de la recherche Fiche produit (2.0).
-2. Spécification de la Fiche produit (2.1), puis Listing/catégorie.
+1. Validation HITL de la recherche Listing (2.0).
+2. Spécification du Listing (2.1), puis Panier.
