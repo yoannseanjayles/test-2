@@ -76,6 +76,19 @@ async function applySchema(client: { exec: (sql: string) => Promise<unknown> }) 
       user_id text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
       name text NOT NULL, species text NOT NULL, gabarit text NOT NULL,
       created_at timestamp NOT NULL DEFAULT now());
+    CREATE TABLE IF NOT EXISTS orders (
+      id text PRIMARY KEY, number text NOT NULL UNIQUE,
+      user_id text REFERENCES "user"(id) ON DELETE SET NULL,
+      email text NOT NULL, status text NOT NULL DEFAULT 'Payée',
+      address text NOT NULL, shipping_method text NOT NULL,
+      subtotal integer NOT NULL, shipping integer NOT NULL, total integer NOT NULL,
+      payment_intent_id text, created_at timestamp NOT NULL DEFAULT now());
+    CREATE TABLE IF NOT EXISTS order_lines (
+      id text PRIMARY KEY,
+      order_id text NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+      product_slug text NOT NULL, product_name text NOT NULL,
+      size text NOT NULL, color text NOT NULL,
+      quantity integer NOT NULL, unit_price integer NOT NULL);
     CREATE INDEX IF NOT EXISTS idx_products_animal_subcategory
       ON products (animal, subcategory);
   `);

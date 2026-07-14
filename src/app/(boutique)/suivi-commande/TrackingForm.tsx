@@ -2,27 +2,25 @@
 
 import { useState } from "react";
 import { Check } from "lucide-react";
-import { useOrder } from "@/lib/checkout";
+import { findOrder, type OrderDto } from "@/lib/orders";
 import { orderStatuses } from "@/lib/account";
 import { Button, FormField } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 export function TrackingForm() {
-  const lastOrder = useOrder((state) => state.lastOrder);
+  const [found, setFound] = useState<OrderDto | null>(null);
   const [result, setResult] = useState<"found" | "not-found" | null>(null);
 
   return (
     <>
       <form
         className="mt-8 flex flex-col gap-4"
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
           const data = new FormData(event.currentTarget);
-          const match =
-            lastOrder !== null &&
-            String(data.get("number")).trim().toUpperCase() === lastOrder.number &&
-            String(data.get("email")).trim().toLowerCase() === lastOrder.email.toLowerCase();
-          setResult(match ? "found" : "not-found");
+          const order = await findOrder(String(data.get("number")), String(data.get("email")));
+          setFound(order);
+          setResult(order ? "found" : "not-found");
         }}
       >
         <FormField label="Numéro de commande" name="number" required placeholder="CC-000000" />
@@ -30,10 +28,10 @@ export function TrackingForm() {
         <Button type="submit" className="self-start">Suivre ma commande</Button>
       </form>
       <div aria-live="polite" className="mt-6">
-        {result === "found" && lastOrder && (
+        {result === "found" && found && (
           <div className="rounded-lg bg-cream-50 p-6 shadow-card">
             <h2 className="font-heading text-h3 font-semibold text-bark-900">
-              Commande {lastOrder.number}
+              Commande {found.number}
             </h2>
             <ol className="mt-4 flex flex-wrap gap-2">
               {orderStatuses.map((status, index) => (

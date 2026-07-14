@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { Check } from "lucide-react";
 import { AccountShell } from "@/components/account/AccountShell";
-import { useOrder, shippingMethods } from "@/lib/checkout";
+import { shippingMethods } from "@/lib/shipping";
+import { listMyOrders, type OrderDto } from "@/lib/orders";
+import { useEffect } from "react";
 import { orderStatuses } from "@/lib/account";
-import { getProductBySlug } from "@/lib/catalog";
 import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
@@ -23,8 +24,15 @@ export default function OrdersPage() {
 const CURRENT_STATUS = 1; // « En préparation » (démo)
 
 function Orders() {
-  const order = useOrder((state) => state.lastOrder);
+  const [ordersList, setOrdersList] = useState<OrderDto[] | null>(null);
+  useEffect(() => {
+    listMyOrders().then(setOrdersList).catch(() => setOrdersList([]));
+  }, []);
 
+  if (ordersList === null) {
+    return <p aria-busy="true" className="text-body-sm text-bark-700">Chargement…</p>;
+  }
+  const order = ordersList[0];
   if (!order) {
     return (
       <div className="rounded-lg bg-cream-50 p-6 shadow-card">
@@ -63,18 +71,14 @@ function Orders() {
           ))}
         </ol>
         <ul className="mt-5 divide-y divide-border border-t border-border">
-          {order.lines.map((line) => {
-            const product = getProductBySlug(line.slug);
-            if (!product) return null;
-            return (
-              <li key={`${line.slug}-${line.size}`} className="flex justify-between gap-3 py-2.5 text-body-sm">
-                <span className="text-bark-700">
-                  {line.quantity} × {product.name} — {line.size} · {line.color}
-                </span>
-                <span className="text-price shrink-0">{formatPrice(product.price * line.quantity)}</span>
-              </li>
-            );
-          })}
+          {order.lines.map((line) => (
+            <li key={`${line.productSlug}-${line.size}`} className="flex justify-between gap-3 py-2.5 text-body-sm">
+              <span className="text-bark-700">
+                {line.quantity} × {line.productName} — {line.size} · {line.color}
+              </span>
+              <span className="text-price shrink-0">{formatPrice(line.unitPrice * line.quantity)}</span>
+            </li>
+          ))}
         </ul>
         <p className="mt-3 text-body-sm text-bark-700">
           {method?.label} · Total {formatPrice(order.total)}

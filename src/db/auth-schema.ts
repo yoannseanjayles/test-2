@@ -1,4 +1,4 @@
-import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 /** Tables Better Auth (schéma cœur documenté) + profil animal (D-015/D-036). */
 
@@ -56,4 +56,31 @@ export const pets = pgTable("pets", {
   species: text("species").$type<"chien" | "chat" | "nac">().notNull(),
   gabarit: text("gabarit").$type<"XS" | "S" | "M" | "L" | "XL">().notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/** Commandes (D-016) — invité (e-mail) ou rattachée au compte (D-014). */
+export const orders = pgTable("orders", {
+  id: text("id").primaryKey(),
+  number: text("number").notNull().unique(),
+  userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+  email: text("email").notNull(),
+  status: text("status").notNull().default("Payée"),
+  address: text("address").notNull(),
+  shippingMethod: text("shipping_method").notNull(),
+  subtotal: integer("subtotal").notNull(),
+  shipping: integer("shipping").notNull(),
+  total: integer("total").notNull(),
+  paymentIntentId: text("payment_intent_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const orderLines = pgTable("order_lines", {
+  id: text("id").primaryKey(),
+  orderId: text("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  productSlug: text("product_slug").notNull(),
+  productName: text("product_name").notNull(),
+  size: text("size").notNull(),
+  color: text("color").notNull(),
+  quantity: integer("quantity").notNull(),
+  unitPrice: integer("unit_price").notNull(),
 });
