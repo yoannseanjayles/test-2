@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Check, RotateCcw, ShieldCheck, Truck, X } from "lucide-react";
 import {
@@ -11,6 +12,7 @@ import {
 } from "@/lib/catalog";
 import { formatPrice } from "@/lib/format";
 import { useCart } from "@/lib/cart";
+import { productImages } from "@/lib/media";
 import { Badge, Button, FormField } from "@/components/ui";
 import { Placeholder } from "../Placeholder/Placeholder";
 import { RatingStars } from "../RatingStars/RatingStars";
@@ -47,6 +49,7 @@ export function ProductView({ product }: { product: Product }) {
   const guideRef = useRef<HTMLDivElement>(null);
   const addCartLine = useCart((state) => state.add);
 
+  const realImages = productImages[product.slug];
   const rating = averageRating(product);
   const singleSize = product.sizes.length === 1;
   const isUniqueSize = singleSize && product.sizes[0]!.name === "Taille unique";
@@ -96,36 +99,53 @@ export function ProductView({ product }: { product: Product }) {
 
   return (
     <div className="grid gap-8 lg:grid-cols-[55fr_45fr] lg:gap-12">
-      {/* S2 — Galerie (placeholders H32, variante-aware) */}
+      {/* S2 — Galerie : vraies photos (M-PDP-*) quand livrées, placeholders DA sinon (H32). */}
       <div className="flex flex-col-reverse gap-3 lg:flex-row">
         <ul className="flex gap-2 lg:flex-col" role="tablist" aria-label="Vues du produit">
-          {GALLERY_VIEWS.map((label, index) => (
-            <li key={label}>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={view === index}
-                aria-label={label}
-                onClick={() => setView(index)}
-                className={cn(
-                  "w-14 overflow-hidden rounded-md border transition-colors duration-150",
-                  view === index ? "border-pine-700" : "border-border hover:border-bark-300",
-                )}
-              >
-                <Placeholder tone={product.tone} ratio="1 / 1" />
-              </button>
-            </li>
-          ))}
+          {(realImages ?? GALLERY_VIEWS).map((item, index) => {
+            const label = typeof item === "string" ? item : item.label;
+            return (
+              <li key={label}>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={view === index}
+                  aria-label={label}
+                  onClick={() => setView(index)}
+                  className={cn(
+                    "block w-14 overflow-hidden rounded-md border transition-colors duration-150",
+                    view === index ? "border-pine-700" : "border-border hover:border-bark-300",
+                  )}
+                >
+                  {typeof item === "string" ? (
+                    <Placeholder tone={product.tone} ratio="1 / 1" />
+                  ) : (
+                    <Image src={item.src} alt="" className="aspect-square h-auto w-full object-cover" sizes="56px" />
+                  )}
+                </button>
+              </li>
+            );
+          })}
         </ul>
         <figure className="relative flex-1 overflow-hidden rounded-lg">
-          <Placeholder tone={product.tone} ratio="1 / 1" label={`${GALLERY_VIEWS[view]} — ${color.name}`} />
+          {realImages ? (
+            <Image
+              src={realImages[Math.min(view, realImages.length - 1)]!.src}
+              alt={`${product.name} — ${realImages[Math.min(view, realImages.length - 1)]!.label}`}
+              sizes="(min-width: 1024px) 55vw, 100vw"
+              className="aspect-square h-auto w-full object-cover"
+              priority
+            />
+          ) : (
+            <Placeholder tone={product.tone} ratio="1 / 1" label={`${GALLERY_VIEWS[view]} — ${color.name}`} />
+          )}
           {product.isNew && (
             <Badge variant="new" className="absolute left-4 top-4">
               Nouveau
             </Badge>
           )}
           <figcaption className="sr-only">
-            {product.name} — {GALLERY_VIEWS[view]}, coloris {color.name}
+            {product.name} — vue {view + 1}, coloris {color.name}
           </figcaption>
         </figure>
       </div>
