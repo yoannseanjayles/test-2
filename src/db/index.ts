@@ -94,6 +94,10 @@ async function applySchema(client: { exec: (sql: string) => Promise<unknown> }) 
       email text NOT NULL, created_at timestamp NOT NULL DEFAULT now());
     CREATE TABLE IF NOT EXISTS newsletter_subscribers (
       email text PRIMARY KEY, created_at timestamp NOT NULL DEFAULT now());
+    CREATE TABLE IF NOT EXISTS import_drafts (
+      id text PRIMARY KEY, file_name text NOT NULL, title text NOT NULL,
+      supplier_price integer, images jsonb NOT NULL, source_url text,
+      status text NOT NULL DEFAULT 'draft', created_at timestamp NOT NULL DEFAULT now());
     CREATE INDEX IF NOT EXISTS idx_products_animal_subcategory
       ON products (animal, subcategory);
   `);

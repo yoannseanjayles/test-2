@@ -1,4 +1,4 @@
-import { boolean, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, integer, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 /** Tables Better Auth (schéma cœur documenté) + profil animal (D-015/D-036). */
 
@@ -97,5 +97,17 @@ export const restockAlerts = pgTable("restock_alerts", {
 
 export const newsletterSubscribers = pgTable("newsletter_subscribers", {
   email: text("email").primaryKey(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/** Brouillons d'import AliExpress (D-052/H41) — jamais publiés directement. */
+export const importDrafts = pgTable("import_drafts", {
+  id: text("id").primaryKey(),
+  fileName: text("file_name").notNull(),
+  title: text("title").notNull(),
+  supplierPrice: integer("supplier_price"),
+  images: jsonb("images").$type<string[]>().notNull(),
+  sourceUrl: text("source_url"),
+  status: text("status").$type<"draft" | "published">().notNull().default("draft"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

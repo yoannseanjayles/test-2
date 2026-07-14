@@ -105,3 +105,111 @@ export async function updateAdminProduct(input: {
   revalidatePath("/", "layout");
   return { ok: true };
 }
+
+// ——— Import AliExpress (D-052/H41) : fichiers téléchargés, analyse hors ligne ———
+
+import { importDrafts } from "@/db/auth-schema";
+import { parseAliexpressPage } from "@/lib/aliexpress";
+import { desc } from "drizzle-orm";
+
+export type ImportReport = { fileName: string; ok: boolean; title?: string; error?: string };
+
+export async function importAliexpressFiles(formData: FormData): Promise<ImportReport[]> {
+  await requireRole("Catalogue");
+  const db = await getDb();
+  const reports: ImportReport[] = [];
+  for (const entry of formData.getAll("files")) {
+    if (!(entry instanceof File)) continue;
+    const fileName = entry.name;
+    try {
+      if (entry.size > 15 * 1024 * 1024) throw new Error("Fichier > 15 Mo.");
+      const raw = Buffer.from(await entry.arrayBuffer()).toString("utf-8");
+      const parsed = parseAliexpressPage(raw);
+      if (!parsed) throw new Error("Titre introuvable — page non reconnue.");
+      await db.insert(importDrafts).values({
+        id: crypto.randomUUID(),
+        fileName,
+        title: parsed.title,
+        supplierPrice: parsed.supplierPrice,
+        images: parsed.images,
+        sourceUrl: parsed.sourceUrl,
+      });
+      reports.push({ fileName, ok: true, title: parsed.title });
+    } catch (error) {
+      reports.push({ fileName, ok: false, error: error instanceof Error ? error.message : "Échec d'analyse." });
+    }
+  }
+  return reports;
+}
+
+export type DraftDto = {
+  id: string;
+  fileName: string;
+  title: string;
+  supplierPrice: number | null;
+  images: string[];
+  sourceUrl: string | null;
+};
+
+export async function listDrafts(): Promise<DraftDto[]> {
+  await requireRole("Catalogue");
+  const db = await getDb();
+  const rows = await db.select().from(importDrafts)
+    .where(eq(importDrafts.status, "draft"))
+    .orderBy(desc(importDrafts.createdAt));
+  return rows.map((r) => ({
+    id: r.id, fileName: r.fileName, title: r.title,
+    supplierPrice: r.supplierPrice, images: r.images, sourceUrl: r.sourceUrl,
+  }));
+}
+
+/** Publication d'un brouillon : fiche complétée + curation obligatoire (D-025). */
+export async function publishDraft(input: {
+  draftId: string;
+  name: string;
+  slug: string;
+  animal: "chien" | "chat" | "nac";
+  subcategory: string;
+  price: number;
+  curatorNote: string;
+  shortDescription: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  await requireRole("Catalogue");
+  if (input.curatorNote.trim().length < 20) {
+    return { ok: false, error: "Note de curation obligatoire (20 caractères min, D-025)." };
+  }
+  if (!/^[a-z0-9-]{3,60}$/.test(input.slug)) {
+    return { ok: false, error: "Slug invalide (minuscules, chiffres, tirets)." };
+  }
+  if (!Number.isInteger(input.price) || input.price < 100) {
+    return { ok: false, error: "Prix de vente invalide." };
+  }
+  const db = await getDb();
+  const [draft] = await db.select().from(importDrafts).where(eq(importDrafts.id, input.draftId));
+  if (!draft || draft.status !== "draft") return { ok: false, error: "Brouillon introuvable." };
+  const [existing] = await db.select({ slug: products.slug }).from(products).where(eq(products.slug, input.slug));
+  if (existing) return { ok: false, error: "Ce slug existe déjà." };
+
+  await db.insert(products).values({
+    slug: input.slug,
+    name: input.name.trim().slice(0, 120),
+    brand: "Sélection import",
+    animal: input.animal,
+    subcategory: input.subcategory,
+    price: input.price,
+    shortDescription: input.shortDescription.trim().slice(0, 400),
+    curatorNote: input.curatorNote.trim(),
+    material: "À préciser",
+    details: [{ title: "Description complète", content: input.shortDescription.trim() }],
+    colors: [{ name: "Coloris unique", hex: "#C9BFAC" }],
+    gabarits: ["XS", "S", "M", "L", "XL"],
+    isNew: true,
+    curatedRank: 999,
+    pairsWith: [],
+    tone: "cream",
+  });
+  await db.insert(productSizes).values({ productSlug: input.slug, name: "Taille unique", stock: 0 });
+  await db.update(importDrafts).set({ status: "published" }).where(eq(importDrafts.id, input.draftId));
+  revalidatePath("/", "layout");
+  return { ok: true };
+}

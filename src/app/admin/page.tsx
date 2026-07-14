@@ -6,11 +6,17 @@ import { useSession } from "@/lib/auth-client";
 import {
   bootstrapAdmin,
   getAdminUser,
+  importAliexpressFiles,
   listAdminProducts,
+  listDrafts,
+  publishDraft,
   updateAdminProduct,
   type AdminProduct,
   type AdminUser,
+  type DraftDto,
+  type ImportReport,
 } from "@/lib/admin";
+import { subcategories } from "@/lib/catalog/data";
 import { formatPrice } from "@/lib/format";
 import { Badge, Button, FormField } from "@/components/ui";
 
@@ -73,6 +79,7 @@ export default function AdminPage() {
   return (
     <Shell role={admin.role}>
       <Catalogue />
+      <ImportSection />
     </Shell>
   );
 }
@@ -203,5 +210,166 @@ function EditForm({ product, onDone }: { product: AdminProduct; onDone: () => vo
       </div>
       <p aria-live="assertive" className="mt-2 text-body-sm text-error">{error}</p>
     </form>
+  );
+}
+
+/** Import AliExpress (D-052/H41) : drag & drop de pages téléchargées, analyse hors ligne. */
+function ImportSection() {
+  const [dragging, setDragging] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [reports, setReports] = useState<ImportReport[]>([]);
+  const [drafts, setDrafts] = useState<DraftDto[]>([]);
+  const refresh = () => listDrafts().then(setDrafts).catch(() => setDrafts([]));
+  useEffect(() => { refresh(); }, []);
+
+  const handleFiles = async (files: FileList | File[]) => {
+    const formData = new FormData();
+    [...files].forEach((f) => formData.append("files", f));
+    setBusy(true);
+    setReports(await importAliexpressFiles(formData));
+    setBusy(false);
+    refresh();
+  };
+
+  return (
+    <section className="mt-14">
+      <h2 className="font-heading text-h2 font-semibold text-bark-900">
+        Importer depuis AliExpress
+      </h2>
+      <p className="mt-2 max-w-2xl text-body-sm text-bark-700">
+        Enregistrez les pages produit depuis votre navigateur (« Enregistrer
+        sous » → page complète, .html ou .mhtml) puis déposez-les ici. Chaque
+        page devient un brouillon à compléter — rien n'est publié sans
+        réécriture ni note de curation.
+      </p>
+      <label
+        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => { e.preventDefault(); setDragging(false); if (e.dataTransfer.files.length) void handleFiles(e.dataTransfer.files); }}
+        className={`mt-5 flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 text-center transition-colors duration-150 ${dragging ? "border-pine-700 bg-pine-50" : "border-bark-300 bg-cream-50"}`}
+      >
+        <span className="text-body text-bark-900">
+          {busy ? "Analyse en cours…" : "Glissez-déposez vos pages produit ici"}
+        </span>
+        <span className="text-caption text-bark-700">.html / .mhtml — plusieurs fichiers acceptés · ou cliquez pour choisir</span>
+        <input
+          type="file"
+          multiple
+          accept=".html,.htm,.mhtml,.mht"
+          className="sr-only"
+          onChange={(e) => { if (e.target.files?.length) void handleFiles(e.target.files); e.target.value = ""; }}
+        />
+      </label>
+
+      {reports.length > 0 && (
+        <ul aria-live="polite" className="mt-4 space-y-1 text-body-sm">
+          {reports.map((r) => (
+            <li key={r.fileName} className={r.ok ? "text-success" : "text-error"}>
+              {r.ok ? "✓" : "✗"} {r.fileName} — {r.ok ? `« ${r.title?.slice(0, 70)}… »` : r.error}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {drafts.length > 0 && (
+        <div className="mt-8 flex flex-col gap-4">
+          <h3 className="font-heading text-h3 font-semibold text-bark-900">
+            Brouillons à compléter ({drafts.length})
+          </h3>
+          {drafts.map((d) => (
+            <DraftCard key={d.id} draft={d} onPublished={refresh} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function DraftCard({ draft, onPublished }: { draft: DraftDto; onPublished: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const suggestedSlug = draft.title.toLowerCase().normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 50);
+
+  return (
+    <div className="rounded-lg bg-cream-50 p-5 shadow-card">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="font-heading max-w-2xl text-body font-semibold text-bark-900">{draft.title}</p>
+        <Badge variant="stock">Brouillon</Badge>
+      </div>
+      <p className="text-caption mt-1 text-bark-700">
+        {draft.fileName}
+        {draft.supplierPrice !== null && <> · prix fournisseur : {formatPrice(draft.supplierPrice)}</>}
+        {draft.images.length > 0 && <> · {draft.images.length} image(s) fournisseur (à remplacer, D-042)</>}
+      </p>
+      {!open ? (
+        <Button variant="secondary" className="mt-3" onClick={() => setOpen(true)}>
+          Compléter et publier
+        </Button>
+      ) : (
+        <form
+          className="mt-4 border-t border-border pt-4"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            const data = new FormData(event.currentTarget);
+            setSaving(true);
+            const result = await publishDraft({
+              draftId: draft.id,
+              name: String(data.get("name")),
+              slug: String(data.get("slug")),
+              animal: data.get("animal") as "chien" | "chat" | "nac",
+              subcategory: String(data.get("subcategory")),
+              price: Math.round(Number(data.get("price")) * 100),
+              shortDescription: String(data.get("description")),
+              curatorNote: String(data.get("note")),
+            });
+            setSaving(false);
+            if (!result.ok) { setError(result.error ?? "Erreur."); return; }
+            onPublished();
+          }}
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField label="Nom (réécrit en français)" name="name" defaultValue={draft.title.slice(0, 80)} required />
+            <FormField label="Slug" name="slug" defaultValue={suggestedSlug} required />
+            <label className="flex flex-col gap-1.5">
+              <span className="text-label text-bark-900">Sous-catégorie</span>
+              <select name="subcategory" required
+                onChange={(e) => {
+                  const animal = e.target.selectedOptions[0]?.dataset.animal ?? "chien";
+                  (e.target.form!.elements.namedItem("animal") as HTMLInputElement).value = animal;
+                }}
+                className="h-12 rounded-sm border border-border bg-cream-50 px-4 text-body text-bark-900">
+                {subcategories.map((s) => (
+                  <option key={`${s.animal}-${s.slug}`} value={s.slug} data-animal={s.animal}>
+                    {s.animal} — {s.label}
+                  </option>
+                ))}
+              </select>
+              <input type="hidden" name="animal" defaultValue="chien" />
+            </label>
+            <FormField label="Prix de vente TTC (€)" name="price" type="number" step="0.01" min="1"
+              defaultValue={draft.supplierPrice !== null ? ((draft.supplierPrice * 2.5) / 100).toFixed(2) : ""}
+              help="Pré-rempli à ×2,5 du prix fournisseur." required />
+          </div>
+          <label className="mt-4 flex flex-col gap-1.5">
+            <span className="text-label text-bark-900">Accroche (2–3 phrases, réécrites)</span>
+            <textarea name="description" rows={2} required
+              className="rounded-sm border border-border bg-cream-50 p-4 text-body text-bark-900 focus:border-pine-500" />
+          </label>
+          <label className="mt-4 flex flex-col gap-1.5">
+            <span className="text-label text-bark-900">Note de curation (obligatoire, D-025)</span>
+            <textarea name="note" rows={2} required
+              placeholder="Pourquoi ce produit passe notre sélection…"
+              className="rounded-sm border border-border bg-cream-50 p-4 text-body text-bark-900 focus:border-pine-500" />
+          </label>
+          <div className="mt-4 flex gap-3">
+            <Button type="submit" loading={saving}>Publier la fiche</Button>
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Annuler</Button>
+          </div>
+          <p aria-live="assertive" className="mt-2 text-body-sm text-error">{error}</p>
+        </form>
+      )}
+    </div>
   );
 }
