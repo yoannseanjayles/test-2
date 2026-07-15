@@ -25,6 +25,12 @@ async function createAuth() {
     database: drizzleAdapter(db as any, { provider: "pg", schema: authSchema }),
     emailAndPassword: { enabled: true },
     ...(google ? { socialProviders: { google } } : {}),
+    // Liaison de comptes : une connexion Google avec le même e-mail rejoint
+    // le compte existant (Google fournit des e-mails vérifiés) au lieu d'en
+    // créer un doublon.
+    account: {
+      accountLinking: { enabled: true, trustedProviders: ["google"] },
+    },
     // Secret de développement uniquement — BETTER_AUTH_SECRET requis en production.
     secret: process.env.BETTER_AUTH_SECRET ?? "dev-only-secret-chien-et-chat",
     // Sans BETTER_AUTH_URL, l'URL de base est inférée de la requête entrante.
