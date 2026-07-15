@@ -7,6 +7,7 @@ import { Check, RotateCcw, ShieldCheck, Truck, X } from "lucide-react";
 import {
   averageRating,
   type Product,
+  isFieldVisible,
   type ProductColor,
   type ProductSize,
 } from "@/lib/catalog";
@@ -52,11 +53,13 @@ export function ProductView({ product }: { product: Product }) {
   const openDrawer = useCartDrawer((state) => state.openDrawer);
 
   // Photos studio statiques d'abord (H32) ; sinon photos fournisseur
-  // distantes des produits importés (7.1) ; sinon placeholders DA.
+  // distantes des produits importés (7.1), si le champ est visible ;
+  // sinon placeholders DA.
   const staticImages = productImages[product.slug];
-  const remoteImages = product.imageUrls?.length
-    ? product.imageUrls.map((src, i) => ({ src, label: `Photo ${i + 1}` }))
-    : undefined;
+  const remoteImages =
+    product.imageUrls?.length && isFieldVisible(product, "images")
+      ? product.imageUrls.map((src, i) => ({ src, label: `Photo ${i + 1}` }))
+      : undefined;
   const realImages = staticImages ?? remoteImages;
   const rating = averageRating(product);
   const singleSize = product.sizes.length === 1;
@@ -188,6 +191,15 @@ export function ProductView({ product }: { product: Product }) {
           {formatPrice(product.price)}
         </p>
         <p className="mt-4 text-body text-bark-700">{product.shortDescription}</p>
+
+        {/* Points clés (import enrichi) — masquables champ par champ dans l'admin. */}
+        {(product.features?.length ?? 0) > 0 && isFieldVisible(product, "features") && (
+          <ul className="mt-4 list-disc space-y-1.5 pl-5 text-body-sm text-bark-700">
+            {product.features!.map((feature) => (
+              <li key={feature}>{feature}</li>
+            ))}
+          </ul>
+        )}
 
         {/* Sélecteur couleur */}
         {product.colors.length > 1 && (

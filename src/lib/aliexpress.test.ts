@@ -17,19 +17,24 @@ const HTML_BODY = `<html><head>
 <span>11,99 €</span>
 <span>Coupon 1,00 €</span>
 <span>Prix barre 39,99 €</span>
-<img src="https://ae-pic-a1.aliexpress-media.com/kf/S111.jpg_220x220q75.jpg_.avif" alt="vue 1">
-<img src="https://ae-pic-a1.aliexpress-media.com/kf/S222.jpg_960x960q75.jpg_.avif" alt="vue 2">
-<img src="https://ae-pic-a1.aliexpress-media.com/kf/S222.jpg_220x220q75.jpg_.avif" alt="doublon miniature">
+<img src="https://ae-pic-a1.aliexpress-media.com/kf/S111.jpg_220x220q75.jpg_.avif" alt="Bleu nuit">
+<img src="https://ae-pic-a1.aliexpress-media.com/kf/S222.jpg_960x960q75.jpg_.avif" alt="Fontaine a eau pour chat 1200ml sans fil">
+<img src="https://ae-pic-a1.aliexpress-media.com/kf/S222.jpg_220x220q75.jpg_.avif" alt="Blanc">
 <img data-src="https://ae-pic-a1.aliexpress-media.com/kf/S444.jpg_720x720q75.jpg_.avif" alt="lazy loading">
-<script>window.runParams={"imagePathList":["https:\\u002F\\u002Fae-pic-a1.aliexpress-media.com\\u002Fkf\\u002FS555.jpg_960x960q75.jpg_.avif"]}</script>
-<img src="https://ae01.alicdn.com/kf/S333.jpg" alt="notice">
+<script>window.runParams={"storeName":"PetJoy Official Store","averageStar":"4.7","totalValidNum":1234,"imagePathList":["https:\\u002F\\u002Fae-pic-a1.aliexpress-media.com\\u002Fkf\\u002FS555.jpg_960x960q75.jpg_.avif"],"productPropList":[{"attrName":"Matière","attrValue":"ABS sans BPA"},{"attrName":"Capacité","attrValue":"1200 ml"}]}</script>
+<img src="https://ae01.alicdn.com/kf/S333.jpg" alt="">
 <img src="https://ae01.alicdn.com/kf/Sicone/79x79.png" alt="">
 <img src="https://example.com/pub.jpg" alt="hors CDN produit">
 </body></html>`;
 
 function toMhtml(body: string): string {
-  // Chrome encode les multi-octets UTF-8 (€ → =E2=82=AC) en quoted-printable.
-  const quoted = body.replace(/=/g, "=3D").replace(/€/g, "=E2=82=AC");
+  // Chrome encode « = » et tous les multi-octets UTF-8 (€, accents) en
+  // quoted-printable — reproduit fidèlement ici (=3D, =C3=A8, =E2=82=AC…).
+  const quoted = body
+    .replace(/=/g, "=3D")
+    .replace(/[^\x00-\x7F]/g, (c) =>
+      [...Buffer.from(c, "utf-8")].map((b) => `=${b.toString(16).toUpperCase().padStart(2, "0")}`).join(""),
+    );
   return [
     "From: <Saved by Blink>",
     "Snapshot-Content-Location: https://fr.aliexpress.com/item/1005006576542.html",
@@ -85,6 +90,19 @@ describe("parseAliexpressPage", () => {
     expect(parsed.description).toBe(
       "Fontaine silencieuse 1200 ml, pompe basse consommation, filtration triple couche.",
     );
+  });
+
+  it("lit la boutique, les caractéristiques, les variantes et la note (import enrichi)", () => {
+    expect(parsed.brand).toBe("PetJoy Official Store");
+    expect(parsed.specifications).toEqual([
+      { label: "Matière", value: "ABS sans BPA" },
+      { label: "Capacité", value: "1200 ml" },
+    ]);
+    // Les alt égaux au titre (photos de galerie) et vides sont exclus.
+    expect(parsed.variantNames).toContain("Bleu nuit");
+    expect(parsed.variantNames).toContain("Blanc");
+    expect(parsed.variantNames).not.toContain("Fontaine a eau pour chat 1200ml sans fil");
+    expect(parsed.supplierRating).toBe("4,7/5 (1234 avis)");
   });
 
   it("retrouve l'URL d'origine via og:url sur un .html brut (sans en-tête de snapshot)", () => {

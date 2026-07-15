@@ -14,6 +14,14 @@ export type ParsedProduct = {
   supplierRef: string | null;
   /** Description fournisseur (og:description) — à réécrire avant publication. */
   description: string | null;
+  /** Nom de la boutique/marque vendeuse. */
+  brand: string | null;
+  /** Caractéristiques produit (module « Caractéristiques » / attributs SKU). */
+  specifications: { label: string; value: string }[];
+  /** Noms de variantes (alt des vignettes SKU) — pré-remplissent les coloris. */
+  variantNames: string[];
+  /** Note fournisseur telle qu'affichée (« 4,7 (1 234 avis) ») — usage interne. */
+  supplierRating: string | null;
 };
 
 function decodeQuotedPrintable(text: string): string {
@@ -102,6 +110,67 @@ export function parseAliexpressPage(raw: string): ParsedProduct | null {
       .map((url) => url.replace(/_\d{2,3}x\d{2,3}q?\d*\./, "_960x960q75.")),
   )].slice(0, 12);
 
+  const clean = (s: string) =>
+    s.replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#0?39;|&apos;/g, "'")
+      .replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+
+  // Champs texte : recherchés dans le HTML décodé uniquement — le flux MHTML
+  // brut est encore en quoted-printable (accents illisibles), on ne l'utilise
+  // que pour les URLs d'images (ASCII).
+  const textHay = html.replace(/\\u002F/gi, "/").replace(/\\\//g, "/");
+
+  // Marque / boutique vendeuse — JSON des scripts (storeName) sinon texte du
+  // lien boutique (/store/<id>) dans le DOM rendu.
+  const brand =
+    (textHay.match(/"storeName"\s*:\s*"([^"]{2,60})"/)?.[1] ??
+      textHay.match(/"sellerShopName"\s*:\s*"([^"]{2,60})"/)?.[1] ??
+      html.match(/href="[^"]*\/store\/\d+[^"]*"[^>]*>\s*(?:<[^>]+>\s*)*([^<]{2,60})</)?.[1] ??
+      null)?.trim() ?? null;
+
+  // Caractéristiques — attributs produit du JSON (attrName/attrValue) sinon
+  // paires libellé/valeur du module « Caractéristiques » rendu.
+  const specifications: { label: string; value: string }[] = [];
+  const pushSpec = (label: string, value: string) => {
+    const l = clean(label);
+    const v = clean(value);
+    if (l.length >= 2 && l.length <= 60 && v.length >= 1 && v.length <= 200 &&
+        l !== v && !specifications.some((s) => s.label === l)) {
+      specifications.push({ label: l, value: v });
+    }
+  };
+  for (const m of textHay.matchAll(/"attrName"\s*:\s*"([^"]+)"\s*,\s*"attrValue"\s*:\s*"([^"]+)"/g)) {
+    pushSpec(m[1]!, m[2]!);
+  }
+  if (specifications.length === 0) {
+    // DOM rendu (snapshots mobiles) : lignes à deux cellules successives.
+    for (const m of html.matchAll(/<(?:span|div|td)[^>]*>([^<>{}]{2,40})<\/(?:span|div|td)>\s*<(?:span|div|td)[^>]*>([^<>{}]{1,120})<\/(?:span|div|td)>/g)) {
+      if (/[:：]$/.test(m[1]!.trim()) || /^(Marque|Matière|Matériau|Couleur|Taille|Type|Origine|Poids|Dimension|Modèle|Numéro|Caractéristique|Certification|Usage|Animaux?)/i.test(m[1]!.trim())) {
+        pushSpec(m[1]!.replace(/[:：]\s*$/, ""), m[2]!);
+      }
+    }
+  }
+  specifications.splice(15);
+
+  // Variantes — alt des vignettes SKU (miniatures produit avec libellé court,
+  // distinct du titre) : pré-remplissent les coloris, à ajuster à la main.
+  const variantNames = [...new Set(
+    [...html.matchAll(/<img[^>]+alt="([^"]{2,40})"[^>]+src="https:\/\/(?:ae0[0-9]\.alicdn\.com|ae-pic-[a-z0-9]+\.aliexpress-media\.com)\/kf\/[^"]+"|<img[^>]+src="https:\/\/(?:ae0[0-9]\.alicdn\.com|ae-pic-[a-z0-9]+\.aliexpress-media\.com)\/kf\/[^"]+"[^>]+alt="([^"]{2,40})"/g)]
+      .map((m) => clean(m[1] ?? m[2] ?? ""))
+      .filter((alt) => alt.length >= 2 && !title.startsWith(alt) && !alt.startsWith(title.slice(0, 20))),
+  )].slice(0, 12);
+
+  // Note fournisseur affichée — « 4.7 » + nombre d'avis (usage interne D-042 :
+  // jamais publiée sur notre fiche, aide seulement à la curation).
+  const star =
+    textHay.match(/"averageStar(?:Rate)?"\s*:\s*"?([0-9][.,][0-9])"?/)?.[1] ??
+    html.match(/>([0-9][.,][0-9])\s*<[^>]*>?\s*(?:sur 5|\/\s*5|★)/)?.[1] ??
+    null;
+  const reviews =
+    textHay.match(/"totalValidNum"\s*:\s*"?(\d{1,7})"?/)?.[1] ??
+    html.match(/(\d{1,6})\s*avis/i)?.[1] ??
+    null;
+  const supplierRating = star ? `${star.replace(".", ",")}/5${reviews ? ` (${reviews} avis)` : ""}` : null;
+
   return {
     title: title.trim().slice(0, 300),
     supplierPrice,
@@ -109,5 +178,9 @@ export function parseAliexpressPage(raw: string): ParsedProduct | null {
     sourceUrl,
     supplierRef,
     description,
+    brand,
+    specifications,
+    variantNames,
+    supplierRating,
   };
 }

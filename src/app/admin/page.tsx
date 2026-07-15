@@ -27,6 +27,7 @@ import {
   type AdminGuideDto,
 } from "@/lib/admin-editorial";
 import { getShippingConfig, saveShippingConfig } from "@/lib/admin-settings";
+import { parseLines, parseSpecs, serializeSpecs } from "@/lib/import-fields";
 import { shippingMethods, type ShippingConfig } from "@/lib/shipping";
 import { orderTransitions } from "@/lib/account";
 import { subcategories } from "@/lib/catalog/data";
@@ -573,6 +574,16 @@ function EditForm({ product, onDone }: { product: AdminProduct; onDone: () => vo
           isNew: data.get("isNew") === "on",
           curatorNote: String(data.get("note") ?? ""),
           stocks: product.sizes.map((s) => ({ name: s.name, stock: Number(data.get(`stock-${s.name}`)) })),
+          name: String(data.get("name")),
+          brand: String(data.get("brand")),
+          shortDescription: String(data.get("description")),
+          features: parseLines(String(data.get("features"))),
+          specifications: parseSpecs(String(data.get("specs"))),
+          fieldVisibility: {
+            images: data.get("show-images") === "on",
+            features: data.get("show-features") === "on",
+            specifications: data.get("show-specs") === "on",
+          },
         });
         setSaving(false);
         if (!result.ok) { setError(result.error ?? "Erreur."); return; }
@@ -594,9 +605,45 @@ function EditForm({ product, onDone }: { product: AdminProduct; onDone: () => vo
         </p>
       )}
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <FormField label="Nom" name="name" defaultValue={product.name} required />
+        <FormField label="Marque" name="brand" defaultValue={product.brand} required />
         <FormField label="Prix TTC (€)" name="price" type="number" step="0.01" min="1" defaultValue={(product.price / 100).toFixed(2)} required />
         <FormField label="Rang « Notre sélection » (H17)" name="rank" type="number" min="1" defaultValue={String(product.curatedRank)} required />
       </div>
+      <label className="mt-4 flex flex-col gap-1.5">
+        <span className="text-label text-bark-900">Accroche</span>
+        <textarea name="description" rows={2} defaultValue={product.shortDescription} required
+          className="rounded-sm border border-border bg-cream-50 p-4 text-body text-bark-900 focus:border-pine-500" />
+      </label>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-label text-bark-900">Points clés (un par ligne)</span>
+          <textarea name="features" rows={4} defaultValue={product.features.join("\n")}
+            className="rounded-sm border border-border bg-cream-50 p-4 text-body-sm text-bark-900 focus:border-pine-500" />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-label text-bark-900">Caractéristiques (« libellé : valeur »)</span>
+          <textarea name="specs" rows={4} defaultValue={serializeSpecs(product.specifications)}
+            className="rounded-sm border border-border bg-cream-50 p-4 text-body-sm text-bark-900 focus:border-pine-500" />
+        </label>
+      </div>
+      <fieldset className="mt-4">
+        <legend className="text-label text-bark-900">Champs affichés sur la fiche publique</legend>
+        <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 text-body-sm text-bark-900">
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="show-images" defaultChecked={product.fieldVisibility.images !== false} className="size-4 accent-pine-700" />
+            Photos fournisseur ({product.imageCount})
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="show-features" defaultChecked={product.fieldVisibility.features !== false} className="size-4 accent-pine-700" />
+            Points clés
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="show-specs" defaultChecked={product.fieldVisibility.specifications !== false} className="size-4 accent-pine-700" />
+            Caractéristiques
+          </label>
+        </div>
+      </fieldset>
       <fieldset className="mt-4">
         <legend className="text-label text-bark-900">Stocks par taille</legend>
         <div className="mt-2 grid gap-4 sm:grid-cols-3">
@@ -735,7 +782,10 @@ function DraftCard({ draft, onPublished }: { draft: DraftDto; onPublished: () =>
       <p className="text-caption mt-1 text-bark-700">
         {draft.fileName}
         {draft.supplierRef && <> · réf. AliExpress {draft.supplierRef}</>}
+        {draft.brand && <> · boutique : {draft.brand}</>}
         {draft.supplierPrice !== null && <> · prix fournisseur : {formatPrice(draft.supplierPrice)}</>}
+        {draft.supplierRating && <> · note fournisseur : {draft.supplierRating} (interne, jamais publiée)</>}
+        {draft.specifications.length > 0 && <> · {draft.specifications.length} caractéristique(s)</>}
         {draft.images.length > 0 && <> · {draft.images.length} image(s) fournisseur (à remplacer, D-042)</>}
         {draft.sourceUrl && (
           <>
@@ -777,6 +827,15 @@ function DraftCard({ draft, onPublished }: { draft: DraftDto; onPublished: () =>
               price: Math.round(Number(data.get("price")) * 100),
               shortDescription: String(data.get("description")),
               curatorNote: String(data.get("note")),
+              brand: String(data.get("brand")),
+              colorNames: parseLines(String(data.get("colors"))),
+              features: parseLines(String(data.get("features"))),
+              specifications: parseSpecs(String(data.get("specs"))),
+              visibility: {
+                images: data.get("show-images") === "on",
+                features: data.get("show-features") === "on",
+                specifications: data.get("show-specs") === "on",
+              },
             });
             setSaving(false);
             if (!result.ok) { setError(result.error ?? "Erreur."); return; }
@@ -805,6 +864,9 @@ function DraftCard({ draft, onPublished }: { draft: DraftDto; onPublished: () =>
             <FormField label="Prix de vente TTC (€)" name="price" type="number" step="0.01" min="1"
               defaultValue={draft.supplierPrice !== null ? ((draft.supplierPrice * 2.5) / 100).toFixed(2) : ""}
               help="Pré-rempli à ×2,5 du prix fournisseur." required />
+            <FormField label="Marque affichée" name="brand"
+              defaultValue={draft.brand ?? "Sélection import"}
+              help="Pré-remplie avec la boutique fournisseur." />
           </div>
           <label className="mt-4 flex flex-col gap-1.5">
             <span className="text-label text-bark-900">Accroche (2–3 phrases, réécrites)</span>
@@ -812,6 +874,45 @@ function DraftCard({ draft, onPublished }: { draft: DraftDto; onPublished: () =>
               defaultValue={draft.description ?? ""}
               className="rounded-sm border border-border bg-cream-50 p-4 text-body text-bark-900 focus:border-pine-500" />
           </label>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <label className="flex flex-col gap-1.5">
+              <span className="text-label text-bark-900">Coloris (un par ligne)</span>
+              <textarea name="colors" rows={3}
+                defaultValue={draft.variantNames.join("\n")}
+                placeholder={"Bleu nuit\nSable"}
+                className="rounded-sm border border-border bg-cream-50 p-4 text-body-sm text-bark-900 focus:border-pine-500" />
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-label text-bark-900">Points clés (un par ligne)</span>
+              <textarea name="features" rows={3}
+                placeholder={"Réservoir 1,2 L\nPompe silencieuse < 30 dB"}
+                className="rounded-sm border border-border bg-cream-50 p-4 text-body-sm text-bark-900 focus:border-pine-500" />
+            </label>
+          </div>
+          <label className="mt-4 flex flex-col gap-1.5">
+            <span className="text-label text-bark-900">Caractéristiques (« libellé : valeur », une par ligne)</span>
+            <textarea name="specs" rows={4}
+              defaultValue={serializeSpecs(draft.specifications)}
+              placeholder={"Matière : ABS sans BPA\nCapacité : 1200 ml"}
+              className="rounded-sm border border-border bg-cream-50 p-4 text-body-sm text-bark-900 focus:border-pine-500" />
+          </label>
+          <fieldset className="mt-4">
+            <legend className="text-label text-bark-900">Champs affichés sur la fiche publique</legend>
+            <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 text-body-sm text-bark-900">
+              <label className="flex items-center gap-2">
+                <input type="checkbox" name="show-images" defaultChecked className="size-4 accent-pine-700" />
+                Photos fournisseur ({draft.images.length})
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" name="show-features" defaultChecked className="size-4 accent-pine-700" />
+                Points clés
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" name="show-specs" defaultChecked className="size-4 accent-pine-700" />
+                Caractéristiques
+              </label>
+            </div>
+          </fieldset>
           <label className="mt-4 flex flex-col gap-1.5">
             <span className="text-label text-bark-900">Note de curation (obligatoire, D-025)</span>
             <textarea name="note" rows={2} required

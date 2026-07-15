@@ -112,6 +112,12 @@ export const importDrafts = pgTable("import_drafts", {
   sourceUrl: text("source_url"),
   supplierRef: text("supplier_ref"),
   description: text("description"),
+  brand: text("brand"),
+  specifications: jsonb("specifications").$type<{ label: string; value: string }[]>().notNull().default([]),
+  /** Noms de variantes détectés (alt des vignettes SKU) — pré-remplissent les coloris. */
+  variantNames: jsonb("variant_names").$type<string[]>().notNull().default([]),
+  /** Note fournisseur affichée sur la page (usage interne, jamais publiée). */
+  supplierRating: text("supplier_rating"),
   status: text("status").$type<"draft" | "published">().notNull().default("draft"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

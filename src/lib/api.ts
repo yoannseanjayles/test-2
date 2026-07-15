@@ -39,6 +39,9 @@ async function hydrate(rows: ProductRow[]): Promise<Product[]> {
     imageUrls: row.imageUrls,
     supplierRef: row.supplierRef,
     sourceUrl: row.sourceUrl,
+    features: row.features,
+    specifications: row.specifications,
+    fieldVisibility: row.fieldVisibility,
     sizes: sizes
       .filter((s) => s.productSlug === row.slug)
       .map((s) => ({ name: s.name, stock: s.stock })),

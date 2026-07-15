@@ -47,7 +47,11 @@ Bilan Phase 6 (clôturée) :
 
 ## Projet terminé — finitions en réserve
 
-Le périmètre des 7 phases est livré et validé. Améliorations possibles, à la demande :
+Le périmètre des 7 phases est livré et validé.
+
+**Finitions déjà livrées post-clôture** : import AliExpress enrichi — le parseur extrait aussi la boutique/marque, les caractéristiques produit, les noms de variantes (pré-remplissent les coloris) et la note fournisseur (interne, jamais publiée) ; l'entité produit porte points clés + caractéristiques, tous les champs sont éditables à la publication comme après (nom, marque, accroche, coloris, points clés, caractéristiques), et chaque bloc (photos fournisseur, points clés, caractéristiques) est affichable ou masquable sur la fiche publique.
+
+Améliorations possibles, à la demande :
 
 1. Relance panier abandonné (H40) et export RGPD self-service côté compte.
 2. Médias restants (~40 prompts listés dans l'artefact des prompts).
