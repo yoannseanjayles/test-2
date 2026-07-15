@@ -39,6 +39,8 @@ export const products = pgTable("products", {
   curatedRank: integer("curated_rank").notNull(),
   pairsWith: jsonb("pairs_with").$type<string[]>().notNull(),
   tone: text("tone").$type<"cream" | "sage" | "caramel" | "terracotta">().notNull(),
+  /** Photos fournisseur (import 7.1) — vides pour le catalogue curé (photos statiques). */
+  imageUrls: jsonb("image_urls").$type<string[]>().notNull().default([]),
 });
 
 export const productSizes = pgTable("product_sizes", {

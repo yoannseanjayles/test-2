@@ -13,9 +13,20 @@ export type ParsedProduct = {
 };
 
 function decodeQuotedPrintable(text: string): string {
-  return text.replace(/=\r?\n/g, "").replace(/=([0-9A-F]{2})/gi, (_, hex) =>
-    String.fromCharCode(parseInt(hex, 16)),
-  );
+  // Décodage en octets puis UTF-8 : les snapshots Chrome encodent les
+  // multi-octets (€, accents) en =E2=82=AC… — un fromCharCode par octet
+  // produirait du mojibake et casserait la détection du prix.
+  const cleaned = text.replace(/=\r?\n/g, "");
+  const bytes: number[] = [];
+  for (let i = 0; i < cleaned.length; i++) {
+    if (cleaned[i] === "=" && /^[0-9A-Fa-f]{2}$/.test(cleaned.slice(i + 1, i + 3))) {
+      bytes.push(parseInt(cleaned.slice(i + 1, i + 3), 16));
+      i += 2;
+    } else {
+      bytes.push(cleaned.charCodeAt(i) & 0xff);
+    }
+  }
+  return Buffer.from(bytes).toString("utf-8");
 }
 
 /** Extrait la partie HTML d'un fichier .mht/.mhtml, ou renvoie le HTML tel quel. */
@@ -57,12 +68,16 @@ export function parseAliexpressPage(raw: string): ParsedProduct | null {
     .filter((cents) => cents >= 200 && cents <= 100_000);
   const supplierPrice = priceMatches[0] ?? null;
 
-  // Images produit alicdn — icônes carrées minuscules exclues (52x48, 79x79…).
+  // Images produit — balises <img> rendues : les snapshots récents servent les
+  // photos depuis ae-pic-*.aliexpress-media.com (plus seulement alicdn).
+  // Icônes carrées minuscules exclues (52x48…) ; miniatures _220x220 remontées
+  // vers la variante 960x960 disponible sur le même CDN.
   const images = [...new Set(
-    [...html.matchAll(/https:\/\/ae0[0-9]\.alicdn\.com\/kf\/[^"'\s)]+?\.(?:jpg|jpeg|png|webp)/gi)]
-      .map((m) => m[0])
-      .filter((url) => !/\/\d{2,3}x\d{2,3}\.(?:png|jpg|webp)$/i.test(url)),
-  )].slice(0, 10);
+    [...html.matchAll(/<img[^>]+src="(https:\/\/(?:ae0[0-9]\.alicdn\.com|ae-pic-[a-z0-9]+\.aliexpress-media\.com)\/kf\/[^"]+)"/gi)]
+      .map((m) => m[1]!)
+      .filter((url) => !/\/\d{2,3}x\d{2,3}[._]/i.test(url))
+      .map((url) => url.replace(/_2\d{2}x2\d{2}q?\d*\./, "_960x960q75.")),
+  )].slice(0, 12);
 
   return { title: title.trim().slice(0, 300), supplierPrice, images, sourceUrl };
 }

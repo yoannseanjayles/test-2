@@ -207,6 +207,7 @@ export async function publishDraft(input: {
     curatedRank: 999,
     pairsWith: [],
     tone: "cream",
+    imageUrls: draft.images,
   });
   await db.insert(productSizes).values({ productSlug: input.slug, name: "Taille unique", stock: 0 });
   await db.update(importDrafts).set({ status: "published" }).where(eq(importDrafts.id, input.draftId));

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   averageRating,
@@ -36,7 +37,19 @@ export function ProductCard({ product, className }: ProductCardProps) {
       )}
     >
       <div className="relative">
-        <Placeholder tone={product.tone} ratio="1 / 1" />
+        {product.imageUrls?.[0] ? (
+          // Photo fournisseur (produit importé 7.1) en attendant le shooting DA (D-042).
+          <Image
+            src={product.imageUrls[0]}
+            alt=""
+            width={640}
+            height={640}
+            sizes="(min-width: 1024px) 25vw, 50vw"
+            className="aspect-square h-auto w-full object-cover"
+          />
+        ) : (
+          <Placeholder tone={product.tone} ratio="1 / 1" />
+        )}
         {product.isNew && !outOfStock && (
           <Badge variant="new" className="absolute left-3 top-3">
             Nouveau

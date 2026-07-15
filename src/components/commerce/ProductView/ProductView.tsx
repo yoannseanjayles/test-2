@@ -51,7 +51,13 @@ export function ProductView({ product }: { product: Product }) {
   const addCartLine = useCart((state) => state.add);
   const openDrawer = useCartDrawer((state) => state.openDrawer);
 
-  const realImages = productImages[product.slug];
+  // Photos studio statiques d'abord (H32) ; sinon photos fournisseur
+  // distantes des produits importés (7.1) ; sinon placeholders DA.
+  const staticImages = productImages[product.slug];
+  const remoteImages = product.imageUrls?.length
+    ? product.imageUrls.map((src, i) => ({ src, label: `Photo ${i + 1}` }))
+    : undefined;
+  const realImages = staticImages ?? remoteImages;
   const rating = averageRating(product);
   const singleSize = product.sizes.length === 1;
   const isUniqueSize = singleSize && product.sizes[0]!.name === "Taille unique";
@@ -124,7 +130,14 @@ export function ProductView({ product }: { product: Product }) {
                   {typeof item === "string" ? (
                     <Placeholder tone={product.tone} ratio="1 / 1" />
                   ) : (
-                    <Image src={item.src} alt="" className="aspect-square h-auto w-full object-cover" sizes="56px" />
+                    <Image
+                      src={item.src}
+                      alt=""
+                      className="aspect-square h-auto w-full object-cover"
+                      sizes="56px"
+                      // Les URLs distantes (import) n'ont pas de dimensions intrinsèques.
+                      {...(typeof item.src === "string" ? { width: 960, height: 960 } : {})}
+                    />
                   )}
                 </button>
               </li>
@@ -139,6 +152,9 @@ export function ProductView({ product }: { product: Product }) {
               sizes="(min-width: 1024px) 55vw, 100vw"
               className="aspect-square h-auto w-full object-cover"
               priority
+              {...(typeof realImages[Math.min(view, realImages.length - 1)]!.src === "string"
+                ? { width: 960, height: 960 }
+                : {})}
             />
           ) : (
             <Placeholder tone={product.tone} ratio="1 / 1" label={`${GALLERY_VIEWS[view]} — ${color.name}`} />

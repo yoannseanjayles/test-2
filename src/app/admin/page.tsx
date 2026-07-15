@@ -303,6 +303,17 @@ function DraftCard({ draft, onPublished }: { draft: DraftDto; onPublished: () =>
         {draft.supplierPrice !== null && <> · prix fournisseur : {formatPrice(draft.supplierPrice)}</>}
         {draft.images.length > 0 && <> · {draft.images.length} image(s) fournisseur (à remplacer, D-042)</>}
       </p>
+      {draft.images.length > 0 && (
+        <ul className="mt-3 flex flex-wrap gap-2">
+          {draft.images.map((src) => (
+            <li key={src}>
+              {/* Vignettes fournisseur brutes — <img> volontaire (aperçu admin, hors optimiseur). */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={src} alt="" className="h-16 w-16 rounded-sm border border-border object-cover" loading="lazy" />
+            </li>
+          ))}
+        </ul>
+      )}
       {!open ? (
         <Button variant="secondary" className="mt-3" onClick={() => setOpen(true)}>
           Compléter et publier
