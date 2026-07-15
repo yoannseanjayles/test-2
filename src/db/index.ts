@@ -39,7 +39,8 @@ async function applySchema(client: { exec: (sql: string) => Promise<unknown> }) 
       short_description text NOT NULL, curator_note text NOT NULL,
       material text NOT NULL, details jsonb NOT NULL, colors jsonb NOT NULL,
       gabarits jsonb NOT NULL, is_new boolean NOT NULL DEFAULT false,
-      curated_rank integer NOT NULL, pairs_with jsonb NOT NULL, tone text NOT NULL);
+      curated_rank integer NOT NULL, pairs_with jsonb NOT NULL, tone text NOT NULL,
+      image_urls jsonb NOT NULL DEFAULT '[]'::jsonb);
     CREATE TABLE IF NOT EXISTS product_sizes (
       product_slug text NOT NULL REFERENCES products(slug), name text NOT NULL,
       stock integer NOT NULL DEFAULT 0, PRIMARY KEY (product_slug, name));
@@ -53,7 +54,7 @@ async function applySchema(client: { exec: (sql: string) => Promise<unknown> }) 
 
     CREATE TABLE IF NOT EXISTS "user" (
       id text PRIMARY KEY, name text NOT NULL, email text NOT NULL UNIQUE,
-      email_verified boolean NOT NULL DEFAULT false, image text,
+      email_verified boolean NOT NULL DEFAULT false, image text, role text,
       created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now());
     CREATE TABLE IF NOT EXISTS "session" (
       id text PRIMARY KEY, expires_at timestamp NOT NULL, token text NOT NULL UNIQUE,
@@ -94,6 +95,10 @@ async function applySchema(client: { exec: (sql: string) => Promise<unknown> }) 
       email text NOT NULL, created_at timestamp NOT NULL DEFAULT now());
     CREATE TABLE IF NOT EXISTS newsletter_subscribers (
       email text PRIMARY KEY, created_at timestamp NOT NULL DEFAULT now());
+    CREATE TABLE IF NOT EXISTS import_drafts (
+      id text PRIMARY KEY, file_name text NOT NULL, title text NOT NULL,
+      supplier_price integer, images jsonb NOT NULL, source_url text,
+      status text NOT NULL DEFAULT 'draft', created_at timestamp NOT NULL DEFAULT now());
     CREATE INDEX IF NOT EXISTS idx_products_animal_subcategory
       ON products (animal, subcategory);
   `);

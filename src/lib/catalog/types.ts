@@ -65,6 +65,8 @@ export type Product = {
   pairsWith: string[];
   /** Teinte de fond du placeholder visuel (H32 : remplacé par les vraies photos). */
   tone: "cream" | "sage" | "caramel" | "terracotta";
+  /** Photos fournisseur distantes (produits importés 7.1) — prioritaires sur le placeholder. */
+  imageUrls?: string[];
 };
 
 export type Subcategory = {
