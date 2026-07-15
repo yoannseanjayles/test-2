@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { EditorialCard } from "@/components/commerce";
-import { guides } from "@/lib/guides";
+import { fetchGuides } from "@/lib/api";
 
 export const metadata: Metadata = {
   title: "Guides & Conseils",
@@ -8,8 +8,9 @@ export const metadata: Metadata = {
     "Guides d'achat et conseils d'experts pour bien choisir les accessoires de votre chien, chat ou NAC.",
 };
 
-/** Hub éditorial — version jalon 2 : cartes des guides. Filtres et pages piliers complètes au jalon 4 (D-037). */
-export default function GuidesPage() {
+/** Hub éditorial (D-037) — guides lus en base (7.1 jalon 4), éditables dans l'admin. */
+export default async function GuidesPage() {
+  const guides = await fetchGuides();
   return (
     <div className="mx-auto max-w-page px-4 py-12 lg:px-6 lg:py-16">
       <header className="max-w-3xl">

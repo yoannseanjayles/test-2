@@ -15,8 +15,27 @@ export const shippingMethods = [
 
 export type ShippingMethodId = (typeof shippingMethods)[number]["id"];
 
-export function shippingPrice(methodId: ShippingMethodId, subtotal: number): number {
+/**
+ * Tarifs ajustables depuis le back-office (7.1 jalon 4) — les valeurs
+ * ci-dessus restent la configuration par défaut (et le repli hors ligne) ;
+ * la base (table settings, clé « shipping ») prime quand un réglage existe.
+ */
+export type ShippingConfig = {
+  freeShippingCents: number;
+  prices: Record<ShippingMethodId, number>;
+};
+
+export const defaultShippingConfig: ShippingConfig = {
+  freeShippingCents: FREE_SHIPPING_CENTS,
+  prices: Object.fromEntries(shippingMethods.map((m) => [m.id, m.price])) as Record<ShippingMethodId, number>,
+};
+
+export function shippingPrice(
+  methodId: ShippingMethodId,
+  subtotal: number,
+  config: ShippingConfig = defaultShippingConfig,
+): number {
   const method = shippingMethods.find((m) => m.id === methodId)!;
-  if (method.freeAboveThreshold && subtotal >= FREE_SHIPPING_CENTS) return 0;
-  return method.price;
+  if (method.freeAboveThreshold && subtotal >= config.freeShippingCents) return 0;
+  return config.prices[methodId] ?? method.price;
 }

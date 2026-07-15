@@ -1,16 +1,18 @@
 "use client";
 
 import { Truck } from "lucide-react";
-import { FREE_SHIPPING_CENTS, freeShippingRemaining } from "@/lib/cart";
+import { useShippingConfig } from "@/lib/use-shipping-config";
 import { formatPrice } from "@/lib/format";
 
 /**
  * Barre de progression vers la livraison offerte (D-029) — levier n°1 de
  * l'objectif panier ≥ 70 € (D-009). En tête du drawer et de la page panier.
+ * Seuil lu depuis les réglages boutique (jalon 4).
  */
 export function FreeShippingBar({ subtotal }: { subtotal: number }) {
-  const remaining = freeShippingRemaining(subtotal);
-  const progress = Math.min(100, (subtotal / FREE_SHIPPING_CENTS) * 100);
+  const { freeShippingCents } = useShippingConfig();
+  const remaining = Math.max(0, freeShippingCents - subtotal);
+  const progress = Math.min(100, (subtotal / freeShippingCents) * 100);
 
   return (
     <div className="rounded-md bg-cream-100 p-4">

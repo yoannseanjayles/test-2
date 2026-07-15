@@ -33,6 +33,14 @@ const DDL = [
     curated_rank integer NOT NULL, pairs_with jsonb NOT NULL, tone text NOT NULL,
     image_urls jsonb NOT NULL DEFAULT '[]'::jsonb,
     supplier_ref text, source_url text)`,
+  `CREATE TABLE IF NOT EXISTS guides (
+    slug text PRIMARY KEY, title text NOT NULL, excerpt text NOT NULL,
+    animal text NOT NULL, pillar boolean NOT NULL DEFAULT false,
+    reading_minutes integer NOT NULL DEFAULT 5,
+    related_subcategories jsonb NOT NULL DEFAULT '[]'::jsonb,
+    author jsonb, content jsonb)`,
+  `CREATE TABLE IF NOT EXISTS settings (
+    key text PRIMARY KEY, value jsonb NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS product_sizes (
     product_slug text NOT NULL REFERENCES products(slug), name text NOT NULL,
     stock integer NOT NULL DEFAULT 0, PRIMARY KEY (product_slug, name))`,

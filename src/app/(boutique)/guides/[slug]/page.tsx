@@ -4,20 +4,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BadgeCheck } from "lucide-react";
 import { Breadcrumb, ProductCard, SectionHeading } from "@/components/commerce";
-import { guides } from "@/lib/guides";
-import { fetchProducts } from "@/lib/api";
+import { fetchGuide, fetchGuides, fetchProducts } from "@/lib/api";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { formatMonth } from "@/lib/format";
 
 type Params = { slug: string };
 
-export function generateStaticParams(): Params[] {
-  return guides.map((g) => ({ slug: g.slug }));
+export async function generateStaticParams(): Promise<Params[]> {
+  return (await fetchGuides()).map((g) => ({ slug: g.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { slug } = await params;
-  const guide = guides.find((g) => g.slug === slug);
+  const guide = await fetchGuide(slug);
   if (!guide) return {};
   return { title: guide.title, description: guide.excerpt };
 }
@@ -28,7 +27,7 @@ const slugify = (s: string) =>
 /** Gabarit article (spec 2.1 Guides, D-037) : E-E-A-T, sommaire, ≤ 3 produits marqués sélection. */
 export default async function GuidePage({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
-  const guide = guides.find((g) => g.slug === slug);
+  const guide = await fetchGuide(slug);
   if (!guide) notFound();
 
   const crumbs = [

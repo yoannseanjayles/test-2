@@ -1,8 +1,9 @@
 import "server-only";
 import { and, asc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { categories, products, productSizes, reviews } from "@/db/schema";
+import { categories, guides, products, productSizes, reviews } from "@/db/schema";
 import type { Animal, Product, Review, Subcategory } from "@/lib/catalog/types";
+import { coverFor, type Guide } from "@/lib/guides";
 
 /**
  * Couche d'accès serveur (6.1 jalon 1) — remplace le mock de la Phase 5
@@ -114,4 +115,47 @@ export async function fetchSubcategory(
     .from(categories)
     .where(and(eq(categories.animal, animal), eq(categories.slug, slug)));
   return row;
+}
+
+// ——— Guides éditoriaux (D-037) — en base depuis 7.1 jalon 4 ———
+
+type GuideRow = typeof guides.$inferSelect;
+
+/** Couverture statique (H32) ré-attachée par slug — absente pour les guides créés en admin. */
+function hydrateGuide(row: GuideRow): Guide {
+  const cover = coverFor(row.slug);
+  return {
+    slug: row.slug,
+    title: row.title,
+    excerpt: row.excerpt,
+    animal: row.animal,
+    pillar: row.pillar,
+    readingMinutes: row.readingMinutes,
+    relatedSubcategories: row.relatedSubcategories,
+    ...(cover ? { cover } : {}),
+    ...(row.author ? { author: row.author } : {}),
+    ...(row.content ? { content: row.content } : {}),
+  };
+}
+
+export async function fetchGuides(): Promise<Guide[]> {
+  const db = await getDb();
+  const rows = await db.select().from(guides).orderBy(asc(guides.slug));
+  return rows.map(hydrateGuide);
+}
+
+export async function fetchGuide(slug: string): Promise<Guide | undefined> {
+  const db = await getDb();
+  const [row] = await db.select().from(guides).where(eq(guides.slug, slug));
+  return row ? hydrateGuide(row) : undefined;
+}
+
+export async function fetchGuidesFor(animal: Animal, count: number): Promise<Guide[]> {
+  return (await fetchGuides())
+    .filter((g) => g.animal === animal || g.animal === "tous")
+    .slice(0, count);
+}
+
+export async function fetchGuideForSubcategory(subcategory: string): Promise<Guide | undefined> {
+  return (await fetchGuides()).find((g) => g.relatedSubcategories.includes(subcategory));
 }

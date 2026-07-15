@@ -27,7 +27,12 @@ export type Guide = {
   content?: { heading: string; paragraphs: string[] }[];
 };
 
-export const guides: Guide[] = [
+/**
+ * Contenu de lancement — seed de la table `guides` (7.1 jalon 4) ; les
+ * couvertures (imports statiques) sont ré-attachées par slug à l'hydratation.
+ * L'édition passe par le back-office, plus par ce fichier.
+ */
+export const guideSeed: Guide[] = [
   {
     slug: "bien-choisir-un-harnais",
     title: "Bien choisir un harnais : le guide complet",
@@ -125,12 +130,7 @@ export const guides: Guide[] = [
   },
 ];
 
-export function getGuidesFor(animal: Animal, count: number): Guide[] {
-  return guides
-    .filter((g) => g.animal === animal || g.animal === "tous")
-    .slice(0, count);
-}
-
-export function getGuideForSubcategory(subcategory: string): Guide | undefined {
-  return guides.find((g) => g.relatedSubcategories.includes(subcategory));
+/** Couverture statique d'un guide seedé (H32) — les nouveaux guides n'en ont pas encore. */
+export function coverFor(slug: string): StaticImageData | undefined {
+  return guideSeed.find((g) => g.slug === slug)?.cover;
 }

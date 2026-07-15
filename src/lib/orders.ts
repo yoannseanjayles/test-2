@@ -8,6 +8,7 @@ import { products } from "@/db/schema";
 import { getSessionUser } from "@/lib/auth";
 import { addressSchema, contactSchema } from "@/lib/checkout-schemas";
 import { shippingMethods, shippingPrice, type ShippingMethodId } from "@/lib/shipping";
+import { getShippingConfig } from "@/lib/admin-settings";
 import type { CartLine } from "@/lib/cart";
 import { sendOrderConfirmation } from "@/lib/email";
 
@@ -52,7 +53,8 @@ export async function placeOrder(input: {
   }
   const subtotal = input.lines.reduce(
     (acc, l) => acc + bySlug.get(l.slug)!.price * l.quantity, 0);
-  const shipping = shippingPrice(input.shippingMethod, subtotal);
+  // Tarifs livraison lus en base (réglages admin, jalon 4) — repli sur D-039.
+  const shipping = shippingPrice(input.shippingMethod, subtotal, await getShippingConfig());
   const total = subtotal + shipping;
 
   const user = await getSessionUser(await headers());

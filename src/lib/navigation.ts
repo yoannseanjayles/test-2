@@ -100,9 +100,11 @@ export const mobileSecondaryLinks: NavLink[] = [
   { label: "Contact", href: "/contact" },
 ];
 
-/** Messages de réassurance du bandeau (D-039/D-040, seuil H12). */
+/**
+ * Messages de réassurance du bandeau (D-039/D-040) — le message seuil est
+ * construit par AnnouncementBar depuis les réglages boutique (jalon 4).
+ */
 export const announcementMessages: string[] = [
-  "Livraison offerte dès 79 €",
   "Premier retour offert — 30 jours pour changer d'avis",
   "Sélection testée et approuvée par nos experts",
 ];

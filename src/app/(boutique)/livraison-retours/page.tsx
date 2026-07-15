@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { RotateCcw, Truck } from "lucide-react";
 import { Accordion } from "@/components/ui";
-import { FREE_SHIPPING_CENTS, shippingMethods } from "@/lib/shipping";
+import { shippingMethods } from "@/lib/shipping";
+import { getShippingConfig } from "@/lib/admin-settings";
 import { formatPrice } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -15,7 +16,8 @@ export const metadata: Metadata = {
  * rappels inline (D-039 : zéro incohérence de délais/tarifs entre pages).
  * Politique retours : D-040.
  */
-export default function ShippingReturnsPage() {
+export default async function ShippingReturnsPage() {
+  const config = await getShippingConfig();
   return (
     <div className="mx-auto max-w-page px-4 py-12 lg:px-6">
       <h1 className="font-display text-h1 font-[560] text-bark-900">Livraison & retours</h1>
@@ -29,7 +31,7 @@ export default function ShippingReturnsPage() {
           <p className="mt-3 text-body text-bark-700">
             Nous expédions sous 24 h ouvrées vers la France, la Belgique, la
             Suisse et le Luxembourg.{" "}
-            <strong>Livraison offerte dès {formatPrice(FREE_SHIPPING_CENTS)}</strong>{" "}
+            <strong>Livraison offerte dès {formatPrice(config.freeShippingCents)}</strong>{" "}
             (domicile et point relais).
           </p>
           <div className="mt-5 overflow-x-auto">
@@ -47,10 +49,10 @@ export default function ShippingReturnsPage() {
                     <td className="py-2.5 pr-4 font-semibold text-bark-900">{m.label}</td>
                     <td className="py-2.5 pr-4">{m.detail}</td>
                     <td className="py-2.5">
-                      {formatPrice(m.price)}
+                      {formatPrice(config.prices[m.id])}
                       {m.freeAboveThreshold && (
                         <span className="text-caption block text-pine-700">
-                          Offerte dès {formatPrice(FREE_SHIPPING_CENTS)}
+                          Offerte dès {formatPrice(config.freeShippingCents)}
                         </span>
                       )}
                     </td>
