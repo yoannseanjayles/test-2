@@ -41,7 +41,7 @@ export async function bootstrapAdmin(): Promise<{ ok: boolean; error?: string }>
   return { ok: true };
 }
 
-async function requireRole(...roles: AdminRole[]): Promise<AdminUser> {
+export async function requireRole(...roles: AdminRole[]): Promise<AdminUser> {
   const admin = await getAdminUser();
   if (!admin || (!roles.includes(admin.role) && admin.role !== "Admin")) {
     throw new Error("Accès refusé.");

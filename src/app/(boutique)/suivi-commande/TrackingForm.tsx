@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { Check } from "lucide-react";
 import { findOrder, type OrderDto } from "@/lib/orders";
-import { orderStatuses } from "@/lib/account";
-import { Button, FormField } from "@/components/ui";
+import { orderStatuses, statusDescriptions, statusIndex } from "@/lib/account";
+import { Badge, Button, FormField } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 export function TrackingForm() {
@@ -33,24 +33,29 @@ export function TrackingForm() {
             <h2 className="font-heading text-h3 font-semibold text-bark-900">
               Commande {found.number}
             </h2>
-            <ol className="mt-4 flex flex-wrap gap-2">
-              {orderStatuses.map((status, index) => (
-                <li
-                  key={status}
-                  className={cn(
-                    "text-label flex min-h-9 items-center gap-1.5 rounded-full px-3.5",
-                    index < 1 && "bg-pine-100 text-pine-900",
-                    index === 1 && "bg-pine-700 text-white",
-                    index > 1 && "bg-cream-300 text-bark-700",
-                  )}
-                >
-                  {index < 1 && <Check aria-hidden="true" className="size-3.5" />}
-                  {status}
-                </li>
-              ))}
-            </ol>
+            {/* Timeline sur le statut réel (D-016) — badge seul hors parcours nominal. */}
+            {statusIndex(found.status) >= 0 ? (
+              <ol className="mt-4 flex flex-wrap gap-2">
+                {orderStatuses.map((status, index) => (
+                  <li
+                    key={status}
+                    className={cn(
+                      "text-label flex min-h-9 items-center gap-1.5 rounded-full px-3.5",
+                      index < statusIndex(found.status) && "bg-pine-100 text-pine-900",
+                      index === statusIndex(found.status) && "bg-pine-700 text-white",
+                      index > statusIndex(found.status) && "bg-cream-300 text-bark-700",
+                    )}
+                  >
+                    {index < statusIndex(found.status) && <Check aria-hidden="true" className="size-3.5" />}
+                    {status}
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="mt-4"><Badge variant="neutral">{found.status}</Badge></p>
+            )}
             <p className="mt-3 text-body-sm text-bark-700">
-              Votre commande est en préparation à l'atelier — expédition sous 24 h ouvrées.
+              {statusDescriptions[found.status] ?? ""}
             </p>
           </div>
         )}

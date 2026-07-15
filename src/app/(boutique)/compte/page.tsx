@@ -4,7 +4,8 @@ import Link from "next/link";
 import { PawPrint, Package, RotateCcw } from "lucide-react";
 import { AccountShell } from "@/components/account/AccountShell";
 import { useOrder } from "@/lib/checkout";
-import { orderStatuses } from "@/lib/account";
+import { orderStatuses, statusIndex } from "@/lib/account";
+import { listMyOrders } from "@/lib/orders";
 import { listPets, type PetDto } from "./animaux/actions";
 import { useEffect, useState } from "react";
 import { useCart, useCartDrawer } from "@/lib/cart";
@@ -23,9 +24,19 @@ export default function AccountDashboard() {
 function Dashboard() {
   const order = useOrder((state) => state.lastOrder);
   const [pets, setPets] = useState<PetDto[]>([]);
+  const [status, setStatus] = useState<string | null>(null);
   useEffect(() => {
     listPets().then(setPets).catch(() => setPets([]));
   }, []);
+  // Statut réel de la commande (D-016) — lu en base, plus de badge de démo.
+  useEffect(() => {
+    listMyOrders()
+      .then((list) => {
+        const match = (order && list.find((o) => o.number === order.number)) ?? list[0];
+        if (match) setStatus(match.status);
+      })
+      .catch(() => {});
+  }, [order]);
   const add = useCart((state) => state.add);
   const openDrawer = useCartDrawer((state) => state.openDrawer);
 
@@ -45,7 +56,9 @@ function Dashboard() {
               <Package aria-hidden="true" className="size-5 text-pine-700" strokeWidth={1.75} />
               Commande en cours — {order.number}
             </h2>
-            <Badge variant="new">{orderStatuses[1]}</Badge>
+            <Badge variant={status !== null && statusIndex(status) < 0 ? "neutral" : "new"}>
+              {status ?? orderStatuses[0]}
+            </Badge>
           </div>
           <p className="mt-2 text-body-sm text-bark-700">
             {order.lines.length} article{order.lines.length > 1 ? "s" : ""} ·{" "}

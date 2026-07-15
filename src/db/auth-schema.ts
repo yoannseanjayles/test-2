@@ -72,6 +72,8 @@ export const orders = pgTable("orders", {
   shipping: integer("shipping").notNull(),
   total: integer("total").notNull(),
   paymentIntentId: text("payment_intent_id"),
+  /** Motif du retour self-service (D-035) — renseigné au passage en « Retour en cours ». */
+  returnReason: text("return_reason"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
