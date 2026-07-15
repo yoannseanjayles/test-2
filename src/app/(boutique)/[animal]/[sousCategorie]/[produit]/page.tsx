@@ -10,7 +10,7 @@ import {
   ReviewCard,
   SectionHeading,
 } from "@/components/commerce";
-import { animalLabels, averageRating, isAnimal, products } from "@/lib/catalog";
+import { animalLabels, averageRating, isAnimal, isFieldVisible, products } from "@/lib/catalog";
 import { fetchGuideForSubcategory, fetchProduct, fetchProducts, fetchProductsBySlugs, fetchSubcategory } from "@/lib/api";
 import { getShippingConfig } from "@/lib/admin-settings";
 import { formatPrice } from "@/lib/format";
@@ -81,6 +81,13 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
 
   const detailItems = [
     ...product.details.map((d) => ({ title: d.title, content: d.content })),
+    // Caractéristiques importées (masquables champ par champ dans l'admin).
+    ...((product.specifications?.length ?? 0) > 0 && isFieldVisible(product, "specifications")
+      ? [{
+          title: "Caractéristiques",
+          content: product.specifications!.map((s) => `${s.label} : ${s.value}`).join(" · "),
+        }]
+      : []),
     {
       title: "Livraison & retours",
       content: `Expédition en 24 h, livraison estimée 2–3 jours ouvrés (France, Belgique, Suisse, Luxembourg). Livraison offerte dès ${formatPrice((await getShippingConfig()).freeShippingCents)}. Premier retour offert, 30 jours pour changer d'avis.`,

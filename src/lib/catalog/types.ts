@@ -70,7 +70,18 @@ export type Product = {
   /** Traçabilité import (7.1) — référence article et page fournisseur, usage interne. */
   supplierRef?: string | null;
   sourceUrl?: string | null;
+  /** Points clés (import enrichi) — puces sous l'accroche si visibles. */
+  features?: string[];
+  /** Caractéristiques techniques (import enrichi) — accordéon dédié si visibles. */
+  specifications?: { label: string; value: string }[];
+  /** Visibilité par champ sur la fiche (images, features, specifications) — true par défaut. */
+  fieldVisibility?: Record<string, boolean>;
 };
+
+/** Un champ est visible sauf s'il est explicitement masqué. */
+export function isFieldVisible(product: Pick<Product, "fieldVisibility">, field: string): boolean {
+  return product.fieldVisibility?.[field] !== false;
+}
 
 export type Subcategory = {
   slug: string;

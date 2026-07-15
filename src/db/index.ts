@@ -32,7 +32,10 @@ const DDL = [
     gabarits jsonb NOT NULL, is_new boolean NOT NULL DEFAULT false,
     curated_rank integer NOT NULL, pairs_with jsonb NOT NULL, tone text NOT NULL,
     image_urls jsonb NOT NULL DEFAULT '[]'::jsonb,
-    supplier_ref text, source_url text)`,
+    supplier_ref text, source_url text,
+    features jsonb NOT NULL DEFAULT '[]'::jsonb,
+    specifications jsonb NOT NULL DEFAULT '[]'::jsonb,
+    field_visibility jsonb NOT NULL DEFAULT '{}'::jsonb)`,
   `CREATE TABLE IF NOT EXISTS guides (
     slug text PRIMARY KEY, title text NOT NULL, excerpt text NOT NULL,
     animal text NOT NULL, pillar boolean NOT NULL DEFAULT false,
@@ -98,7 +101,10 @@ const DDL = [
   `CREATE TABLE IF NOT EXISTS import_drafts (
     id text PRIMARY KEY, file_name text NOT NULL, title text NOT NULL,
     supplier_price integer, images jsonb NOT NULL, source_url text,
-    supplier_ref text, description text,
+    supplier_ref text, description text, brand text,
+    specifications jsonb NOT NULL DEFAULT '[]'::jsonb,
+    variant_names jsonb NOT NULL DEFAULT '[]'::jsonb,
+    supplier_rating text,
     status text NOT NULL DEFAULT 'draft', created_at timestamp NOT NULL DEFAULT now())`,
   `CREATE INDEX IF NOT EXISTS idx_products_animal_subcategory
     ON products (animal, subcategory)`,
@@ -109,6 +115,13 @@ const DDL = [
   `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS role text`,
   `ALTER TABLE import_drafts ADD COLUMN IF NOT EXISTS supplier_ref text`,
   `ALTER TABLE import_drafts ADD COLUMN IF NOT EXISTS description text`,
+  `ALTER TABLE import_drafts ADD COLUMN IF NOT EXISTS brand text`,
+  `ALTER TABLE import_drafts ADD COLUMN IF NOT EXISTS specifications jsonb NOT NULL DEFAULT '[]'::jsonb`,
+  `ALTER TABLE import_drafts ADD COLUMN IF NOT EXISTS variant_names jsonb NOT NULL DEFAULT '[]'::jsonb`,
+  `ALTER TABLE import_drafts ADD COLUMN IF NOT EXISTS supplier_rating text`,
+  `ALTER TABLE products ADD COLUMN IF NOT EXISTS features jsonb NOT NULL DEFAULT '[]'::jsonb`,
+  `ALTER TABLE products ADD COLUMN IF NOT EXISTS specifications jsonb NOT NULL DEFAULT '[]'::jsonb`,
+  `ALTER TABLE products ADD COLUMN IF NOT EXISTS field_visibility jsonb NOT NULL DEFAULT '{}'::jsonb`,
   `ALTER TABLE orders ADD COLUMN IF NOT EXISTS return_reason text`,
 ];
 

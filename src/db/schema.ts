@@ -44,6 +44,12 @@ export const products = pgTable("products", {
   /** Traçabilité import (7.1) : référence article et page fournisseur d'origine. */
   supplierRef: text("supplier_ref"),
   sourceUrl: text("source_url"),
+  /** Points clés fournisseur (import enrichi) — liste à puces sur la fiche. */
+  features: jsonb("features").$type<string[]>().notNull().default([]),
+  /** Caractéristiques techniques (import enrichi) — accordéon dédié. */
+  specifications: jsonb("specifications").$type<{ label: string; value: string }[]>().notNull().default([]),
+  /** Visibilité par champ sur la fiche publique (images, features, specifications) — true par défaut. */
+  fieldVisibility: jsonb("field_visibility").$type<Record<string, boolean>>().notNull().default({}),
 });
 
 /** Réglages boutique (7.1 jalon 4) — clé/valeur JSON (config livraison D-039). */

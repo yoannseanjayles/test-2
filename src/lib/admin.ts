@@ -4,8 +4,8 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { and, asc, count, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { restockAlerts, user } from "@/db/auth-schema";
-import { products, productSizes, reviews } from "@/db/schema";
+import { newsletterSubscribers, orders, restockAlerts, user } from "@/db/auth-schema";
+import { guides, products, productSizes, reviews } from "@/db/schema";
 import { getSessionUser } from "@/lib/auth";
 
 /**
@@ -49,6 +49,47 @@ export async function requireRole(...roles: AdminRole[]): Promise<AdminUser> {
   return admin;
 }
 
+/** Indicateurs du tableau de bord — chaque rôle voit sa vue d'ensemble. */
+export type AdminSummary = {
+  pendingOrders: number;
+  returnsInProgress: number;
+  products: number;
+  outOfStock: number;
+  lowStock: number;
+  drafts: number;
+  guides: number;
+  subscribers: number;
+};
+
+export async function getAdminSummary(): Promise<AdminSummary> {
+  await requireRole("Ops", "Catalogue", "Éditorial");
+  const db = await getDb();
+  const [orderRows, sizeRows, [draftCount], [guideCount], [subscriberCount], [productCount]] =
+    await Promise.all([
+      db.select({ status: orders.status }).from(orders),
+      db.select().from(productSizes),
+      db.select({ n: count() }).from(importDrafts).where(eq(importDrafts.status, "draft")),
+      db.select({ n: count() }).from(guides),
+      db.select({ n: count() }).from(newsletterSubscribers),
+      db.select({ n: count() }).from(products),
+    ]);
+  const stockBySlug = new Map<string, number>();
+  for (const s of sizeRows) {
+    stockBySlug.set(s.productSlug, (stockBySlug.get(s.productSlug) ?? 0) + s.stock);
+  }
+  const totals = [...stockBySlug.values()];
+  return {
+    pendingOrders: orderRows.filter((o) => o.status.startsWith("Payée") || o.status === "En préparation").length,
+    returnsInProgress: orderRows.filter((o) => o.status === "Retour en cours").length,
+    products: productCount?.n ?? 0,
+    outOfStock: totals.filter((t) => t === 0).length,
+    lowStock: totals.filter((t) => t > 0 && t <= 5).length,
+    drafts: draftCount?.n ?? 0,
+    guides: guideCount?.n ?? 0,
+    subscribers: subscriberCount?.n ?? 0,
+  };
+}
+
 export type AdminProduct = {
   slug: string;
   name: string;
@@ -58,9 +99,15 @@ export type AdminProduct = {
   curatedRank: number;
   isNew: boolean;
   curatorNote: string;
+  shortDescription: string;
+  brand: string;
   sizes: { name: string; stock: number }[];
   supplierRef: string | null;
   sourceUrl: string | null;
+  imageCount: number;
+  features: string[];
+  specifications: { label: string; value: string }[];
+  fieldVisibility: Record<string, boolean>;
 };
 
 export async function listAdminProducts(): Promise<AdminProduct[]> {
@@ -71,7 +118,10 @@ export async function listAdminProducts(): Promise<AdminProduct[]> {
   return rows.map((p) => ({
     slug: p.slug, name: p.name, animal: p.animal, subcategory: p.subcategory,
     price: p.price, curatedRank: p.curatedRank, isNew: p.isNew, curatorNote: p.curatorNote,
+    shortDescription: p.shortDescription, brand: p.brand,
     supplierRef: p.supplierRef, sourceUrl: p.sourceUrl,
+    imageCount: p.imageUrls.length, features: p.features,
+    specifications: p.specifications, fieldVisibility: p.fieldVisibility,
     sizes: sizes.filter((s) => s.productSlug === p.slug).map((s) => ({ name: s.name, stock: s.stock })),
   }));
 }
@@ -83,6 +133,12 @@ export async function updateAdminProduct(input: {
   isNew: boolean;
   curatorNote: string;
   stocks: { name: string; stock: number }[];
+  name?: string;
+  brand?: string;
+  shortDescription?: string;
+  features?: string[];
+  specifications?: { label: string; value: string }[];
+  fieldVisibility?: Record<string, boolean>;
 }): Promise<{ ok: boolean; error?: string }> {
   await requireRole("Catalogue");
   if (!Number.isInteger(input.price) || input.price < 100 || input.price > 1_000_000) {
@@ -92,12 +148,23 @@ export async function updateAdminProduct(input: {
   if (input.curatorNote.trim().length < 20) {
     return { ok: false, error: "La note de curation est obligatoire (20 caractères min, D-025)." };
   }
+  if (input.name !== undefined && input.name.trim().length < 3) {
+    return { ok: false, error: "Nom trop court." };
+  }
   const db = await getDb();
   await db.update(products).set({
     price: input.price,
     curatedRank: input.curatedRank,
     isNew: input.isNew,
     curatorNote: input.curatorNote.trim(),
+    ...(input.name !== undefined ? { name: input.name.trim().slice(0, 120) } : {}),
+    ...(input.brand !== undefined ? { brand: input.brand.trim().slice(0, 60) || "Sélection import" } : {}),
+    ...(input.shortDescription !== undefined && input.shortDescription.trim()
+      ? { shortDescription: input.shortDescription.trim().slice(0, 400) }
+      : {}),
+    ...(input.features !== undefined ? { features: input.features.slice(0, 12) } : {}),
+    ...(input.specifications !== undefined ? { specifications: input.specifications.slice(0, 15) } : {}),
+    ...(input.fieldVisibility !== undefined ? { fieldVisibility: input.fieldVisibility } : {}),
   }).where(eq(products.slug, input.slug));
   for (const s of input.stocks) {
     await db.update(productSizes)
@@ -156,6 +223,10 @@ export async function importAliexpressFiles(formData: FormData): Promise<ImportR
         sourceUrl: parsed.sourceUrl,
         supplierRef: parsed.supplierRef,
         description: parsed.description,
+        brand: parsed.brand,
+        specifications: parsed.specifications,
+        variantNames: parsed.variantNames,
+        supplierRating: parsed.supplierRating,
       });
       reports.push({ fileName, ok: true, title: parsed.title });
     } catch (error) {
@@ -174,6 +245,10 @@ export type DraftDto = {
   sourceUrl: string | null;
   supplierRef: string | null;
   description: string | null;
+  brand: string | null;
+  specifications: { label: string; value: string }[];
+  variantNames: string[];
+  supplierRating: string | null;
 };
 
 export async function listDrafts(): Promise<DraftDto[]> {
@@ -186,6 +261,8 @@ export async function listDrafts(): Promise<DraftDto[]> {
     id: r.id, fileName: r.fileName, title: r.title,
     supplierPrice: r.supplierPrice, images: r.images, sourceUrl: r.sourceUrl,
     supplierRef: r.supplierRef, description: r.description,
+    brand: r.brand, specifications: r.specifications,
+    variantNames: r.variantNames, supplierRating: r.supplierRating,
   }));
 }
 
@@ -199,6 +276,11 @@ export async function publishDraft(input: {
   price: number;
   curatorNote: string;
   shortDescription: string;
+  brand: string;
+  colorNames: string[];
+  features: string[];
+  specifications: { label: string; value: string }[];
+  visibility: { images: boolean; features: boolean; specifications: boolean };
 }): Promise<{ ok: boolean; error?: string }> {
   await requireRole("Catalogue");
   if (input.curatorNote.trim().length < 20) {
@@ -216,18 +298,21 @@ export async function publishDraft(input: {
   const [existing] = await db.select({ slug: products.slug }).from(products).where(eq(products.slug, input.slug));
   if (existing) return { ok: false, error: "Ce slug existe déjà." };
 
+  const colorNames = input.colorNames.map((n) => n.trim()).filter(Boolean).slice(0, 12);
   await db.insert(products).values({
     slug: input.slug,
     name: input.name.trim().slice(0, 120),
-    brand: "Sélection import",
+    brand: input.brand.trim().slice(0, 60) || "Sélection import",
     animal: input.animal,
     subcategory: input.subcategory,
     price: input.price,
     shortDescription: input.shortDescription.trim().slice(0, 400),
     curatorNote: input.curatorNote.trim(),
-    material: "À préciser",
+    material: draft.specifications.find((s) => /mati[èe]re|mat[ée]riau/i.test(s.label))?.value.slice(0, 60) ?? "À préciser",
     details: [{ title: "Description complète", content: input.shortDescription.trim() }],
-    colors: [{ name: "Coloris unique", hex: "#C9BFAC" }],
+    colors: colorNames.length > 0
+      ? colorNames.map((name) => ({ name: name.slice(0, 40), hex: "#C9BFAC" }))
+      : [{ name: "Coloris unique", hex: "#C9BFAC" }],
     gabarits: ["XS", "S", "M", "L", "XL"],
     isNew: true,
     curatedRank: 999,
@@ -236,6 +321,13 @@ export async function publishDraft(input: {
     imageUrls: draft.images,
     supplierRef: draft.supplierRef,
     sourceUrl: draft.sourceUrl,
+    features: input.features.map((f) => f.trim()).filter(Boolean).slice(0, 12).map((f) => f.slice(0, 200)),
+    specifications: input.specifications.slice(0, 15),
+    fieldVisibility: {
+      images: input.visibility.images,
+      features: input.visibility.features,
+      specifications: input.visibility.specifications,
+    },
   });
   await db.insert(productSizes).values({ productSlug: input.slug, name: "Taille unique", stock: 0 });
   await db.update(importDrafts).set({ status: "published" }).where(eq(importDrafts.id, input.draftId));

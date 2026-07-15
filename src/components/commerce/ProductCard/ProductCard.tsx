@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   averageRating,
+  isFieldVisible,
   isOutOfStock,
   productPath,
   type Product,
@@ -37,7 +38,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
       )}
     >
       <div className="relative">
-        {product.imageUrls?.[0] ? (
+        {product.imageUrls?.[0] && isFieldVisible(product, "images") ? (
           // Photo fournisseur (produit importé 7.1) en attendant le shooting DA (D-042).
           <Image
             src={product.imageUrls[0]}
