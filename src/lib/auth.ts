@@ -6,16 +6,31 @@ import * as authSchema from "@/db/auth-schema";
 
 /**
  * Better Auth (6.0/D-051) — e-mail + mot de passe, sessions en base,
- * pas de connexion sociale (H23). Instance paresseuse : elle attend le
- * client Drizzle (Neon ou PGlite selon l'environnement).
+ * plus connexion Google quand GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET
+ * sont posés (URI de redirection : <site>/api/auth/callback/google).
+ * Instance paresseuse : elle attend le client Drizzle (Neon ou PGlite).
  */
 
 async function createAuth() {
   const db = await getDb();
+  const google =
+    process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? {
+          clientId: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        }
+      : null;
   return betterAuth({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     database: drizzleAdapter(db as any, { provider: "pg", schema: authSchema }),
     emailAndPassword: { enabled: true },
+    ...(google ? { socialProviders: { google } } : {}),
+    // Liaison de comptes : une connexion Google avec le même e-mail rejoint
+    // le compte existant (Google fournit des e-mails vérifiés) au lieu d'en
+    // créer un doublon.
+    account: {
+      accountLinking: { enabled: true, trustedProviders: ["google"] },
+    },
     // Secret de développement uniquement — BETTER_AUTH_SECRET requis en production.
     secret: process.env.BETTER_AUTH_SECRET ?? "dev-only-secret-chien-et-chat",
     // Sans BETTER_AUTH_URL, l'URL de base est inférée de la requête entrante.

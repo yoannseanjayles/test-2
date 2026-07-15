@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "@/lib/auth-client";
 import {
   bootstrapAdmin,
+  deleteAdminProduct,
   getAdminUser,
   importAliexpressFiles,
   listAdminProducts,
@@ -156,6 +157,7 @@ function Catalogue() {
 function EditForm({ product, onDone }: { product: AdminProduct; onDone: () => void }) {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   return (
     <form
@@ -217,9 +219,28 @@ function EditForm({ product, onDone }: { product: AdminProduct; onDone: () => vo
           className="rounded-sm border border-border bg-cream-50 p-4 text-body text-bark-900 focus:border-pine-500"
         />
       </label>
-      <div className="mt-5 flex gap-3">
+      <div className="mt-5 flex flex-wrap items-center gap-3">
         <Button type="submit" loading={saving}>Enregistrer</Button>
         <Button type="button" variant="ghost" onClick={onDone}>Annuler</Button>
+        <button
+          type="button"
+          disabled={deleting}
+          onClick={async () => {
+            const message =
+              `Supprimer définitivement « ${product.name} » ?\n\n` +
+              "Ses avis, stocks et alertes de retour en stock seront supprimés. " +
+              "Les commandes déjà passées conservent leur historique.";
+            if (!window.confirm(message)) return;
+            setDeleting(true);
+            const result = await deleteAdminProduct(product.slug);
+            setDeleting(false);
+            if (!result.ok) { setError(result.error ?? "Erreur."); return; }
+            onDone();
+          }}
+          className="text-label ml-auto min-h-11 rounded-md px-4 text-error transition-colors duration-150 hover:bg-error/10 disabled:opacity-50"
+        >
+          {deleting ? "Suppression…" : "Supprimer ce produit"}
+        </button>
       </div>
       <p aria-live="assertive" className="mt-2 text-body-sm text-error">{error}</p>
     </form>
