@@ -31,7 +31,8 @@ const DDL = [
     material text NOT NULL, details jsonb NOT NULL, colors jsonb NOT NULL,
     gabarits jsonb NOT NULL, is_new boolean NOT NULL DEFAULT false,
     curated_rank integer NOT NULL, pairs_with jsonb NOT NULL, tone text NOT NULL,
-    image_urls jsonb NOT NULL DEFAULT '[]'::jsonb)`,
+    image_urls jsonb NOT NULL DEFAULT '[]'::jsonb,
+    supplier_ref text, source_url text)`,
   `CREATE TABLE IF NOT EXISTS product_sizes (
     product_slug text NOT NULL REFERENCES products(slug), name text NOT NULL,
     stock integer NOT NULL DEFAULT 0, PRIMARY KEY (product_slug, name))`,
@@ -88,12 +89,17 @@ const DDL = [
   `CREATE TABLE IF NOT EXISTS import_drafts (
     id text PRIMARY KEY, file_name text NOT NULL, title text NOT NULL,
     supplier_price integer, images jsonb NOT NULL, source_url text,
+    supplier_ref text, description text,
     status text NOT NULL DEFAULT 'draft', created_at timestamp NOT NULL DEFAULT now())`,
   `CREATE INDEX IF NOT EXISTS idx_products_animal_subcategory
     ON products (animal, subcategory)`,
   // Migrations additives (bases créées avant la Phase 7) :
   `ALTER TABLE products ADD COLUMN IF NOT EXISTS image_urls jsonb NOT NULL DEFAULT '[]'::jsonb`,
+  `ALTER TABLE products ADD COLUMN IF NOT EXISTS supplier_ref text`,
+  `ALTER TABLE products ADD COLUMN IF NOT EXISTS source_url text`,
   `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS role text`,
+  `ALTER TABLE import_drafts ADD COLUMN IF NOT EXISTS supplier_ref text`,
+  `ALTER TABLE import_drafts ADD COLUMN IF NOT EXISTS description text`,
 ];
 
 type Database = Awaited<ReturnType<typeof createDb>>;
