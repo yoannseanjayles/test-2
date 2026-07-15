@@ -74,7 +74,8 @@ const DDL = [
     email text NOT NULL, status text NOT NULL DEFAULT 'Payée',
     address text NOT NULL, shipping_method text NOT NULL,
     subtotal integer NOT NULL, shipping integer NOT NULL, total integer NOT NULL,
-    payment_intent_id text, created_at timestamp NOT NULL DEFAULT now())`,
+    payment_intent_id text, return_reason text,
+    created_at timestamp NOT NULL DEFAULT now())`,
   `CREATE TABLE IF NOT EXISTS order_lines (
     id text PRIMARY KEY,
     order_id text NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
@@ -100,6 +101,7 @@ const DDL = [
   `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS role text`,
   `ALTER TABLE import_drafts ADD COLUMN IF NOT EXISTS supplier_ref text`,
   `ALTER TABLE import_drafts ADD COLUMN IF NOT EXISTS description text`,
+  `ALTER TABLE orders ADD COLUMN IF NOT EXISTS return_reason text`,
 ];
 
 type Database = Awaited<ReturnType<typeof createDb>>;

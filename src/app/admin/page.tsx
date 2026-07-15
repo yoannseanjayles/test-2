@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useSession } from "@/lib/auth-client";
 import {
   bootstrapAdmin,
@@ -17,6 +17,8 @@ import {
   type DraftDto,
   type ImportReport,
 } from "@/lib/admin";
+import { listAdminOrders, setOrderStatus, type AdminOrderDto } from "@/lib/admin-orders";
+import { orderTransitions } from "@/lib/account";
 import { subcategories } from "@/lib/catalog/data";
 import { formatPrice } from "@/lib/format";
 import { Badge, Button, FormField } from "@/components/ui";
@@ -77,10 +79,19 @@ export default function AdminPage() {
     );
   }
 
+  const canOps = admin.role === "Admin" || admin.role === "Ops";
+  const canCatalogue = admin.role === "Admin" || admin.role === "Catalogue";
   return (
     <Shell role={admin.role}>
-      <Catalogue />
-      <ImportSection />
+      {canOps && <OrdersSection />}
+      {canCatalogue && <Catalogue />}
+      {canCatalogue && <ImportSection />}
+      {!canOps && !canCatalogue && (
+        <p className="text-body text-bark-700">
+          Les outils éditoriaux arrivent au jalon 4 — rien à afficher pour
+          votre rôle pour l'instant.
+        </p>
+      )}
     </Shell>
   );
 }
@@ -94,6 +105,141 @@ function Shell({ children, role }: { children: React.ReactNode; role?: string })
       </div>
       <div className="mt-8">{children}</div>
     </div>
+  );
+}
+
+/**
+ * Commandes & Ops (jalon 3) — transitions D-016 gardées serveur, retour
+ * client visible avec son motif, remboursement Stripe sur Annulée/Remboursée.
+ */
+function OrdersSection() {
+  const [ordersList, setOrdersList] = useState<AdminOrderDto[] | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const refresh = () => listAdminOrders().then(setOrdersList).catch(() => setOrdersList([]));
+  useEffect(() => { refresh(); }, []);
+
+  if (ordersList === null) {
+    return <p aria-busy="true" className="text-body-sm text-bark-700">Chargement des commandes…</p>;
+  }
+
+  const transition = async (number: string, next: string) => {
+    setBusy(true);
+    setFeedback("");
+    const result = await setOrderStatus(number, next);
+    setBusy(false);
+    setFeedback(result.ok ? `${number} → ${next}. ${result.info ?? ""}` : (result.error ?? "Erreur."));
+    if (result.ok) refresh();
+  };
+
+  return (
+    <section className="mb-10 flex flex-col gap-4">
+      <h2 className="font-heading text-h2 font-semibold text-bark-900">
+        Commandes ({ordersList.length})
+      </h2>
+      <p aria-live="polite" className={`text-body-sm ${/refusé|Erreur|non autorisée|introuvable/.test(feedback) ? "text-error" : "text-success"}`}>
+        {feedback}
+      </p>
+      {ordersList.length === 0 ? (
+        <p className="rounded-lg bg-cream-50 p-6 text-body-sm text-bark-700 shadow-card">
+          Aucune commande pour l'instant.
+        </p>
+      ) : (
+        <div className="overflow-x-auto rounded-lg bg-cream-50 shadow-card">
+          <table className="w-full border-collapse text-body-sm">
+            <thead>
+              <tr className="border-b border-border text-left">
+                {["N°", "Date", "Client", "Total", "Statut", ""].map((h) => (
+                  <th key={h} className="font-heading px-4 py-3 font-semibold text-bark-900">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="text-bark-700">
+              {ordersList.map((order) => {
+                const nextStatuses = orderTransitions[order.status] ?? [];
+                const isOpen = open === order.number;
+                const closed = order.status === "Annulée" || order.status === "Remboursée";
+                return (
+                  <Fragment key={order.number}>
+                    <tr className="border-b border-border last:border-0">
+                      <td className="px-4 py-2.5 font-semibold text-bark-900">{order.number}</td>
+                      <td className="px-4 py-2.5">{new Date(order.createdAt).toLocaleDateString("fr-FR")}</td>
+                      <td className="px-4 py-2.5">{order.email}</td>
+                      <td className="text-price px-4 py-2.5">{formatPrice(order.total)}</td>
+                      <td className="px-4 py-2.5">
+                        <Badge variant={closed ? "stock" : order.status === "Retour en cours" ? "neutral" : "new"}>
+                          {order.status}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <button
+                          type="button"
+                          onClick={() => setOpen(isOpen ? null : order.number)}
+                          aria-expanded={isOpen}
+                          className="text-label min-h-9 text-action underline-offset-4 hover:underline"
+                        >
+                          {isOpen ? "Fermer" : "Détails"}
+                        </button>
+                      </td>
+                    </tr>
+                    {isOpen && (
+                      <tr className="border-b border-border bg-cream-100/60 last:border-0">
+                        <td colSpan={6} className="px-4 py-4">
+                          <div className="flex flex-col gap-3">
+                            <p className="text-body-sm">
+                              <span className="font-semibold text-bark-900">Livraison :</span> {order.address} · {order.shippingMethod}
+                              {order.hasPaymentIntent ? " · paiement Stripe" : " · paiement démonstration"}
+                            </p>
+                            {order.returnReason && (
+                              <p className="text-body-sm">
+                                <span className="font-semibold text-bark-900">Motif du retour client :</span> {order.returnReason}
+                              </p>
+                            )}
+                            <ul className="divide-y divide-border border-y border-border">
+                              {order.lines.map((line, i) => (
+                                <li key={i} className="flex justify-between gap-3 py-2 text-body-sm">
+                                  <span>{line.quantity} × {line.productName} — {line.size} · {line.color}</span>
+                                  <span className="text-price shrink-0">{formatPrice(line.unitPrice * line.quantity)}</span>
+                                </li>
+                              ))}
+                            </ul>
+                            {nextStatuses.length > 0 ? (
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-label text-bark-900">Passer à :</span>
+                                {nextStatuses.map((next) => (
+                                  <Button
+                                    key={next}
+                                    variant={next === "Annulée" || next === "Remboursée" ? "ghost" : "secondary"}
+                                    disabled={busy}
+                                    onClick={() => {
+                                      if (
+                                        (next === "Annulée" || next === "Remboursée") &&
+                                        !window.confirm(`Confirmer « ${next} » pour ${order.number} ? Le paiement sera remboursé intégralement.`)
+                                      ) return;
+                                      transition(order.number, next);
+                                    }}
+                                  >
+                                    {next}
+                                  </Button>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-body-sm text-bark-500">Statut terminal — aucune transition (D-016).</p>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 
