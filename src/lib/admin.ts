@@ -4,8 +4,8 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { and, asc, count, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { user } from "@/db/auth-schema";
-import { products, productSizes } from "@/db/schema";
+import { restockAlerts, user } from "@/db/auth-schema";
+import { products, productSizes, reviews } from "@/db/schema";
 import { getSessionUser } from "@/lib/auth";
 
 /**
@@ -105,6 +105,24 @@ export async function updateAdminProduct(input: {
       .where(and(eq(productSizes.productSlug, input.slug), eq(productSizes.name, s.name)));
   }
   // Produit à jour < 60 s sur la boutique (revalidation ISR, 5.0 §4).
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+/**
+ * Suppression définitive d'un produit — avis, stocks et alertes restock
+ * associés compris. Les lignes de commande passées conservent leur copie
+ * dénormalisée (nom, prix) : l'historique client reste intact.
+ */
+export async function deleteAdminProduct(slug: string): Promise<{ ok: boolean; error?: string }> {
+  await requireRole("Catalogue");
+  const db = await getDb();
+  const [existing] = await db.select({ slug: products.slug }).from(products).where(eq(products.slug, slug));
+  if (!existing) return { ok: false, error: "Produit introuvable." };
+  await db.delete(reviews).where(eq(reviews.productSlug, slug));
+  await db.delete(productSizes).where(eq(productSizes.productSlug, slug));
+  await db.delete(restockAlerts).where(eq(restockAlerts.productSlug, slug));
+  await db.delete(products).where(eq(products.slug, slug));
   revalidatePath("/", "layout");
   return { ok: true };
 }
