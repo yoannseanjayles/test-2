@@ -10,6 +10,8 @@ import { extractHtml, parseAliexpressPage } from "./aliexpress";
  */
 const HTML_BODY = `<html><head>
 <meta property="og:title" content="Fontaine a eau pour chat 1200ml sans fil"/>
+<meta property="og:url" content="https://fr.aliexpress.com/item/1005006576542.html"/>
+<meta property="og:description" content="Fontaine silencieuse 1200 ml, pompe basse consommation, filtration triple couche."/>
 <title>Fontaine a eau pour chat | AliExpress</title>
 </head><body>
 <span>11,99 €</span>
@@ -18,6 +20,8 @@ const HTML_BODY = `<html><head>
 <img src="https://ae-pic-a1.aliexpress-media.com/kf/S111.jpg_220x220q75.jpg_.avif" alt="vue 1">
 <img src="https://ae-pic-a1.aliexpress-media.com/kf/S222.jpg_960x960q75.jpg_.avif" alt="vue 2">
 <img src="https://ae-pic-a1.aliexpress-media.com/kf/S222.jpg_220x220q75.jpg_.avif" alt="doublon miniature">
+<img data-src="https://ae-pic-a1.aliexpress-media.com/kf/S444.jpg_720x720q75.jpg_.avif" alt="lazy loading">
+<script>window.runParams={"imagePathList":["https:\\u002F\\u002Fae-pic-a1.aliexpress-media.com\\u002Fkf\\u002FS555.jpg_960x960q75.jpg_.avif"]}</script>
 <img src="https://ae01.alicdn.com/kf/S333.jpg" alt="notice">
 <img src="https://ae01.alicdn.com/kf/Sicone/79x79.png" alt="">
 <img src="https://example.com/pub.jpg" alt="hors CDN produit">
@@ -66,12 +70,27 @@ describe("parseAliexpressPage", () => {
     expect(parsed.supplierPrice).toBe(1199);
   });
 
-  it("extrait les photos des deux CDN, remonte les miniatures en 960x960, exclut icônes et doublons", () => {
+  it("extrait les photos des deux CDN — src, data-src et JSON échappé des scripts — en 960x960, sans icônes ni doublons", () => {
     expect(parsed.images).toEqual([
       "https://ae-pic-a1.aliexpress-media.com/kf/S111.jpg_960x960q75.jpg_.avif",
       "https://ae-pic-a1.aliexpress-media.com/kf/S222.jpg_960x960q75.jpg_.avif",
+      "https://ae-pic-a1.aliexpress-media.com/kf/S444.jpg_960x960q75.jpg_.avif",
+      "https://ae-pic-a1.aliexpress-media.com/kf/S555.jpg_960x960q75.jpg_.avif",
       "https://ae01.alicdn.com/kf/S333.jpg",
     ]);
+  });
+
+  it("lit la référence article et la description fournisseur", () => {
+    expect(parsed.supplierRef).toBe("1005006576542");
+    expect(parsed.description).toBe(
+      "Fontaine silencieuse 1200 ml, pompe basse consommation, filtration triple couche.",
+    );
+  });
+
+  it("retrouve l'URL d'origine via og:url sur un .html brut (sans en-tête de snapshot)", () => {
+    const parsedHtml = parseAliexpressPage(HTML_BODY)!;
+    expect(parsedHtml.sourceUrl).toBe("https://fr.aliexpress.com/item/1005006576542.html");
+    expect(parsedHtml.supplierRef).toBe("1005006576542");
   });
 
   it("renvoie null sans titre exploitable", () => {

@@ -41,6 +41,9 @@ export const products = pgTable("products", {
   tone: text("tone").$type<"cream" | "sage" | "caramel" | "terracotta">().notNull(),
   /** Photos fournisseur (import 7.1) — vides pour le catalogue curé (photos statiques). */
   imageUrls: jsonb("image_urls").$type<string[]>().notNull().default([]),
+  /** Traçabilité import (7.1) : référence article et page fournisseur d'origine. */
+  supplierRef: text("supplier_ref"),
+  sourceUrl: text("source_url"),
 });
 
 export const productSizes = pgTable("product_sizes", {

@@ -108,6 +108,8 @@ export const importDrafts = pgTable("import_drafts", {
   supplierPrice: integer("supplier_price"),
   images: jsonb("images").$type<string[]>().notNull(),
   sourceUrl: text("source_url"),
+  supplierRef: text("supplier_ref"),
+  description: text("description"),
   status: text("status").$type<"draft" | "published">().notNull().default("draft"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

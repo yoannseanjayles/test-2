@@ -178,6 +178,19 @@ function EditForm({ product, onDone }: { product: AdminProduct; onDone: () => vo
       }}
     >
       <h3 className="font-heading text-h3 font-semibold text-bark-900">{product.name}</h3>
+      {product.supplierRef && (
+        <p className="text-caption mt-1 text-bark-700">
+          Produit importé — réf. AliExpress {product.supplierRef}
+          {product.sourceUrl && (
+            <>
+              {" · "}
+              <a href={product.sourceUrl} target="_blank" rel="noreferrer noopener" className="text-action underline-offset-4 hover:underline">
+                page d'origine ↗
+              </a>
+            </>
+          )}
+        </p>
+      )}
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <FormField label="Prix TTC (€)" name="price" type="number" step="0.01" min="1" defaultValue={(product.price / 100).toFixed(2)} required />
         <FormField label="Rang « Notre sélection » (H17)" name="rank" type="number" min="1" defaultValue={String(product.curatedRank)} required />
@@ -300,8 +313,17 @@ function DraftCard({ draft, onPublished }: { draft: DraftDto; onPublished: () =>
       </div>
       <p className="text-caption mt-1 text-bark-700">
         {draft.fileName}
+        {draft.supplierRef && <> · réf. AliExpress {draft.supplierRef}</>}
         {draft.supplierPrice !== null && <> · prix fournisseur : {formatPrice(draft.supplierPrice)}</>}
         {draft.images.length > 0 && <> · {draft.images.length} image(s) fournisseur (à remplacer, D-042)</>}
+        {draft.sourceUrl && (
+          <>
+            {" · "}
+            <a href={draft.sourceUrl} target="_blank" rel="noreferrer noopener" className="text-action underline-offset-4 hover:underline">
+              page d'origine ↗
+            </a>
+          </>
+        )}
       </p>
       {draft.images.length > 0 && (
         <ul className="mt-3 flex flex-wrap gap-2">
@@ -366,6 +388,7 @@ function DraftCard({ draft, onPublished }: { draft: DraftDto; onPublished: () =>
           <label className="mt-4 flex flex-col gap-1.5">
             <span className="text-label text-bark-900">Accroche (2–3 phrases, réécrites)</span>
             <textarea name="description" rows={2} required
+              defaultValue={draft.description ?? ""}
               className="rounded-sm border border-border bg-cream-50 p-4 text-body text-bark-900 focus:border-pine-500" />
           </label>
           <label className="mt-4 flex flex-col gap-1.5">

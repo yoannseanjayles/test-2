@@ -59,6 +59,8 @@ export type AdminProduct = {
   isNew: boolean;
   curatorNote: string;
   sizes: { name: string; stock: number }[];
+  supplierRef: string | null;
+  sourceUrl: string | null;
 };
 
 export async function listAdminProducts(): Promise<AdminProduct[]> {
@@ -69,6 +71,7 @@ export async function listAdminProducts(): Promise<AdminProduct[]> {
   return rows.map((p) => ({
     slug: p.slug, name: p.name, animal: p.animal, subcategory: p.subcategory,
     price: p.price, curatedRank: p.curatedRank, isNew: p.isNew, curatorNote: p.curatorNote,
+    supplierRef: p.supplierRef, sourceUrl: p.sourceUrl,
     sizes: sizes.filter((s) => s.productSlug === p.slug).map((s) => ({ name: s.name, stock: s.stock })),
   }));
 }
@@ -133,6 +136,8 @@ export async function importAliexpressFiles(formData: FormData): Promise<ImportR
         supplierPrice: parsed.supplierPrice,
         images: parsed.images,
         sourceUrl: parsed.sourceUrl,
+        supplierRef: parsed.supplierRef,
+        description: parsed.description,
       });
       reports.push({ fileName, ok: true, title: parsed.title });
     } catch (error) {
@@ -149,6 +154,8 @@ export type DraftDto = {
   supplierPrice: number | null;
   images: string[];
   sourceUrl: string | null;
+  supplierRef: string | null;
+  description: string | null;
 };
 
 export async function listDrafts(): Promise<DraftDto[]> {
@@ -160,6 +167,7 @@ export async function listDrafts(): Promise<DraftDto[]> {
   return rows.map((r) => ({
     id: r.id, fileName: r.fileName, title: r.title,
     supplierPrice: r.supplierPrice, images: r.images, sourceUrl: r.sourceUrl,
+    supplierRef: r.supplierRef, description: r.description,
   }));
 }
 
@@ -208,6 +216,8 @@ export async function publishDraft(input: {
     pairsWith: [],
     tone: "cream",
     imageUrls: draft.images,
+    supplierRef: draft.supplierRef,
+    sourceUrl: draft.sourceUrl,
   });
   await db.insert(productSizes).values({ productSlug: input.slug, name: "Taille unique", stock: 0 });
   await db.update(importDrafts).set({ status: "published" }).where(eq(importDrafts.id, input.draftId));

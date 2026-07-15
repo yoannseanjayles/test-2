@@ -67,6 +67,9 @@ export type Product = {
   tone: "cream" | "sage" | "caramel" | "terracotta";
   /** Photos fournisseur distantes (produits importés 7.1) — prioritaires sur le placeholder. */
   imageUrls?: string[];
+  /** Traçabilité import (7.1) — référence article et page fournisseur, usage interne. */
+  supplierRef?: string | null;
+  sourceUrl?: string | null;
 };
 
 export type Subcategory = {
