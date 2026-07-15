@@ -1,11 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { Fragment, useEffect, useState } from "react";
-import { useSession } from "@/lib/auth-client";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
+import {
+  ArrowUpRight,
+  BookOpen,
+  ClipboardList,
+  FileDown,
+  LayoutDashboard,
+  PackageOpen,
+  Settings2,
+  Tags,
+} from "lucide-react";
+import { useSession, signOut } from "@/lib/auth-client";
 import {
   bootstrapAdmin,
   deleteAdminProduct,
+  getAdminSummary,
   getAdminUser,
   importAliexpressFiles,
   listAdminProducts,
@@ -13,6 +24,7 @@ import {
   publishDraft,
   updateAdminProduct,
   type AdminProduct,
+  type AdminSummary,
   type AdminUser,
   type DraftDto,
   type ImportReport,
@@ -34,14 +46,32 @@ import { subcategories } from "@/lib/catalog/data";
 import { formatPrice } from "@/lib/format";
 import { Badge, Button, FormField } from "@/components/ui";
 
+/** Sections du back-office — visibles selon le rôle (D-017/H42). */
+type SectionId = "dashboard" | "orders" | "catalogue" | "import" | "editorial" | "settings";
+
+const SECTIONS: {
+  id: SectionId;
+  label: string;
+  Icon: typeof LayoutDashboard;
+  roles: ("Admin" | "Ops" | "Catalogue" | "Éditorial")[];
+}[] = [
+  { id: "dashboard", label: "Vue d'ensemble", Icon: LayoutDashboard, roles: ["Admin", "Ops", "Catalogue", "Éditorial"] },
+  { id: "orders", label: "Commandes", Icon: ClipboardList, roles: ["Admin", "Ops"] },
+  { id: "catalogue", label: "Catalogue", Icon: Tags, roles: ["Admin", "Catalogue"] },
+  { id: "import", label: "Import AliExpress", Icon: FileDown, roles: ["Admin", "Catalogue"] },
+  { id: "editorial", label: "Éditorial", Icon: BookOpen, roles: ["Admin", "Éditorial"] },
+  { id: "settings", label: "Réglages", Icon: Settings2, roles: ["Admin"] },
+];
+
 /**
- * Back-office — jalon 1 (D-052) : garde par rôle (serveur), catalogue
- * éditable (prix, stocks, rang H17, note de curation D-025), ISR < 60 s.
+ * Back-office (D-052) — garde par rôle (serveur), navigation par sections :
+ * vue d'ensemble chiffrée, commandes, catalogue, import, éditorial, réglages.
  */
 export default function AdminPage() {
   const { data: session, isPending } = useSession();
   const [admin, setAdmin] = useState<AdminUser | null | undefined>(undefined);
   const [message, setMessage] = useState("");
+  const [section, setSection] = useState<SectionId>("dashboard");
 
   const refresh = () => getAdminUser().then(setAdmin);
   useEffect(() => {
@@ -50,12 +80,12 @@ export default function AdminPage() {
   }, [session, isPending]);
 
   if (isPending || admin === undefined) {
-    return <Shell><p aria-busy="true" className="text-body-sm text-bark-700">Chargement…</p></Shell>;
+    return <Gate><p aria-busy="true" className="text-body-sm text-bark-700">Chargement…</p></Gate>;
   }
 
   if (!session) {
     return (
-      <Shell>
+      <Gate>
         <p className="text-body text-bark-700">
           Espace réservé à l'équipe.{" "}
           <Link href="/compte" className="text-action underline-offset-4 hover:underline">
@@ -63,13 +93,13 @@ export default function AdminPage() {
           </Link>{" "}
           puis revenez ici.
         </p>
-      </Shell>
+      </Gate>
     );
   }
 
   if (!admin) {
     return (
-      <Shell>
+      <Gate>
         <p className="text-body text-bark-700">
           Votre compte n'a pas de rôle back-office (H42 : les rôles sont
           attribués en base).
@@ -86,33 +116,173 @@ export default function AdminPage() {
           Devenir administrateur (amorçage démo — 1ᵉʳ admin uniquement)
         </Button>
         <p aria-live="polite" className="mt-2 text-body-sm text-error">{message}</p>
-      </Shell>
+      </Gate>
     );
+  }
+
+  const allowed = SECTIONS.filter((s) => s.roles.includes(admin.role));
+  const active = allowed.some((s) => s.id === section) ? section : "dashboard";
+
+  return (
+    <div className="min-h-screen bg-cream-100">
+      {/* Barre d'en-tête admin */}
+      <header className="border-b border-border bg-cream-50">
+        <div className="mx-auto flex max-w-page flex-wrap items-center justify-between gap-3 px-4 py-4 lg:px-6">
+          <div className="flex items-baseline gap-3">
+            <span className="font-display text-xl font-semibold text-bark-900">chien et chat</span>
+            <span className="text-caption rounded-full bg-pine-700 px-2.5 py-0.5 text-cream-50">Back-office</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-caption hidden text-bark-700 sm:inline">
+              {admin.email} · rôle {admin.role}
+            </span>
+            <Link
+              href="/"
+              className="text-label inline-flex min-h-9 items-center gap-1 text-action underline-offset-4 hover:underline"
+            >
+              Voir la boutique <ArrowUpRight aria-hidden="true" className="size-3.5" />
+            </Link>
+            <button
+              type="button"
+              onClick={() => signOut()}
+              className="text-label min-h-9 text-bark-500 hover:text-error"
+            >
+              Se déconnecter
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-page px-4 py-6 lg:grid lg:grid-cols-[230px_1fr] lg:gap-8 lg:px-6 lg:py-8">
+        {/* Navigation — verticale desktop, ruban défilant mobile */}
+        <nav aria-label="Sections du back-office" className="lg:sticky lg:top-6 lg:self-start">
+          <ul className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-3 lg:mx-0 lg:flex-col lg:px-0 lg:pb-0">
+            {allowed.map(({ id, label, Icon }) => (
+              <li key={id} className="shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setSection(id)}
+                  aria-current={active === id ? "page" : undefined}
+                  className={
+                    active === id
+                      ? "text-label flex min-h-11 w-full items-center gap-2.5 rounded-md bg-pine-700 px-4 text-white"
+                      : "text-label flex min-h-11 w-full items-center gap-2.5 rounded-md px-4 text-bark-700 transition-colors duration-150 hover:bg-cream-300 hover:text-bark-900"
+                  }
+                >
+                  <Icon aria-hidden="true" className="size-4 shrink-0" strokeWidth={1.75} />
+                  {label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <main className="min-w-0 pt-4 lg:pt-0">
+          {active === "dashboard" && <Dashboard admin={admin} go={setSection} />}
+          {active === "orders" && <OrdersSection />}
+          {active === "catalogue" && <Catalogue />}
+          {active === "import" && <ImportSection />}
+          {active === "editorial" && <EditorialSection />}
+          {active === "settings" && <SettingsSection />}
+        </main>
+      </div>
+    </div>
+  );
+}
+
+/** Écran d'accès (connexion / amorçage) — avant l'entrée dans le shell. */
+function Gate({ children }: { children: ReactNode }) {
+  return (
+    <div className="mx-auto max-w-page px-4 py-10 lg:px-6">
+      <h1 className="font-display text-h1 font-[560] text-bark-900">Back-office</h1>
+      <div className="mt-8 max-w-xl rounded-lg bg-cream-50 p-6 shadow-card">{children}</div>
+    </div>
+  );
+}
+
+/** En-tête commun des sections — titre, description, action à droite. */
+function SectionHeader({ title, description, action }: { title: string; description?: string; action?: ReactNode }) {
+  return (
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h1 className="font-display text-h2 font-[560] text-bark-900">{title}</h1>
+        {description && <p className="mt-1 max-w-2xl text-body-sm text-bark-700">{description}</p>}
+      </div>
+      {action}
+    </div>
+  );
+}
+
+/** Pastille de statut de commande — teinte par famille d'états. */
+function StatusPill({ status }: { status: string }) {
+  const tone =
+    status === "Annulée" || status === "Échec de paiement"
+      ? "bg-terracotta-100 text-terracotta-900"
+      : status === "Remboursée"
+        ? "bg-cream-300 text-bark-700"
+        : status === "Retour en cours"
+          ? "bg-caramel-100 text-caramel-900"
+          : status === "Expédiée" || status === "Livrée" || status === "Clôturée"
+            ? "bg-sage-100 text-pine-900"
+            : "bg-pine-100 text-pine-900";
+  return (
+    <span className={`text-caption inline-flex min-h-6 items-center whitespace-nowrap rounded-full px-2.5 font-semibold ${tone}`}>
+      {status}
+    </span>
+  );
+}
+
+/** Vue d'ensemble — indicateurs par rôle, raccourcis vers les sections. */
+function Dashboard({ admin, go }: { admin: AdminUser; go: (s: SectionId) => void }) {
+  const [summary, setSummary] = useState<AdminSummary | null>(null);
+  useEffect(() => {
+    getAdminSummary().then(setSummary).catch(() => {});
+  }, []);
+
+  if (summary === null) {
+    return <p aria-busy="true" className="text-body-sm text-bark-700">Chargement de la vue d'ensemble…</p>;
   }
 
   const canOps = admin.role === "Admin" || admin.role === "Ops";
   const canCatalogue = admin.role === "Admin" || admin.role === "Catalogue";
   const canEditorial = admin.role === "Admin" || admin.role === "Éditorial";
-  return (
-    <Shell role={admin.role}>
-      {canOps && <OrdersSection />}
-      {canCatalogue && <Catalogue />}
-      {canCatalogue && <ImportSection />}
-      {canEditorial && <EditorialSection />}
-      {admin.role === "Admin" && <SettingsSection />}
-    </Shell>
-  );
-}
 
-function Shell({ children, role }: { children: React.ReactNode; role?: string }) {
+  const cards: { label: string; value: number; hint?: string; alert?: boolean; section: SectionId; show: boolean }[] = [
+    { label: "Commandes à traiter", value: summary.pendingOrders, hint: "payées ou en préparation", section: "orders", show: canOps },
+    { label: "Retours en cours", value: summary.returnsInProgress, alert: summary.returnsInProgress > 0, hint: "à rembourser après réception", section: "orders", show: canOps },
+    { label: "Produits au catalogue", value: summary.products, section: "catalogue", show: canCatalogue },
+    { label: "Ruptures de stock", value: summary.outOfStock, alert: summary.outOfStock > 0, hint: `${summary.lowStock} produit(s) en stock faible`, section: "catalogue", show: canCatalogue },
+    { label: "Brouillons d'import", value: summary.drafts, hint: "à compléter et publier", section: "import", show: canCatalogue },
+    { label: "Guides publiés", value: summary.guides, section: "editorial", show: canEditorial },
+    { label: "Inscrits newsletter", value: summary.subscribers, hint: "export CSV dans Éditorial", section: "editorial", show: canEditorial },
+  ];
+
   return (
-    <div className="mx-auto max-w-page px-4 py-10 lg:px-6">
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="font-display text-h1 font-[560] text-bark-900">Back-office</h1>
-        {role && <Badge variant="new">Rôle : {role}</Badge>}
+    <section>
+      <SectionHeader
+        title={`Bonjour ${admin.name || admin.email}`}
+        description="L'essentiel de la boutique en un coup d'œil — cliquez sur une carte pour ouvrir la section."
+      />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {cards.filter((c) => c.show).map((card) => (
+          <button
+            key={card.label}
+            type="button"
+            onClick={() => go(card.section)}
+            className="group rounded-lg bg-cream-50 p-5 text-left shadow-card transition-shadow duration-150 hover:shadow-lg focus-visible:outline-2"
+          >
+            <p className="text-label flex items-center justify-between text-bark-700">
+              {card.label}
+              <ArrowUpRight aria-hidden="true" className="size-4 text-bark-300 transition-colors duration-150 group-hover:text-action" />
+            </p>
+            <p className={`font-display mt-2 text-4xl font-[560] ${card.alert ? "text-terracotta-700" : "text-bark-900"}`}>
+              {card.value}
+            </p>
+            {card.hint && <p className="text-caption mt-1 text-bark-500">{card.hint}</p>}
+          </button>
+        ))}
       </div>
-      <div className="mt-8">{children}</div>
-    </div>
+    </section>
   );
 }
 
@@ -143,15 +313,14 @@ function EditorialSection() {
   };
 
   return (
-    <section className="mb-10 flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-heading text-h2 font-semibold text-bark-900">
-          Guides & Conseils ({guides.length})
-        </h2>
-        {!editing && !creating && (
-          <Button variant="secondary" onClick={() => setCreating(true)}>Nouveau guide</Button>
-        )}
-      </div>
+    <section className="flex flex-col gap-4">
+      <SectionHeader
+        title="Éditorial"
+        description={`${guides.length} guides en ligne — contenu par sections « ## », mis à jour sur la boutique en moins d'une minute.`}
+        action={!editing && !creating
+          ? <Button variant="secondary" onClick={() => setCreating(true)}>Nouveau guide</Button>
+          : undefined}
+      />
       {editing || creating ? (
         <GuideForm
           guide={editing ?? emptyGuide}
@@ -322,8 +491,11 @@ function SettingsSection() {
   }
 
   return (
-    <section className="mb-10">
-      <h2 className="font-heading text-h2 font-semibold text-bark-900">Réglages livraison</h2>
+    <section>
+      <SectionHeader
+        title="Réglages"
+        description="Config livraison (D-039) : seuil de livraison offerte et tarifs des 3 modes — appliqués au tunnel, au panier, au bandeau et aux pages légales."
+      />
       <form
         className="mt-4 max-w-2xl rounded-lg bg-cream-50 p-6 shadow-card"
         onSubmit={async (event) => {
@@ -367,11 +539,21 @@ function SettingsSection() {
  * Commandes & Ops (jalon 3) — transitions D-016 gardées serveur, retour
  * client visible avec son motif, remboursement Stripe sur Annulée/Remboursée.
  */
+/** Familles de statuts pour le filtre des commandes. */
+const ORDER_FILTERS = [
+  { id: "all", label: "Toutes", match: () => true },
+  { id: "todo", label: "À traiter", match: (s: string) => s.startsWith("Payée") || s === "En préparation" },
+  { id: "shipped", label: "Expédiées", match: (s: string) => ["Expédiée", "Livrée", "Clôturée"].includes(s) },
+  { id: "returns", label: "Retours", match: (s: string) => s === "Retour en cours" || s === "Remboursée" },
+  { id: "issues", label: "Annulées / échecs", match: (s: string) => s === "Annulée" || s === "Échec de paiement" || s === "En attente de paiement" },
+] as const;
+
 function OrdersSection() {
   const [ordersList, setOrdersList] = useState<AdminOrderDto[] | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [feedback, setFeedback] = useState("");
   const [busy, setBusy] = useState(false);
+  const [filter, setFilter] = useState<(typeof ORDER_FILTERS)[number]["id"]>("all");
 
   const refresh = () => listAdminOrders().then(setOrdersList).catch(() => setOrdersList([]));
   useEffect(() => { refresh(); }, []);
@@ -389,18 +571,46 @@ function OrdersSection() {
     if (result.ok) refresh();
   };
 
+  const activeFilter = ORDER_FILTERS.find((f) => f.id === filter)!;
+  const visible = ordersList.filter((o) => activeFilter.match(o.status));
+
   return (
-    <section className="mb-10 flex flex-col gap-4">
-      <h2 className="font-heading text-h2 font-semibold text-bark-900">
-        Commandes ({ordersList.length})
-      </h2>
+    <section className="flex flex-col gap-4">
+      <SectionHeader
+        title="Commandes"
+        description="Transitions de statuts D-016 — le client est notifié par e-mail à chaque étape ; Annulée et Remboursée déclenchent le remboursement Stripe."
+      />
+      {/* Filtres par famille de statuts */}
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrer les commandes">
+        {ORDER_FILTERS.map((f) => {
+          const count = ordersList.filter((o) => f.match(o.status)).length;
+          return (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setFilter(f.id)}
+              aria-pressed={filter === f.id}
+              className={
+                filter === f.id
+                  ? "text-label min-h-9 rounded-full bg-pine-700 px-4 text-white"
+                  : "text-label min-h-9 rounded-full border border-border bg-cream-50 px-4 text-bark-700 transition-colors duration-150 hover:border-bark-300"
+              }
+            >
+              {f.label} ({count})
+            </button>
+          );
+        })}
+      </div>
       <p aria-live="polite" className={`text-body-sm ${/refusé|Erreur|non autorisée|introuvable/.test(feedback) ? "text-error" : "text-success"}`}>
         {feedback}
       </p>
-      {ordersList.length === 0 ? (
-        <p className="rounded-lg bg-cream-50 p-6 text-body-sm text-bark-700 shadow-card">
-          Aucune commande pour l'instant.
-        </p>
+      {visible.length === 0 ? (
+        <div className="rounded-lg bg-cream-50 p-8 text-center shadow-card">
+          <PackageOpen aria-hidden="true" className="mx-auto size-8 text-bark-300" strokeWidth={1.5} />
+          <p className="mt-3 text-body-sm text-bark-700">
+            {ordersList.length === 0 ? "Aucune commande pour l'instant." : "Aucune commande dans ce filtre."}
+          </p>
+        </div>
       ) : (
         <div className="overflow-x-auto rounded-lg bg-cream-50 shadow-card">
           <table className="w-full border-collapse text-body-sm">
@@ -412,21 +622,18 @@ function OrdersSection() {
               </tr>
             </thead>
             <tbody className="text-bark-700">
-              {ordersList.map((order) => {
+              {visible.map((order) => {
                 const nextStatuses = orderTransitions[order.status] ?? [];
                 const isOpen = open === order.number;
-                const closed = order.status === "Annulée" || order.status === "Remboursée";
                 return (
                   <Fragment key={order.number}>
-                    <tr className="border-b border-border last:border-0">
+                    <tr className="border-b border-border transition-colors duration-150 last:border-0 hover:bg-cream-100/70">
                       <td className="px-4 py-2.5 font-semibold text-bark-900">{order.number}</td>
                       <td className="px-4 py-2.5">{new Date(order.createdAt).toLocaleDateString("fr-FR")}</td>
                       <td className="px-4 py-2.5">{order.email}</td>
                       <td className="text-price px-4 py-2.5">{formatPrice(order.total)}</td>
                       <td className="px-4 py-2.5">
-                        <Badge variant={closed ? "stock" : order.status === "Retour en cours" ? "neutral" : "new"}>
-                          {order.status}
-                        </Badge>
+                        <StatusPill status={order.status} />
                       </td>
                       <td className="px-4 py-2.5">
                         <button
@@ -498,21 +705,78 @@ function OrdersSection() {
   );
 }
 
+const STOCK_FILTERS = [
+  { id: "all", label: "Tous", match: () => true },
+  { id: "low", label: "Stock faible", match: (stock: number) => stock > 0 && stock <= 5 },
+  { id: "out", label: "Rupture", match: (stock: number) => stock === 0 },
+] as const;
+
 function Catalogue() {
   const [items, setItems] = useState<AdminProduct[] | null>(null);
   const [editing, setEditing] = useState<AdminProduct | null>(null);
+  const [query, setQuery] = useState("");
+  const [stockFilter, setStockFilter] = useState<(typeof STOCK_FILTERS)[number]["id"]>("all");
   const refresh = () => listAdminProducts().then(setItems).catch(() => setItems([]));
   useEffect(() => { refresh(); }, []);
 
   if (items === null) return <p aria-busy="true" className="text-body-sm text-bark-700">Chargement…</p>;
 
-  return (
-    <div className="flex flex-col gap-6">
-      <h2 className="font-heading text-h2 font-semibold text-bark-900">
-        Catalogue ({items.length} produits)
-      </h2>
-      {editing ? (
+  if (editing) {
+    return (
+      <div className="flex flex-col gap-6">
+        <SectionHeader title="Modifier un produit" description={editing.name} />
         <EditForm product={editing} onDone={() => { setEditing(null); refresh(); }} />
+      </div>
+    );
+  }
+
+  const activeStock = STOCK_FILTERS.find((f) => f.id === stockFilter)!;
+  const q = query.trim().toLowerCase();
+  const visible = items.filter((p) => {
+    const stock = p.sizes.reduce((a, s) => a + s.stock, 0);
+    if (!activeStock.match(stock)) return false;
+    if (!q) return true;
+    return `${p.name} ${p.brand} ${p.animal} ${p.subcategory} ${p.supplierRef ?? ""}`.toLowerCase().includes(q);
+  });
+
+  return (
+    <div className="flex flex-col gap-4">
+      <SectionHeader
+        title="Catalogue"
+        description={`${items.length} produits — prix, stocks, rang de sélection (H17) et note de curation (D-025).`}
+      />
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Rechercher (nom, marque, univers, réf.)…"
+          aria-label="Rechercher un produit"
+          className="h-11 w-full max-w-sm rounded-sm border border-border bg-cream-50 px-4 text-body-sm text-bark-900 placeholder:text-bark-500 focus:border-pine-500 focus:outline-none"
+        />
+        <div className="flex gap-2" role="group" aria-label="Filtrer par stock">
+          {STOCK_FILTERS.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setStockFilter(f.id)}
+              aria-pressed={stockFilter === f.id}
+              className={
+                stockFilter === f.id
+                  ? "text-label min-h-9 rounded-full bg-pine-700 px-4 text-white"
+                  : "text-label min-h-9 rounded-full border border-border bg-cream-50 px-4 text-bark-700 transition-colors duration-150 hover:border-bark-300"
+              }
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {visible.length === 0 ? (
+        <div className="rounded-lg bg-cream-50 p-8 text-center shadow-card">
+          <Tags aria-hidden="true" className="mx-auto size-8 text-bark-300" strokeWidth={1.5} />
+          <p className="mt-3 text-body-sm text-bark-700">Aucun produit ne correspond à cette recherche.</p>
+        </div>
       ) : (
         <div className="overflow-x-auto rounded-lg bg-cream-50 shadow-card">
           <table className="w-full border-collapse text-body-sm">
@@ -524,11 +788,14 @@ function Catalogue() {
               </tr>
             </thead>
             <tbody className="text-bark-700">
-              {items.map((p) => {
+              {visible.map((p) => {
                 const stock = p.sizes.reduce((a, s) => a + s.stock, 0);
                 return (
-                  <tr key={p.slug} className="border-b border-border last:border-0">
-                    <td className="px-4 py-2.5 font-semibold text-bark-900">{p.name}</td>
+                  <tr key={p.slug} className="border-b border-border transition-colors duration-150 last:border-0 hover:bg-cream-100/70">
+                    <td className="px-4 py-2.5">
+                      <span className="font-semibold text-bark-900">{p.name}</span>
+                      {p.supplierRef && <span className="text-caption block text-bark-500">import · réf. {p.supplierRef}</span>}
+                    </td>
                     <td className="px-4 py-2.5">{p.animal} / {p.subcategory}</td>
                     <td className="text-price px-4 py-2.5">{formatPrice(p.price)}</td>
                     <td className="px-4 py-2.5">{p.curatedRank}</td>
@@ -713,16 +980,11 @@ function ImportSection() {
   };
 
   return (
-    <section className="mt-14">
-      <h2 className="font-heading text-h2 font-semibold text-bark-900">
-        Importer depuis AliExpress
-      </h2>
-      <p className="mt-2 max-w-2xl text-body-sm text-bark-700">
-        Enregistrez les pages produit depuis votre navigateur (« Enregistrer
-        sous » → page complète, .html ou .mhtml) puis déposez-les ici. Chaque
-        page devient un brouillon à compléter — rien n'est publié sans
-        réécriture ni note de curation.
-      </p>
+    <section>
+      <SectionHeader
+        title="Import AliExpress"
+        description="Enregistrez les pages produit depuis votre navigateur (« Enregistrer sous », .html ou .mhtml) puis déposez-les ici. Chaque page devient un brouillon à compléter — rien n'est publié sans réécriture ni note de curation (D-042)."
+      />
       <label
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}

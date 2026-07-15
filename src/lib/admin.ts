@@ -4,8 +4,8 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { and, asc, count, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { restockAlerts, user } from "@/db/auth-schema";
-import { products, productSizes, reviews } from "@/db/schema";
+import { newsletterSubscribers, orders, restockAlerts, user } from "@/db/auth-schema";
+import { guides, products, productSizes, reviews } from "@/db/schema";
 import { getSessionUser } from "@/lib/auth";
 
 /**
@@ -47,6 +47,47 @@ export async function requireRole(...roles: AdminRole[]): Promise<AdminUser> {
     throw new Error("Accès refusé.");
   }
   return admin;
+}
+
+/** Indicateurs du tableau de bord — chaque rôle voit sa vue d'ensemble. */
+export type AdminSummary = {
+  pendingOrders: number;
+  returnsInProgress: number;
+  products: number;
+  outOfStock: number;
+  lowStock: number;
+  drafts: number;
+  guides: number;
+  subscribers: number;
+};
+
+export async function getAdminSummary(): Promise<AdminSummary> {
+  await requireRole("Ops", "Catalogue", "Éditorial");
+  const db = await getDb();
+  const [orderRows, sizeRows, [draftCount], [guideCount], [subscriberCount], [productCount]] =
+    await Promise.all([
+      db.select({ status: orders.status }).from(orders),
+      db.select().from(productSizes),
+      db.select({ n: count() }).from(importDrafts).where(eq(importDrafts.status, "draft")),
+      db.select({ n: count() }).from(guides),
+      db.select({ n: count() }).from(newsletterSubscribers),
+      db.select({ n: count() }).from(products),
+    ]);
+  const stockBySlug = new Map<string, number>();
+  for (const s of sizeRows) {
+    stockBySlug.set(s.productSlug, (stockBySlug.get(s.productSlug) ?? 0) + s.stock);
+  }
+  const totals = [...stockBySlug.values()];
+  return {
+    pendingOrders: orderRows.filter((o) => o.status.startsWith("Payée") || o.status === "En préparation").length,
+    returnsInProgress: orderRows.filter((o) => o.status === "Retour en cours").length,
+    products: productCount?.n ?? 0,
+    outOfStock: totals.filter((t) => t === 0).length,
+    lowStock: totals.filter((t) => t > 0 && t <= 5).length,
+    drafts: draftCount?.n ?? 0,
+    guides: guideCount?.n ?? 0,
+    subscribers: subscriberCount?.n ?? 0,
+  };
 }
 
 export type AdminProduct = {
