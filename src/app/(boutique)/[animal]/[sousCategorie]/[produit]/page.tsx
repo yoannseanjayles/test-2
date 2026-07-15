@@ -11,8 +11,10 @@ import {
   SectionHeading,
 } from "@/components/commerce";
 import { animalLabels, averageRating, isAnimal, products } from "@/lib/catalog";
-import { fetchProduct, fetchProducts, fetchProductsBySlugs, fetchSubcategory } from "@/lib/api";
-import { getGuideForSubcategory } from "@/lib/guides";
+import { fetchGuideForSubcategory, fetchProduct, fetchProducts, fetchProductsBySlugs, fetchSubcategory } from "@/lib/api";
+import { getShippingConfig } from "@/lib/admin-settings";
+import { formatPrice } from "@/lib/format";
+
 import { breadcrumbJsonLd, productJsonLd } from "@/lib/jsonld";
 
 type Params = { animal: string; sousCategorie: string; produit: string };
@@ -61,7 +63,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   ];
 
   const pairsWith = await fetchProductsBySlugs(product.pairsWith);
-  const guide = getGuideForSubcategory(sousCategorie);
+  const guide = await fetchGuideForSubcategory(sousCategorie);
   const alsoLike = (await fetchProducts(animal))
     .filter((p) => p.slug !== product.slug && !product.pairsWith.includes(p.slug))
     .sort((a, b) => {
@@ -81,8 +83,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
     ...product.details.map((d) => ({ title: d.title, content: d.content })),
     {
       title: "Livraison & retours",
-      content:
-        "Expédition en 24 h, livraison estimée 2–3 jours ouvrés (France, Belgique, Suisse, Luxembourg). Livraison offerte dès 79 €. Premier retour offert, 30 jours pour changer d'avis.",
+      content: `Expédition en 24 h, livraison estimée 2–3 jours ouvrés (France, Belgique, Suisse, Luxembourg). Livraison offerte dès ${formatPrice((await getShippingConfig()).freeShippingCents)}. Premier retour offert, 30 jours pour changer d'avis.`,
     },
   ];
 

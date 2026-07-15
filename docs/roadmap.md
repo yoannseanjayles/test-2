@@ -27,7 +27,7 @@
 | **6 — Back-end** | 6.0 Recherche | Best Practices Summary | ✅ Validé (D-051) |
 | | 6.1 Développement | Documentation technique | ✅ Validé — **Phase 6 clôturée** (4 jalons HITL) |
 | **7 — Administration** | 7.0 Recherche | Best Practices Summary | ✅ Validé (D-052) |
-| | 7.1 Développement | Back-office fonctionnel | 🟡 En cours — jalons 1-3/4 ✅ validés et mergés en prod ; jalon 4 (dernier) en cours |
+| | 7.1 Développement | Back-office fonctionnel | 🟡 Jalons 1-3/4 ✅ validés et mergés en prod ; jalon 4 (dernier) livré, en validation |
 
 ## Phase en cours
 
@@ -36,7 +36,7 @@
 1. ✅ **Jalon 1 — Socle admin** : validé HITL — rôles en base (H42 : Admin/Ops/Catalogue/Éditorial, amorçage du 1ᵉʳ admin en démo), `/admin` protégé par rôle, catalogue éditable (note de curation ≥ 20 caractères D-025, alertes stock faible/rupture), révalidation SSG après édition.
 2. ✅ **Jalon 2 — Import AliExpress** : validé HITL — import hors ligne par pages téléchargées depuis le navigateur (`.html`/`.mhtml` en glisser-déposer, D-052/H41), parseur MHTML défensif (titre, prix fournisseur, photos des deux CDN remontées en 960x960), brouillons systématiques puis publication avec curation obligatoire (prix pré-rempli ×2,5, stock 0 → alerte restock) ; photos fournisseur affichées sur la fiche, les cartes et les brouillons. Parcours upload→brouillon→publication→fiche vérifié au navigateur, parseur couvert par tests unitaires.
 3. ✅ **Jalon 3 — Commandes & Ops** : validé HITL — section Commandes du back-office (rôles Ops/Admin), transitions de statuts gardées serveur selon le graphe D-016 (Payée → En préparation → Expédiée → Livrée → Clôturée ; annulation avant expédition, retour après), e-mail client à chaque transition (Resend), retour self-service réel (motif en base, visible côté admin), remboursement Stripe intégral sur Annulée/Remboursée (mode démonstration explicite sinon), timelines client (compte + suivi invité) branchées sur le statut réel. Cycle complet vérifié au navigateur : commande → préparation → expédition → retour client → remboursement → suivi.
-4. ⬜ **Jalon 4 — Éditorial & réglages** : guides en base, configuration livraison, export newsletter.
+4. 🟡 **Jalon 4 — Éditorial & réglages** : livré, en validation HITL — guides en base (table + seed du contenu de lancement, pages publiques et SSG branchées, hub/Accueil/pages animal/recherche), section Éditorial du back-office (rôle Éditorial : édition du contenu par sections « ## », création, suppression, revalidation ISR), configuration livraison en base (seuil offert + tarifs des 3 modes, rôle Admin) appliquée partout — recalcul serveur des commandes, checkout, panier, bandeau header, tunnel, pages Livraison/FAQ/CGV, meta Accueil —, export CSV des inscrits newsletter (consentements horodatés). Vérifié au navigateur : édition/création de guide → pages publiques à jour ; seuil 50 € → bandeau, panier et pages à jour ; export CSV téléchargé.
 
 Bilan Phase 6 (clôturée) :
 

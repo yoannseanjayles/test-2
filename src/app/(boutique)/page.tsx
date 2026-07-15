@@ -12,16 +12,20 @@ import {
 import { NewsletterForm } from "@/components/layout/Footer/NewsletterForm";
 import { animalCategories } from "@/lib/navigation";
 import type { Review } from "@/lib/catalog";
-import { fetchFeatured, fetchProducts } from "@/lib/api";
-import { guides } from "@/lib/guides";
+import { fetchFeatured, fetchGuides, fetchProducts } from "@/lib/api";
+import { getShippingConfig } from "@/lib/admin-settings";
+import { formatPrice } from "@/lib/format";
+
 import { media, universeCards } from "@/lib/media";
 import { organizationJsonLd, webSiteJsonLd } from "@/lib/jsonld";
 
-export const metadata: Metadata = {
-  title: "Accessoires premium pour chiens, chats & NAC — chien et chat",
-  description:
-    "Une sélection exigeante de colliers, couchages et jouets — choisis pour leur qualité, dessinés pour durer. Livraison offerte dès 79 €.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const seuil = formatPrice((await getShippingConfig()).freeShippingCents);
+  return {
+    title: "Accessoires premium pour chiens, chats & NAC — chien et chat",
+    description: `Une sélection exigeante de colliers, couchages et jouets — choisis pour leur qualité, dessinés pour durer. Livraison offerte dès ${seuil}.`,
+  };
+}
 
 const pillars = [
   { Icon: Leaf, label: "Matériaux durables", text: "Cuir, laine, bois : des matières nobles qui vieillissent bien." },
@@ -37,7 +41,7 @@ const heroTones: Record<string, "caramel" | "sage" | "terracotta"> = {
 
 /** Accueil — spec 2.1 (10 sections, D-020/D-021/D-022). */
 export default async function HomePage() {
-  const [featured, products] = await Promise.all([fetchFeatured(8), fetchProducts()]);
+  const [featured, products, guides] = await Promise.all([fetchFeatured(8), fetchProducts(), fetchGuides()]);
   const featuredGuide = guides.find((g) => g.pillar);
   const secondaryGuides = guides.filter((g) => g !== featuredGuide).slice(0, 2);
 

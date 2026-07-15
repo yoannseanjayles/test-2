@@ -46,6 +46,25 @@ export const products = pgTable("products", {
   sourceUrl: text("source_url"),
 });
 
+/** Réglages boutique (7.1 jalon 4) — clé/valeur JSON (config livraison D-039). */
+export const settings = pgTable("settings", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").notNull(),
+});
+
+/** Guides éditoriaux (D-037) — en base depuis 7.1 jalon 4, éditables dans l'admin. */
+export const guides = pgTable("guides", {
+  slug: text("slug").primaryKey(),
+  title: text("title").notNull(),
+  excerpt: text("excerpt").notNull(),
+  animal: text("animal").$type<"chien" | "chat" | "nac" | "tous">().notNull(),
+  pillar: boolean("pillar").notNull().default(false),
+  readingMinutes: integer("reading_minutes").notNull().default(5),
+  relatedSubcategories: jsonb("related_subcategories").$type<string[]>().notNull().default([]),
+  author: jsonb("author").$type<{ name: string; role: string; reviewedBy: string; updated: string } | null>(),
+  content: jsonb("content").$type<{ heading: string; paragraphs: string[] }[] | null>(),
+});
+
 export const productSizes = pgTable("product_sizes", {
   productSlug: text("product_slug").notNull().references(() => products.slug),
   name: text("name").notNull(),

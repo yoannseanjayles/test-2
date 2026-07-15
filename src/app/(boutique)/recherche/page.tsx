@@ -4,8 +4,8 @@ import { ilike, or } from "drizzle-orm";
 import { ProductCard, EditorialCard } from "@/components/commerce";
 import { getDb } from "@/db";
 import { products as productsTable } from "@/db/schema";
-import { guides } from "@/lib/guides";
-import { fetchProductsBySlugs, fetchFeatured } from "@/lib/api";
+
+import { fetchGuides, fetchProductsBySlugs, fetchFeatured } from "@/lib/api";
 import { SearchForm } from "./SearchForm";
 
 export const metadata: Metadata = {
@@ -23,7 +23,7 @@ export default async function SearchPage({
   const query = (q ?? "").trim().slice(0, 80);
 
   let foundProducts: Awaited<ReturnType<typeof fetchProductsBySlugs>> = [];
-  let foundGuides: typeof guides = [];
+  let foundGuides: Awaited<ReturnType<typeof fetchGuides>> = [];
   if (query.length >= 2) {
     const db = await getDb();
     const pattern = `%${query}%`;
@@ -38,7 +38,7 @@ export default async function SearchPage({
       ));
     foundProducts = await fetchProductsBySlugs(rows.map((r) => r.slug));
     const lower = query.toLowerCase();
-    foundGuides = guides.filter(
+    foundGuides = (await fetchGuides()).filter(
       (g) => g.title.toLowerCase().includes(lower) || g.excerpt.toLowerCase().includes(lower),
     );
   }

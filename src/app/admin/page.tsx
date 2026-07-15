@@ -18,6 +18,16 @@ import {
   type ImportReport,
 } from "@/lib/admin";
 import { listAdminOrders, setOrderStatus, type AdminOrderDto } from "@/lib/admin-orders";
+import {
+  countNewsletterSubscribers,
+  deleteGuide,
+  exportNewsletterCsv,
+  listAdminGuides,
+  saveGuide,
+  type AdminGuideDto,
+} from "@/lib/admin-editorial";
+import { getShippingConfig, saveShippingConfig } from "@/lib/admin-settings";
+import { shippingMethods, type ShippingConfig } from "@/lib/shipping";
 import { orderTransitions } from "@/lib/account";
 import { subcategories } from "@/lib/catalog/data";
 import { formatPrice } from "@/lib/format";
@@ -81,17 +91,14 @@ export default function AdminPage() {
 
   const canOps = admin.role === "Admin" || admin.role === "Ops";
   const canCatalogue = admin.role === "Admin" || admin.role === "Catalogue";
+  const canEditorial = admin.role === "Admin" || admin.role === "Éditorial";
   return (
     <Shell role={admin.role}>
       {canOps && <OrdersSection />}
       {canCatalogue && <Catalogue />}
       {canCatalogue && <ImportSection />}
-      {!canOps && !canCatalogue && (
-        <p className="text-body text-bark-700">
-          Les outils éditoriaux arrivent au jalon 4 — rien à afficher pour
-          votre rôle pour l'instant.
-        </p>
-      )}
+      {canEditorial && <EditorialSection />}
+      {admin.role === "Admin" && <SettingsSection />}
     </Shell>
   );
 }
@@ -105,6 +112,253 @@ function Shell({ children, role }: { children: React.ReactNode; role?: string })
       </div>
       <div className="mt-8">{children}</div>
     </div>
+  );
+}
+
+/**
+ * Éditorial (jalon 4) — guides en base : édition du contenu (sections « ## »),
+ * création, suppression ; export CSV des inscrits newsletter.
+ */
+function EditorialSection() {
+  const [guides, setGuides] = useState<AdminGuideDto[] | null>(null);
+  const [editing, setEditing] = useState<AdminGuideDto | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [subscribers, setSubscribers] = useState<number | null>(null);
+  const [feedback, setFeedback] = useState("");
+
+  const refresh = () => {
+    listAdminGuides().then(setGuides).catch(() => setGuides([]));
+    countNewsletterSubscribers().then(setSubscribers).catch(() => {});
+  };
+  useEffect(() => { refresh(); }, []);
+
+  if (guides === null) {
+    return <p aria-busy="true" className="text-body-sm text-bark-700">Chargement de l'éditorial…</p>;
+  }
+
+  const emptyGuide: AdminGuideDto = {
+    slug: "", title: "", excerpt: "", animal: "tous", pillar: false,
+    readingMinutes: 5, relatedSubcategories: [], contentText: "",
+  };
+
+  return (
+    <section className="mb-10 flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-heading text-h2 font-semibold text-bark-900">
+          Guides & Conseils ({guides.length})
+        </h2>
+        {!editing && !creating && (
+          <Button variant="secondary" onClick={() => setCreating(true)}>Nouveau guide</Button>
+        )}
+      </div>
+      {editing || creating ? (
+        <GuideForm
+          guide={editing ?? emptyGuide}
+          isNew={creating}
+          onDone={() => { setEditing(null); setCreating(false); refresh(); }}
+        />
+      ) : (
+        <div className="overflow-x-auto rounded-lg bg-cream-50 shadow-card">
+          <table className="w-full border-collapse text-body-sm">
+            <thead>
+              <tr className="border-b border-border text-left">
+                {["Guide", "Univers", "Type", "Lecture", ""].map((h) => (
+                  <th key={h} className="font-heading px-4 py-3 font-semibold text-bark-900">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="text-bark-700">
+              {guides.map((g) => (
+                <tr key={g.slug} className="border-b border-border last:border-0">
+                  <td className="px-4 py-2.5 font-semibold text-bark-900">{g.title}</td>
+                  <td className="px-4 py-2.5">{g.animal}</td>
+                  <td className="px-4 py-2.5">{g.pillar ? "Pilier" : "Satellite"}</td>
+                  <td className="px-4 py-2.5">{g.readingMinutes} min</td>
+                  <td className="px-4 py-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setEditing(g)}
+                      className="text-label min-h-9 text-action underline-offset-4 hover:underline"
+                    >
+                      Modifier
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <div className="rounded-lg bg-cream-50 p-5 shadow-card">
+        <h3 className="font-heading text-h3 font-semibold text-bark-900">Newsletter</h3>
+        <p className="mt-1 text-body-sm text-bark-700">
+          {subscribers === null ? "…" : `${subscribers} inscrit${subscribers > 1 ? "s" : ""}`} —
+          consentements horodatés (RGPD).
+        </p>
+        <Button
+          variant="secondary"
+          className="mt-3"
+          onClick={async () => {
+            const { csv, total } = await exportNewsletterCsv();
+            const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "newsletter-chien-et-chat.csv";
+            a.click();
+            URL.revokeObjectURL(url);
+            setFeedback(`Export téléchargé (${total} inscrit${total > 1 ? "s" : ""}).`);
+          }}
+        >
+          Exporter en CSV
+        </Button>
+        <p aria-live="polite" className="mt-2 text-body-sm text-success">{feedback}</p>
+      </div>
+    </section>
+  );
+}
+
+function GuideForm({ guide, isNew, onDone }: { guide: AdminGuideDto; isNew: boolean; onDone: () => void }) {
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  return (
+    <form
+      className="rounded-lg bg-cream-50 p-6 shadow-card"
+      onSubmit={async (event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        setSaving(true);
+        const result = await saveGuide({
+          slug: isNew ? String(data.get("slug")) : guide.slug,
+          title: String(data.get("title")),
+          excerpt: String(data.get("excerpt")),
+          animal: data.get("animal") as AdminGuideDto["animal"],
+          pillar: data.get("pillar") === "on",
+          readingMinutes: Number(data.get("readingMinutes")),
+          contentText: String(data.get("content")),
+          isNew,
+        });
+        setSaving(false);
+        if (!result.ok) { setError(result.error ?? "Erreur."); return; }
+        onDone();
+      }}
+    >
+      <h3 className="font-heading text-h3 font-semibold text-bark-900">
+        {isNew ? "Nouveau guide" : guide.title}
+      </h3>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <FormField label="Titre" name="title" defaultValue={guide.title} required />
+        {isNew ? (
+          <FormField label="Slug" name="slug" placeholder="mon-guide" required />
+        ) : (
+          <FormField label="Slug (fixe — URL publiée)" name="slug-disabled" defaultValue={guide.slug} disabled />
+        )}
+        <label className="flex flex-col gap-1.5">
+          <span className="text-label text-bark-900">Univers</span>
+          <select name="animal" defaultValue={guide.animal}
+            className="h-12 rounded-sm border border-border bg-cream-50 px-4 text-body text-bark-900">
+            {["tous", "chien", "chat", "nac"].map((a) => <option key={a} value={a}>{a}</option>)}
+          </select>
+        </label>
+        <FormField label="Temps de lecture (min)" name="readingMinutes" type="number" min="1" max="60"
+          defaultValue={String(guide.readingMinutes)} required />
+      </div>
+      <label className="mt-4 flex items-center gap-3 text-body-sm text-bark-900">
+        <input type="checkbox" name="pillar" defaultChecked={guide.pillar} className="size-4 accent-pine-700" />
+        Guide pilier (mis en avant sur l'Accueil, D-037)
+      </label>
+      <label className="mt-4 flex flex-col gap-1.5">
+        <span className="text-label text-bark-900">Accroche</span>
+        <textarea name="excerpt" rows={2} defaultValue={guide.excerpt} required
+          className="rounded-sm border border-border bg-cream-50 p-4 text-body text-bark-900 focus:border-pine-500" />
+      </label>
+      <label className="mt-4 flex flex-col gap-1.5">
+        <span className="text-label text-bark-900">
+          Contenu — un titre de section par ligne « ## », paragraphes séparés par une ligne vide
+        </span>
+        <textarea name="content" rows={14} defaultValue={guide.contentText}
+          className="rounded-sm border border-border bg-cream-50 p-4 font-mono text-body-sm text-bark-900 focus:border-pine-500" />
+      </label>
+      <div className="mt-5 flex flex-wrap items-center gap-3">
+        <Button type="submit" loading={saving}>{isNew ? "Créer le guide" : "Enregistrer"}</Button>
+        <Button type="button" variant="ghost" onClick={onDone}>Annuler</Button>
+        {!isNew && (
+          <button
+            type="button"
+            disabled={deleting}
+            onClick={async () => {
+              if (!window.confirm(`Supprimer définitivement le guide « ${guide.title} » ?`)) return;
+              setDeleting(true);
+              const result = await deleteGuide(guide.slug);
+              setDeleting(false);
+              if (!result.ok) { setError(result.error ?? "Erreur."); return; }
+              onDone();
+            }}
+            className="text-label ml-auto min-h-11 rounded-md px-4 text-error transition-colors duration-150 hover:bg-error/10 disabled:opacity-50"
+          >
+            {deleting ? "Suppression…" : "Supprimer ce guide"}
+          </button>
+        )}
+      </div>
+      <p aria-live="assertive" className="mt-2 text-body-sm text-error">{error}</p>
+    </form>
+  );
+}
+
+/** Réglages boutique (jalon 4) — config livraison D-039 en base (rôle Admin). */
+function SettingsSection() {
+  const [config, setConfig] = useState<ShippingConfig | null>(null);
+  const [feedback, setFeedback] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    getShippingConfig().then(setConfig).catch(() => {});
+  }, []);
+
+  if (config === null) {
+    return <p aria-busy="true" className="text-body-sm text-bark-700">Chargement des réglages…</p>;
+  }
+
+  return (
+    <section className="mb-10">
+      <h2 className="font-heading text-h2 font-semibold text-bark-900">Réglages livraison</h2>
+      <form
+        className="mt-4 max-w-2xl rounded-lg bg-cream-50 p-6 shadow-card"
+        onSubmit={async (event) => {
+          event.preventDefault();
+          const data = new FormData(event.currentTarget);
+          const toCents = (name: string) => Math.round(Number(data.get(name)) * 100);
+          setSaving(true);
+          setFeedback("");
+          const result = await saveShippingConfig({
+            freeShippingCents: toCents("threshold"),
+            prices: {
+              domicile: toCents("domicile"),
+              relais: toCents("relais"),
+              express: toCents("express"),
+            },
+          });
+          setSaving(false);
+          setFeedback(result.ok
+            ? "Réglages enregistrés — tunnel, panier et page Livraison à jour."
+            : (result.error ?? "Erreur."));
+        }}
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField label="Livraison offerte dès (€)" name="threshold" type="number" step="0.01" min="0"
+            defaultValue={(config.freeShippingCents / 100).toFixed(2)} required />
+          {shippingMethods.map((m) => (
+            <FormField key={m.id} label={`${m.label} (€)`} name={m.id} type="number" step="0.01" min="0"
+              defaultValue={((config.prices[m.id] ?? m.price) / 100).toFixed(2)} required />
+          ))}
+        </div>
+        <Button type="submit" className="mt-5" loading={saving}>Enregistrer les réglages</Button>
+        <p aria-live="polite" className={`mt-2 text-body-sm ${/Erreur|invalides/.test(feedback) ? "text-error" : "text-success"}`}>
+          {feedback}
+        </p>
+      </form>
+    </section>
   );
 }
 

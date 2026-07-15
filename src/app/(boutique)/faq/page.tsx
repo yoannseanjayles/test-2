@@ -1,17 +1,19 @@
 import type { Metadata } from "next";
 import { Accordion } from "@/components/ui";
+import { getShippingConfig } from "@/lib/admin-settings";
+import { formatPrice } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "Questions fréquentes",
   description: "Livraison, retours, tailles, produits : toutes les réponses aux questions fréquentes.",
 };
 
-const sections = [
+const sections = (seuil: string) => [
   {
     title: "Commande & livraison",
     items: [
       { title: "Faut-il créer un compte pour commander ?", content: "Non — la commande invitée est le parcours par défaut. Le compte vous est proposé après l'achat, pour le suivi et les retours en un clic." },
-      { title: "Quels sont les délais de livraison ?", content: "Expédition sous 24 h ouvrées, puis 2 à 3 jours à domicile, 3 à 4 jours en point relais, 24 h en express. Livraison offerte dès 79 € (domicile et relais)." },
+      { title: "Quels sont les délais de livraison ?", content: `Expédition sous 24 h ouvrées, puis 2 à 3 jours à domicile, 3 à 4 jours en point relais, 24 h en express. Livraison offerte dès ${seuil} (domicile et relais).` },
       { title: "Quels moyens de paiement acceptez-vous ?", content: "Carte bancaire (CB, Visa, Mastercard) et PayPal, en paiement sécurisé. Apple Pay arrive prochainement." },
     ],
   },
@@ -32,11 +34,12 @@ const sections = [
   },
 ];
 
-export default function FaqPage() {
+export default async function FaqPage() {
+  const seuil = formatPrice((await getShippingConfig()).freeShippingCents);
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 lg:px-6">
       <h1 className="font-display text-h1 font-[560] text-bark-900">Questions fréquentes</h1>
-      {sections.map((section) => (
+      {sections(seuil).map((section) => (
         <section key={section.title} aria-label={section.title} className="mt-10">
           <h2 className="font-heading text-h2 font-semibold text-bark-900">{section.title}</h2>
           <Accordion className="mt-4" items={section.items} />

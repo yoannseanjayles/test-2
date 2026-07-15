@@ -1,18 +1,20 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowLeft, Lock, RotateCcw, Truck } from "lucide-react";
-
-const reassurance = [
-  { Icon: Truck, text: "Livraison offerte dès 79 €" },
-  { Icon: RotateCcw, text: "Premier retour offert" },
-  { Icon: Lock, text: "Paiement sécurisé" },
-];
+import { getShippingConfig } from "@/lib/admin-settings";
+import { formatPrice } from "@/lib/format";
 
 /**
  * Layout tunnel épuré (D-032) : logo, retour boutique, réassurance —
  * pas de navigation ni de distractions pendant l'achat.
  */
-export default function TunnelLayout({ children }: { children: ReactNode }) {
+export default async function TunnelLayout({ children }: { children: ReactNode }) {
+  const { freeShippingCents } = await getShippingConfig();
+  const reassurance = [
+    { Icon: Truck, text: `Livraison offerte dès ${formatPrice(freeShippingCents)}` },
+    { Icon: RotateCcw, text: "Premier retour offert" },
+    { Icon: Lock, text: "Paiement sécurisé" },
+  ];
   return (
     <>
       <header className="border-b border-border bg-cream-100">

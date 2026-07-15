@@ -9,8 +9,8 @@ import {
   Breadcrumb,
 } from "@/components/commerce";
 import { animalLabels, isAnimal, type Animal } from "@/lib/catalog";
-import { fetchFeatured, fetchProducts, fetchSubcategories } from "@/lib/api";
-import { getGuidesFor } from "@/lib/guides";
+import { fetchFeatured, fetchGuidesFor, fetchProducts, fetchSubcategories } from "@/lib/api";
+
 import { categoryImages, universeBanners } from "@/lib/media";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import type { PlaceholderTone } from "@/components/commerce";
@@ -58,7 +58,7 @@ export default async function AnimalPage({ params }: { params: Promise<Params> }
     fetchProducts(animal),
   ]);
   const bestSellers = animalProducts.slice(0, 4);
-  const animalGuides = getGuidesFor(animal, 3);
+  const animalGuides = await fetchGuidesFor(animal, 3);
 
   return (
     <div className="mx-auto max-w-page px-4 lg:px-6">

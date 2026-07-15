@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Breadcrumb, ListingExplorer, SeoTextBlock } from "@/components/commerce";
 import { animalLabels, isAnimal, subcategories } from "@/lib/catalog";
-import { fetchFeatured, fetchProducts, fetchSubcategories, fetchSubcategory } from "@/lib/api";
-import { getGuideForSubcategory } from "@/lib/guides";
+import { fetchFeatured, fetchGuideForSubcategory, fetchProducts, fetchSubcategories, fetchSubcategory } from "@/lib/api";
+
 import { breadcrumbJsonLd, itemListJsonLd } from "@/lib/jsonld";
 
 type Params = { animal: string; sousCategorie: string };
@@ -46,7 +46,7 @@ export default async function SubcategoryPage({
   const prods = await fetchProducts(animal, sousCategorie);
   const label = animalLabels[animal];
   const animalName = animal === "nac" ? "NAC" : animal;
-  const guide = getGuideForSubcategory(sousCategorie);
+  const guide = await fetchGuideForSubcategory(sousCategorie);
   const siblings = (await fetchSubcategories(animal)).filter((s) => s.slug !== sousCategorie);
 
   const crumbs = [

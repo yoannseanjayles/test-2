@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Lock, PencilLine } from "lucide-react";
 import { cartSubtotal, useCart } from "@/lib/cart";
+import { useShippingConfig } from "@/lib/use-shipping-config";
 import {
   addressSchema,
   contactSchema,
@@ -47,8 +48,10 @@ export function CheckoutFlow() {
   const [payError, setPayError] = useState("");
   useEffect(() => setHydrated(true), []);
 
+  // Tarifs livraison depuis les réglages boutique (jalon 4), repli D-039.
+  const shippingConfig = useShippingConfig();
   const subtotal = cartSubtotal(lines);
-  const shipping = shippingPrice(shippingMethod, subtotal);
+  const shipping = shippingPrice(shippingMethod, subtotal, shippingConfig);
   const total = subtotal + shipping;
 
   const contactForm = useForm<ContactValues>({
@@ -282,7 +285,7 @@ export function CheckoutFlow() {
                   <legend className="text-label text-bark-900">Mode de livraison</legend>
                   <div className="mt-2 flex flex-col gap-2">
                     {shippingMethods.map((method) => {
-                      const price = shippingPrice(method.id, subtotal);
+                      const price = shippingPrice(method.id, subtotal, shippingConfig);
                       return (
                         <label
                           key={method.id}
