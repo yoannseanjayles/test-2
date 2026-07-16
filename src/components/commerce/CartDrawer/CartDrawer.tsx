@@ -5,12 +5,12 @@ import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { Minus, Plus, Trash2, X } from "lucide-react";
 import {
-  cartSubtotal,
   useCart,
   useCartDrawer,
   type CartLine,
 } from "@/lib/cart";
-import { getProductBySlug, productPath } from "@/lib/catalog";
+import { useCartProducts } from "@/lib/use-cart-products";
+import type { CartProduct } from "@/lib/cart-data";
 import { formatPrice } from "@/lib/format";
 import { productImages, illustrations } from "@/lib/media";
 import { Button } from "@/components/ui";
@@ -26,7 +26,9 @@ export function CartDrawer() {
   const { isOpen, closeDrawer } = useCartDrawer();
   const lines = useCart((state) => state.lines);
   const drawerRef = useRef<HTMLDivElement>(null);
-  const subtotal = cartSubtotal(lines);
+  // Lignes résolues depuis la base (audit M-1) — produits importés et prix
+  // à jour compris.
+  const { get, subtotal } = useCartProducts(lines);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -87,7 +89,11 @@ export function CartDrawer() {
             </div>
             <ul className="flex-1 divide-y divide-border overflow-y-auto px-5 py-2">
               {lines.map((line) => (
-                <CartDrawerLine key={`${line.slug}-${line.size}-${line.color}`} line={line} />
+                <CartDrawerLine
+                  key={`${line.slug}-${line.size}-${line.color}`}
+                  line={line}
+                  product={get(line.slug)}
+                />
               ))}
             </ul>
             <div className="border-t border-border px-5 py-4">
@@ -122,29 +128,57 @@ export function CartDrawer() {
   );
 }
 
-function CartDrawerLine({ line }: { line: CartLine }) {
+function CartDrawerLine({
+  line,
+  product,
+}: {
+  line: CartLine;
+  product: CartProduct | null | undefined;
+}) {
   const { setQuantity, remove } = useCart();
   const closeDrawer = useCartDrawer((state) => state.closeDrawer);
-  const product = getProductBySlug(line.slug);
-  if (!product) return null;
+  // Pas encore de réponse de la base : ligne en attente.
+  if (product === undefined) {
+    return <li aria-busy="true" className="py-4 text-body-sm text-bark-500">Chargement…</li>;
+  }
+  // Produit retiré de la vente : la ligne reste visible et retirable.
+  if (product === null) {
+    return (
+      <li className="flex items-center justify-between gap-3 py-4">
+        <p className="text-body-sm text-bark-700">
+          Cet article n'est plus disponible ({line.size} · {line.color}).
+        </p>
+        <button
+          type="button"
+          aria-label="Retirer l'article indisponible du panier"
+          onClick={() => remove(line)}
+          className="flex size-9 shrink-0 items-center justify-center rounded-sm text-bark-500 hover:bg-cream-300 hover:text-error"
+        >
+          <Trash2 aria-hidden="true" className="size-4" />
+        </button>
+      </li>
+    );
+  }
   const image = productImages[line.slug]?.[0];
 
   return (
     <li className="flex gap-3 py-4">
       <Link
-        href={productPath(product)}
+        href={product.path}
         onClick={closeDrawer}
         className="w-20 shrink-0 overflow-hidden rounded-md"
       >
         {image ? (
           <Image src={image.src} alt="" sizes="80px" className="aspect-square h-auto w-full object-cover" />
+        ) : product.imageUrl ? (
+          <Image src={product.imageUrl} alt="" width={160} height={160} sizes="80px" className="aspect-square h-auto w-full object-cover" />
         ) : (
           <Placeholder tone={product.tone} ratio="1 / 1" />
         )}
       </Link>
       <div className="min-w-0 flex-1">
         <Link
-          href={productPath(product)}
+          href={product.path}
           onClick={closeDrawer}
           className="text-body-sm font-semibold text-bark-900 hover:text-action"
         >

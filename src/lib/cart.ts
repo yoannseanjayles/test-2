@@ -75,7 +75,11 @@ export const useCartDrawer = create<CartDrawerState>((set) => ({
   closeDrawer: () => set({ isOpen: false }),
 }));
 
-/** Sous-total TTC en centimes — jointure catalogue (les lignes ne stockent pas de prix). */
+/**
+ * Sous-total TTC en centimes sur le catalogue statique — REPLI uniquement :
+ * le tunnel utilise `useCartProducts` (lecture base, audit M-1), qui ne se
+ * sert du statique que le temps de la réponse serveur.
+ */
 export function cartSubtotal(lines: CartLine[]): number {
   return lines.reduce((acc, line) => {
     const product = getProductBySlug(line.slug);
