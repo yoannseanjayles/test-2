@@ -97,7 +97,10 @@ export async function exportNewsletterCsv(): Promise<{ csv: string; total: numbe
   await requireRole("Éditorial");
   const db = await getDb();
   const rows = await db.select().from(newsletterSubscribers).orderBy(asc(newsletterSubscribers.createdAt));
-  const lines = rows.map((r) => `${r.email},${r.createdAt.toISOString()}`);
+  // Anti-injection tableur (audit S-8) : neutraliser les valeurs commençant
+  // par un caractère de formule (=, +, -, @).
+  const safe = (value: string) => (/^[=+\-@]/.test(value) ? `'${value}` : value);
+  const lines = rows.map((r) => `${safe(r.email)},${r.createdAt.toISOString()}`);
   return { csv: ["email,inscription", ...lines].join("\n"), total: rows.length };
 }
 

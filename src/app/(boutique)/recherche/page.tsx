@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { ilike, or } from "drizzle-orm";
 import { ProductCard, EditorialCard } from "@/components/commerce";
-import { getDb } from "@/db";
-import { products as productsTable } from "@/db/schema";
 
-import { fetchGuides, fetchProductsBySlugs, fetchFeatured } from "@/lib/api";
+import { fetchGuides, fetchProducts, fetchProductsBySlugs, fetchFeatured } from "@/lib/api";
 import { SearchForm } from "./SearchForm";
+
+/** Comparaison insensible aux accents et à la casse (audit S-4). */
+function normalize(value: string): string {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
 
 export const metadata: Metadata = {
   title: "Recherche",
@@ -25,21 +27,16 @@ export default async function SearchPage({
   let foundProducts: Awaited<ReturnType<typeof fetchProductsBySlugs>> = [];
   let foundGuides: Awaited<ReturnType<typeof fetchGuides>> = [];
   if (query.length >= 2) {
-    const db = await getDb();
-    const pattern = `%${query}%`;
-    const rows = await db
-      .select({ slug: productsTable.slug })
-      .from(productsTable)
-      .where(or(
-        ilike(productsTable.name, pattern),
-        ilike(productsTable.shortDescription, pattern),
-        ilike(productsTable.material, pattern),
-        ilike(productsTable.brand, pattern),
-      ));
-    foundProducts = await fetchProductsBySlugs(rows.map((r) => r.slug));
-    const lower = query.toLowerCase();
+    // Filtrage normalisé en mémoire (catalogue curé de petite taille) :
+    // « echarpe » trouve « écharpe », quel que soit le driver SQL.
+    const q = normalize(query);
+    foundProducts = (await fetchProducts()).filter((p) =>
+      [p.name, p.shortDescription, p.material, p.brand].some((field) =>
+        normalize(field).includes(q),
+      ),
+    );
     foundGuides = (await fetchGuides()).filter(
-      (g) => g.title.toLowerCase().includes(lower) || g.excerpt.toLowerCase().includes(lower),
+      (g) => normalize(g.title).includes(q) || normalize(g.excerpt).includes(q),
     );
   }
   const fallback = query.length >= 2 && foundProducts.length === 0 ? await fetchFeatured(3) : [];
