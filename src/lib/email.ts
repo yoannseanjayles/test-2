@@ -73,6 +73,15 @@ export async function sendContactMessage(input: {
   return true;
 }
 
+/** Alerte « retour en stock » (H15/audit M-3) — envoyée depuis l'admin au resaisi du stock. */
+export async function sendRestockAlert(to: string, productName: string, size: string, url: string) {
+  await sendEmail(
+    to,
+    `De retour en stock : ${productName} — chien et chat`,
+    `<p>Bonne nouvelle ! <strong>${escapeHtml(productName)}</strong>${size !== "ce produit" ? ` (taille ${escapeHtml(size)})` : ""} est de nouveau disponible.</p><p><a href="${escapeHtml(url)}">Voir le produit</a> — les quantités restent limitées.</p><p>Vous recevez ce message car vous aviez demandé à être prévenu·e du retour en stock.</p>`,
+  );
+}
+
 /** Notification client à chaque transition de statut (D-016). */
 const statusEmails: Record<string, { subject: string; body: string }> = {
   "En préparation": {
@@ -85,7 +94,7 @@ const statusEmails: Record<string, { subject: string; body: string }> = {
   },
   "Livrée": {
     subject: "a été livrée",
-    body: "Votre commande est arrivée. Un souci ? Le premier retour est offert pendant 30 jours.",
+    body: "Votre commande est arrivée. Un souci ? Les retours sont offerts pendant 30 jours.",
   },
   "Clôturée": {
     subject: "est clôturée",

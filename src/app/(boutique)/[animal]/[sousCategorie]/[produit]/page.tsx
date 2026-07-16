@@ -90,7 +90,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
       : []),
     {
       title: "Livraison & retours",
-      content: `Expédition en 24 h, livraison estimée 2–3 jours ouvrés (France, Belgique, Suisse, Luxembourg). Livraison offerte dès ${formatPrice((await getShippingConfig()).freeShippingCents)}. Premier retour offert, 30 jours pour changer d'avis.`,
+      content: `Expédition en 24 h, livraison estimée 2–3 jours ouvrés (France, Belgique, Suisse, Luxembourg). Livraison offerte dès ${formatPrice((await getShippingConfig()).freeShippingCents)}. Retours offerts — 30 jours pour changer d'avis.`,
     },
   ];
 

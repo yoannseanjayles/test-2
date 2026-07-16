@@ -105,6 +105,6 @@ export const mobileSecondaryLinks: NavLink[] = [
  * construit par AnnouncementBar depuis les réglages boutique (jalon 4).
  */
 export const announcementMessages: string[] = [
-  "Premier retour offert — 30 jours pour changer d'avis",
+  "Retours offerts — 30 jours pour changer d'avis",
   "Sélection testée et approuvée par nos experts",
 ];

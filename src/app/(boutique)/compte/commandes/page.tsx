@@ -143,17 +143,17 @@ function ReturnFlow({ order, onDone }: { order: OrderDto; onDone: () => void }) 
       {step === 0 && (
         <>
           <p className="mt-2 text-body-sm text-bark-700">
-            Premier retour offert, 30 jours pour changer d'avis. Les retours
-            suivants sont à 4,90 €.
+            Retours offerts — 30 jours pour changer d'avis, étiquette prépayée.
           </p>
-          {isReturnEligible(order.status) ? (
+          {isReturnEligible(order.status, order.createdAt) ? (
             <Button variant="secondary" className="mt-4" onClick={() => setStep(1)}>
               Faire un retour
             </Button>
           ) : (
             <p className="mt-3 text-body-sm text-bark-500">
-              Le retour devient possible une fois la commande expédiée
-              (statut actuel : {order.status}).
+              {["Expédiée", "Livrée", "Clôturée"].includes(order.status)
+                ? "La fenêtre de retour de 30 jours est dépassée — contactez-nous si besoin."
+                : `Le retour devient possible une fois la commande expédiée (statut actuel : ${order.status}).`}
             </p>
           )}
         </>

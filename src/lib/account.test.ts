@@ -58,6 +58,11 @@ describe("retour self-service (D-035/D-040)", () => {
     expect(isReturnEligible("Payée")).toBe(false);
     expect(isReturnEligible("En préparation")).toBe(false);
     expect(isReturnEligible("Remboursée")).toBe(false);
+    // Fenêtre de 30 jours (+ marge d'acheminement) — audit M-4.
+    expect(isReturnEligible("Livrée", new Date().toISOString())).toBe(true);
+    expect(
+      isReturnEligible("Livrée", new Date(Date.now() - 90 * 24 * 3600 * 1000).toISOString()),
+    ).toBe(false);
   });
 
   it("chaque statut a un message client", () => {

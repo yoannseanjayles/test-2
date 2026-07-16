@@ -28,9 +28,24 @@ export const orderTransitions: Record<string, string[]> = {
   "Retour en cours": ["Remboursée"],
 };
 
-/** Retour client self-service (D-035/D-040) : possible une fois la commande expédiée. */
-export function isReturnEligible(status: string): boolean {
-  return ["Expédiée", "Livrée", "Clôturée"].includes(status);
+/**
+ * Fenêtre de retour (audit M-4) : 30 jours pour changer d'avis après
+ * réception. La date de livraison n'étant pas encore tracée, on
+ * l'approxime par la date de commande + une marge d'acheminement.
+ */
+export const RETURN_WINDOW_DAYS = 30;
+const SHIPPING_MARGIN_DAYS = 10;
+
+/**
+ * Retour client self-service (D-035/D-040) : possible une fois la commande
+ * expédiée, dans la fenêtre de 30 jours (+ marge d'acheminement).
+ */
+export function isReturnEligible(status: string, createdAt?: string | Date): boolean {
+  if (!["Expédiée", "Livrée", "Clôturée"].includes(status)) return false;
+  if (!createdAt) return true;
+  const placed = new Date(createdAt).getTime();
+  const windowMs = (RETURN_WINDOW_DAYS + SHIPPING_MARGIN_DAYS) * 24 * 60 * 60 * 1000;
+  return Date.now() - placed <= windowMs;
 }
 
 /** Message client par statut — suivi invité et espace compte. */

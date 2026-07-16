@@ -7,6 +7,7 @@ import { getDb } from "@/db";
 import { newsletterSubscribers, orders, restockAlerts, user } from "@/db/auth-schema";
 import { guides, products, productSizes, reviews } from "@/db/schema";
 import { getSessionUser } from "@/lib/auth";
+import { sendRestockAlert } from "@/lib/email";
 
 /**
  * Actions back-office (7.1 jalon 1) — garde serveur par rôle (D-017/H42),
@@ -165,6 +166,9 @@ export async function updateAdminProduct(input: {
     return { ok: false, error: "Nom trop court." };
   }
   const db = await getDb();
+  // État du stock avant mise à jour — pour détecter les retours en stock (M-3).
+  const previousSizes = await db.select().from(productSizes)
+    .where(eq(productSizes.productSlug, input.slug));
   await db.update(products).set({
     price: input.price,
     curatedRank: input.curatedRank,
@@ -184,9 +188,47 @@ export async function updateAdminProduct(input: {
       .set({ stock: Math.max(0, Math.min(9999, Math.trunc(s.stock))) })
       .where(and(eq(productSizes.productSlug, input.slug), eq(productSizes.name, s.name)));
   }
+  await notifyRestocks(input.slug, previousSizes, input.stocks);
   // Produit à jour < 60 s sur la boutique (revalidation ISR, 5.0 §4).
   revalidatePath("/", "layout");
   return { ok: true };
+}
+
+/**
+ * Alertes restock (H15/audit M-3) : quand une taille repasse de 0 à
+ * disponible, les inscrits sur cette taille — et, si le produit entier
+ * était en rupture, les inscrits « ce produit » — sont prévenus, puis
+ * leurs alertes sont purgées. Sans RESEND_API_KEY, les alertes restent en
+ * attente (rien n'est purgé sans e-mail parti).
+ */
+async function notifyRestocks(
+  slug: string,
+  previousSizes: { name: string; stock: number }[],
+  newStocks: { name: string; stock: number }[],
+): Promise<void> {
+  if (!process.env.RESEND_API_KEY) return;
+  const next = new Map(newStocks.map((s) => [s.name, Math.max(0, Math.trunc(s.stock))]));
+  const backInStock = previousSizes
+    .filter((s) => s.stock === 0 && (next.get(s.name) ?? 0) > 0)
+    .map((s) => s.name);
+  if (backInStock.length === 0) return;
+  const wasAllOut = previousSizes.every((s) => s.stock === 0);
+  const watchedSizes = wasAllOut ? [...backInStock, "ce produit"] : backInStock;
+
+  const db = await getDb();
+  const [product] = await db
+    .select({ name: products.name, animal: products.animal, subcategory: products.subcategory })
+    .from(products)
+    .where(eq(products.slug, slug));
+  if (!product) return;
+  const url = `${process.env.BETTER_AUTH_URL ?? "https://comptoir-store.vercel.app"}/${product.animal}/${product.subcategory}/${slug}`;
+
+  const alerts = await db.select().from(restockAlerts)
+    .where(eq(restockAlerts.productSlug, slug));
+  for (const alert of alerts.filter((a) => watchedSizes.includes(a.size))) {
+    await sendRestockAlert(alert.email, product.name, alert.size, url);
+    await db.delete(restockAlerts).where(eq(restockAlerts.id, alert.id));
+  }
 }
 
 /**

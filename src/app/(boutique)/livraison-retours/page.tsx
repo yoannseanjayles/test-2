@@ -8,7 +8,7 @@ import { formatPrice } from "@/lib/format";
 export const metadata: Metadata = {
   title: "Livraison & retours",
   description:
-    "Livraison France, Belgique, Suisse et Luxembourg — offerte dès 79 €. Premier retour offert, 30 jours pour changer d'avis.",
+    "Livraison France, Belgique, Suisse et Luxembourg — offerte dès 79 €. Retours offerts — 30 jours pour changer d'avis.",
 };
 
 /**
@@ -70,9 +70,8 @@ export default async function ShippingReturnsPage() {
           </h2>
           <ul className="mt-3 space-y-3 text-body text-bark-700">
             <li>
-              <strong className="text-bark-900">Premier retour offert</strong> — étiquette
-              prépayée envoyée par e-mail, dépôt en point relais. Les retours
-              suivants sont à 4,90 €.
+              <strong className="text-bark-900">Retours offerts</strong> — étiquette
+              prépayée envoyée par e-mail, dépôt en point relais.
             </li>
             <li>
               <strong className="text-bark-900">30 jours pour changer d'avis</strong> —

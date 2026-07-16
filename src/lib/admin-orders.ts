@@ -128,10 +128,12 @@ export async function requestReturn(
       account.emailVerified &&
       order.email.toLowerCase() === account.email.toLowerCase());
   if (!owns) return { ok: false, error: "Cette commande n'est pas rattachée à votre compte." };
-  if (!isReturnEligible(order.status)) {
+  if (!isReturnEligible(order.status, order.createdAt)) {
     return {
       ok: false,
-      error: `Le retour devient possible une fois la commande expédiée (statut actuel : ${order.status}).`,
+      error: ["Expédiée", "Livrée", "Clôturée"].includes(order.status)
+        ? "La fenêtre de retour de 30 jours est dépassée — contactez-nous si besoin."
+        : `Le retour devient possible une fois la commande expédiée (statut actuel : ${order.status}).`,
     };
   }
   await db.update(orders)

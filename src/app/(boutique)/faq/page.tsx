@@ -28,7 +28,7 @@ const sections = (seuil: string) => [
   {
     title: "Retours & SAV",
     items: [
-      { title: "Comment faire un retour ?", content: "Depuis votre compte (Mes commandes → Faire un retour) ou via le contact si vous avez commandé en invité. Premier retour offert, 30 jours pour changer d'avis." },
+      { title: "Comment faire un retour ?", content: "Depuis votre compte (Mes commandes → Faire un retour) ou via le contact si vous avez commandé en invité. Retours offerts — 30 jours pour changer d'avis." },
       { title: "Comment vous contacter ?", content: "Par le formulaire de contact — nous répondons sous 24 h ouvrées. Nous avons fait le choix d'un support écrit soigné plutôt que d'une hotline." },
     ],
   },
