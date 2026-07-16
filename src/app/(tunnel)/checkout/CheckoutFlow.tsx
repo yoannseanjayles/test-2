@@ -280,6 +280,15 @@ export function CheckoutFlow() {
                     {...addressForm.register("city")}
                   />
                 </div>
+                <FormField
+                  label="Téléphone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  help="Utilisé par le transporteur pour la livraison (relais, express)."
+                  error={addressForm.formState.errors.phone?.message}
+                  {...addressForm.register("phone")}
+                />
                 <label className="flex flex-col gap-1.5">
                   <span className="text-label text-bark-900">Pays</span>
                   <select

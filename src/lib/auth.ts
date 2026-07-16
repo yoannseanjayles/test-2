@@ -3,7 +3,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { getDb } from "@/db";
 import * as authSchema from "@/db/auth-schema";
-import { sendVerificationEmail } from "@/lib/email";
+import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/email";
 
 /**
  * Better Auth (6.0/D-051) — e-mail + mot de passe, sessions en base,
@@ -38,7 +38,14 @@ async function createAuth() {
   return betterAuth({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     database: drizzleAdapter(db as any, { provider: "pg", schema: authSchema }),
-    emailAndPassword: { enabled: true, requireEmailVerification: canSendEmails },
+    emailAndPassword: {
+      enabled: true,
+      requireEmailVerification: canSendEmails,
+      // Mot de passe oublié (audit M-6) — lien envoyé par e-mail.
+      sendResetPassword: async ({ user, url }) => {
+        await sendPasswordResetEmail(user.email, url);
+      },
+    },
     emailVerification: {
       sendOnSignUp: canSendEmails,
       sendVerificationEmail: async ({ user, url }) => {

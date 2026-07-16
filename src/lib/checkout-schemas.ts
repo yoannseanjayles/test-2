@@ -21,6 +21,10 @@ export const addressSchema = z.object({
     .regex(/^[0-9]{4,5}$/, "Code postal invalide (4 à 5 chiffres)."),
   city: z.string().min(1, "La ville est requise."),
   country: z.enum(countries),
+  /** Exigé par les transporteurs (point relais, express) — audit M-7. */
+  phone: z
+    .string()
+    .regex(/^\+?[0-9 ().-]{6,20}$/, "Numéro de téléphone invalide."),
 });
 
 export type ContactValues = z.infer<typeof contactSchema>;

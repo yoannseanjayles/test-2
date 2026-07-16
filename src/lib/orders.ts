@@ -107,7 +107,7 @@ export async function placeOrder(input: {
       userId: sessionUser?.id ?? null,
       email: contact.data.email,
       status,
-      address: `${address.data.firstName} ${address.data.lastName}, ${address.data.address}, ${address.data.postalCode} ${address.data.city}, ${address.data.country}`,
+      address: `${address.data.firstName} ${address.data.lastName}, ${address.data.address}, ${address.data.postalCode} ${address.data.city}, ${address.data.country} — tél. ${address.data.phone}`,
       shippingMethod: input.shippingMethod,
       subtotal,
       shipping,
