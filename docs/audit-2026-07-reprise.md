@@ -1,5 +1,9 @@
 # Audit complet — reprise du projet « chien et chat » (juillet 2026)
 
+> **Mise à jour (même branche)** : les correctifs P0 et plusieurs P1 ont été
+> appliqués à la suite de cet audit — voir la section « État des correctifs »
+> en fin de document. Les constats ci-dessous décrivent l'état *avant* correctifs.
+
 Audit métier, UX, cohérence, fonctionnalités et sécurité réalisé à la reprise du projet,
 sur l'état de `main` après la PR #557. Chaque constat a été vérifié dans le code
 (référence `fichier:ligne`). Vérifications d'ensemble : les **54 tests passent**,
@@ -302,3 +306,31 @@ correspondent à aucune logique implémentée.
 13. Rapatrier les images AliExpress ; corbeille produit ; pagination admin ;
     rate-limiting ; recherche insensible aux accents ; sitemap/robots ;
     réinitialisation de mot de passe (M-6) ; sortir `src/media/a-trier/`.
+
+---
+
+## 6. État des correctifs (appliqués sur cette branche)
+
+| Constat | État | Détail |
+|---|---|---|
+| C-1 Paiement jamais encaissé | ✅ Corrigé | Payment Element intégré au checkout (`CheckoutFlow.tsx`) : le `clientSecret` alimente `Elements`/`confirmPayment`, retour sur `/checkout/confirmation` avec gestion de `redirect_status` (succès / en cours / échec avec panier conservé). Nécessite `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` sur Vercel en plus des clés existantes. |
+| C-2 Stock non géré | ✅ Corrigé | Nouveau module `src/lib/stock.ts` : réservation conditionnelle (jamais sous zéro, agrégée par taille) à `placeOrder`, restitution sur échec de paiement (webhook), annulation admin et échec d'enregistrement. Testé (`stock.test.ts`, 5 tests). |
+| C-3 Confirmation avant paiement | ✅ Corrigé | Avec Stripe, statut « Payée » + e-mail de confirmation partent du webhook (idempotent : transition depuis « En attente de paiement » uniquement). Le mode démo reste confirmé immédiatement. |
+| C-4 Fuite de données par e-mail non vérifié | ✅ Corrigé | Rattachement des commandes et retours par e-mail réservé aux adresses **vérifiées** ; vérification d'e-mail Better Auth activée (envoi via Resend) avec `requireEmailVerification` dès que `RESEND_API_KEY` est posée. |
+| C-5 Avis fictifs « vérifiés » | ✅ Corrigé | Avis du seed passés en non vérifiés (badge masqué), `aggregateRating` retiré du JSON-LD, allégation « avis vérifiés » retirée de l'accueil. Les avis de démonstration restent affichés : à remplacer par de vrais avis avant lancement. |
+| C-6 Écrans factices | ✅ Corrigé | Contact branché (action serveur + Resend, `CONTACT_EMAIL` optionnelle) ; création de compte post-achat réelle (inscription + rattachement de la commande) ; « Mes adresses » supprimée ; « Mes informations » en lecture seule honnête avec procédure RGPD via contact. |
+| C-7 Prod dangereuse par défaut | ✅ Corrigé | `BETTER_AUTH_SECRET` exigé à l'exécution en production (build SSG toléré) ; « Devenir administrateur » refusé en production sans `DATABASE_URL` (échappatoire explicite `ALLOW_ADMIN_BOOTSTRAP=1`). |
+| M-2 Historique limité à 1 commande | ✅ Corrigé | « Mes commandes » liste toutes les commandes (timeline + retour par commande). |
+| M-5 CGV non opposables / PayPal | ✅ Corrigé | Case d'acceptation CGV + confidentialité obligatoire avant paiement ; CGV corrigées (Stripe, acceptation au checkout). Mentions légales/médiateur : toujours à compléter (juridique, pas code). |
+| M-8 Collision numéros de commande | ✅ Corrigé | Numéros sur 10 hexadécimaux (`CC-XXXXXXXXXX`). |
+| M-9 Seuil livraison en dur | ✅ Partiel | Page panier branchée sur la config ; restent la métadescription du layout et la page livraison-retours (textes statiques). |
+| M-11 Aucune CI | ✅ Corrigé | `.github/workflows/ci.yml` : install → build → typecheck → test ; test de bascule PGlite fiabilisé (timeout). |
+| S-2 Message quantité trompeur | ✅ Corrigé | Message explicite « Maximum 20 exemplaires par article ». |
+| S-3 Injection HTML e-mails | ✅ Corrigé | Échappement systématique du contenu variable + journalisation des échecs d'envoi. |
+
+**Restent ouverts** (par ordre de priorité) : M-1 (panier branché sur la base —
+refonte des lookups client), M-3 (envoi des alertes restock), M-4 (fenêtre de
+30 jours et frais du 2ᵉ retour), M-6 (réinitialisation de mot de passe), M-7
+(téléphone, choix du point relais, cas Suisse), M-10 (rapatriement des images
+AliExpress, validation de sous-catégorie), mentions légales/médiateur, et les
+points P2.

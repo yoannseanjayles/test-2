@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { ConfirmationContent } from "./ConfirmationContent";
 
 export const metadata: Metadata = {
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 
 /** Confirmation (spec Checkout) : récap + création de compte post-achat (D-014). */
 export default function ConfirmationPage() {
-  return <ConfirmationContent />;
+  return (
+    <Suspense>
+      <ConfirmationContent />
+    </Suspense>
+  );
 }

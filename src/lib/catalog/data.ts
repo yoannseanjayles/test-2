@@ -61,9 +61,9 @@ export const products: Product[] = [
     isNew: false,
     curatedRank: 1,
     reviews: [
-      { author: "Camille R.", rating: 5, title: "Magnifique et solide", text: "La qualité du cuir est bluffante, il s'assouplit vite sans se déformer. Après six mois d'usage quotidien, il est encore plus beau qu'au premier jour.", context: "Berger australien, 24 kg — taille L", date: "2026-05-12", verified: true },
-      { author: "Julien M.", rating: 5, title: "Le premier collier qui dure", text: "Troisième collier en deux ans pour mon staffie… celui-ci tient enfin. La boucle est massive et rassurante.", context: "Staffordshire, 18 kg — taille M", date: "2026-04-02", verified: true },
-      { author: "Anne L.", rating: 4, title: "Très beau, taille juste", text: "Splendide, mais prenez la taille au-dessus si votre chien est entre deux mesures.", context: "Cocker, 13 kg — taille M", date: "2026-03-18", verified: true },
+      { author: "Camille R.", rating: 5, title: "Magnifique et solide", text: "La qualité du cuir est bluffante, il s'assouplit vite sans se déformer. Après six mois d'usage quotidien, il est encore plus beau qu'au premier jour.", context: "Berger australien, 24 kg — taille L", date: "2026-05-12", verified: false },
+      { author: "Julien M.", rating: 5, title: "Le premier collier qui dure", text: "Troisième collier en deux ans pour mon staffie… celui-ci tient enfin. La boucle est massive et rassurante.", context: "Staffordshire, 18 kg — taille M", date: "2026-04-02", verified: false },
+      { author: "Anne L.", rating: 4, title: "Très beau, taille juste", text: "Splendide, mais prenez la taille au-dessus si votre chien est entre deux mesures.", context: "Cocker, 13 kg — taille M", date: "2026-03-18", verified: false },
     ],
     pairsWith: ["laisse-cuir-ambre", "medaille-laiton"],
     tone: "caramel",
@@ -94,7 +94,7 @@ export const products: Product[] = [
     isNew: true,
     curatedRank: 2,
     reviews: [
-      { author: "Thomas B.", rating: 5, title: "Parfait en rando", text: "La poignée dorsale change tout sur les passages rocheux. Séchage très rapide.", context: "Border collie, 19 kg — taille M", date: "2026-06-20", verified: true },
+      { author: "Thomas B.", rating: 5, title: "Parfait en rando", text: "La poignée dorsale change tout sur les passages rocheux. Séchage très rapide.", context: "Border collie, 19 kg — taille M", date: "2026-06-20", verified: false },
     ],
     pairsWith: ["laisse-trail-amarre", "manteau-pluie-brume"],
     tone: "sage",
@@ -124,7 +124,7 @@ export const products: Product[] = [
     isNew: false,
     curatedRank: 8,
     reviews: [
-      { author: "Sophie D.", rating: 5, title: "Léger et chic", text: "Ma chienne oublie qu'elle le porte. Les couleurs sont encore plus belles en vrai.", context: "Braque, 22 kg — taille L", date: "2026-02-25", verified: true },
+      { author: "Sophie D.", rating: 5, title: "Léger et chic", text: "Ma chienne oublie qu'elle le porte. Les couleurs sont encore plus belles en vrai.", context: "Braque, 22 kg — taille L", date: "2026-02-25", verified: false },
     ],
     pairsWith: ["laisse-tressee-olive"],
     tone: "sage",
@@ -204,7 +204,7 @@ export const products: Product[] = [
     isNew: false,
     curatedRank: 22,
     reviews: [
-      { author: "Marc P.", rating: 5, title: "Belle gravure", text: "Lisible, élégante, et elle ne tinte pas contre le collier. Parfait.", context: "Beagle, 12 kg", date: "2026-01-30", verified: true },
+      { author: "Marc P.", rating: 5, title: "Belle gravure", text: "Lisible, élégante, et elle ne tinte pas contre le collier. Parfait.", context: "Beagle, 12 kg", date: "2026-01-30", verified: false },
     ],
     pairsWith: ["collier-cuir-ambre"],
     tone: "caramel",
@@ -232,7 +232,7 @@ export const products: Product[] = [
     isNew: false,
     curatedRank: 5,
     reviews: [
-      { author: "Camille R.", rating: 5, title: "Assortie et robuste", text: "Achetée avec le collier, l'ensemble est superbe. Le mousqueton inspire confiance.", context: "Berger australien, 24 kg", date: "2026-05-12", verified: true },
+      { author: "Camille R.", rating: 5, title: "Assortie et robuste", text: "Achetée avec le collier, l'ensemble est superbe. Le mousqueton inspire confiance.", context: "Berger australien, 24 kg", date: "2026-05-12", verified: false },
     ],
     pairsWith: ["collier-cuir-ambre"],
     tone: "caramel",
@@ -310,8 +310,8 @@ export const products: Product[] = [
     isNew: false,
     curatedRank: 3,
     reviews: [
-      { author: "Élise T.", rating: 5, title: "Adopté en une nuit", text: "Notre whippet frileux ne dort plus ailleurs. Et c'est le seul panier que j'accepte dans le salon.", context: "Whippet, 12 kg — taille M", date: "2026-06-02", verified: true },
-      { author: "Hugo V.", rating: 4, title: "Très qualitatif", text: "Superbe matière. Prévoir la taille au-dessus si votre chien aime s'étaler.", context: "Golden retriever, 30 kg — taille L", date: "2026-04-15", verified: true },
+      { author: "Élise T.", rating: 5, title: "Adopté en une nuit", text: "Notre whippet frileux ne dort plus ailleurs. Et c'est le seul panier que j'accepte dans le salon.", context: "Whippet, 12 kg — taille M", date: "2026-06-02", verified: false },
+      { author: "Hugo V.", rating: 4, title: "Très qualitatif", text: "Superbe matière. Prévoir la taille au-dessus si votre chien aime s'étaler.", context: "Golden retriever, 30 kg — taille L", date: "2026-04-15", verified: false },
     ],
     pairsWith: ["plaid-refuge"],
     tone: "cream",
@@ -390,7 +390,7 @@ export const products: Product[] = [
     isNew: false,
     curatedRank: 19,
     reviews: [
-      { author: "Nadia K.", rating: 5, title: "Incassable (pour l'instant)", text: "Premier jouet qui passe la semaine. Les couleurs sont très jolies.", context: "Jack russell, 7 kg — taille S", date: "2026-03-08", verified: true },
+      { author: "Nadia K.", rating: 5, title: "Incassable (pour l'instant)", text: "Premier jouet qui passe la semaine. Les couleurs sont très jolies.", context: "Jack russell, 7 kg — taille S", date: "2026-03-08", verified: false },
     ],
     pairsWith: [],
     tone: "terracotta",
@@ -441,7 +441,7 @@ export const products: Product[] = [
     isNew: false,
     curatedRank: 4,
     reviews: [
-      { author: "Léa F.", rating: 5, title: "Il y vit", text: "Mon maine coon squattait les placards, maintenant c'est l'alcôve. Très belle qualité de feutre.", context: "Maine coon, 6 kg", date: "2026-05-28", verified: true },
+      { author: "Léa F.", rating: 5, title: "Il y vit", text: "Mon maine coon squattait les placards, maintenant c'est l'alcôve. Très belle qualité de feutre.", context: "Maine coon, 6 kg", date: "2026-05-28", verified: false },
     ],
     pairsWith: ["plaid-refuge"],
     tone: "cream",
@@ -514,7 +514,7 @@ export const products: Product[] = [
     isNew: false,
     curatedRank: 6,
     reviews: [
-      { author: "Paul G.", rating: 5, title: "Enfin stable", text: "Mon chat de 7 kg s'y jette dessus, rien ne bouge. Le sisal remplaçable est un vrai plus.", context: "Européen, 7 kg", date: "2026-06-10", verified: true },
+      { author: "Paul G.", rating: 5, title: "Enfin stable", text: "Mon chat de 7 kg s'y jette dessus, rien ne bouge. Le sisal remplaçable est un vrai plus.", context: "Européen, 7 kg", date: "2026-06-10", verified: false },
     ],
     pairsWith: ["jouet-plume-comete"],
     tone: "cream",
@@ -564,7 +564,7 @@ export const products: Product[] = [
     isNew: false,
     curatedRank: 20,
     reviews: [
-      { author: "Inès B.", rating: 4, title: "Session garantie", text: "Dix minutes de folie chaque soir. J'aurais aimé une plume de rechange incluse.", context: "Chartreux, 5 kg", date: "2026-02-14", verified: true },
+      { author: "Inès B.", rating: 4, title: "Session garantie", text: "Dix minutes de folie chaque soir. J'aurais aimé une plume de rechange incluse.", context: "Chartreux, 5 kg", date: "2026-02-14", verified: false },
     ],
     pairsWith: ["balle-liege-duo"],
     tone: "terracotta",
@@ -617,7 +617,7 @@ export const products: Product[] = [
     isNew: false,
     curatedRank: 10,
     reviews: [
-      { author: "Chloé M.", rating: 5, title: "Rongée avec amour", text: "Mes deux lapins dorment dedans et rongent les angles sans danger. Très solide.", context: "Lapins béliers, 2 kg", date: "2026-04-22", verified: true },
+      { author: "Chloé M.", rating: 5, title: "Rongée avec amour", text: "Mes deux lapins dorment dedans et rongent les angles sans danger. Très solide.", context: "Lapins béliers, 2 kg", date: "2026-04-22", verified: false },
     ],
     pairsWith: ["tapis-chanvre-prairie"],
     tone: "cream",

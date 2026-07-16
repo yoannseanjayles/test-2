@@ -23,7 +23,7 @@ export function TrackingForm() {
           setResult(order ? "found" : "not-found");
         }}
       >
-        <FormField label="Numéro de commande" name="number" required placeholder="CC-000000" />
+        <FormField label="Numéro de commande" name="number" required placeholder="CC-0000000000" />
         <FormField label="Adresse e-mail" name="email" type="email" required autoComplete="email" />
         <Button type="submit" className="self-start">Suivre ma commande</Button>
       </form>
