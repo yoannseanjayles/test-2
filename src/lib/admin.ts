@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { and, asc, count, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { newsletterSubscribers, orders, restockAlerts, user } from "@/db/auth-schema";
-import { guides, products, productSizes, reviews } from "@/db/schema";
+import { categories, guides, products, productSizes, reviews } from "@/db/schema";
 import { getSessionUser } from "@/lib/auth";
 import { sendRestockAlert } from "@/lib/email";
 
@@ -347,7 +347,14 @@ export async function publishDraft(input: {
   if (!Number.isInteger(input.price) || input.price < 100) {
     return { ok: false, error: "Prix de vente invalide." };
   }
+  // Sous-catégorie validée côté serveur (audit M-10) — un produit publié
+  // hors des catégories existantes serait invisible en navigation.
   const db = await getDb();
+  const [category] = await db.select({ slug: categories.slug }).from(categories)
+    .where(and(eq(categories.animal, input.animal), eq(categories.slug, input.subcategory)));
+  if (!category) {
+    return { ok: false, error: `Sous-catégorie inconnue pour ${input.animal} : « ${input.subcategory} ».` };
+  }
   const [draft] = await db.select().from(importDrafts).where(eq(importDrafts.id, input.draftId));
   if (!draft || draft.status !== "draft") return { ok: false, error: "Brouillon introuvable." };
   const [existing] = await db.select({ slug: products.slug }).from(products).where(eq(products.slug, input.slug));
