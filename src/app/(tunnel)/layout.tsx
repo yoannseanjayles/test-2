@@ -12,7 +12,7 @@ export default async function TunnelLayout({ children }: { children: ReactNode }
   const { freeShippingCents } = await getShippingConfig();
   const reassurance = [
     { Icon: Truck, text: `Livraison offerte dès ${formatPrice(freeShippingCents)}` },
-    { Icon: RotateCcw, text: "Premier retour offert" },
+    { Icon: RotateCcw, text: "Retours offerts (30 jours)" },
     { Icon: Lock, text: "Paiement sécurisé" },
   ];
   return (
