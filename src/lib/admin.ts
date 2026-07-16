@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { and, asc, count, eq } from "drizzle-orm";
+import { and, asc, count, eq, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { newsletterSubscribers, orders, restockAlerts, user } from "@/db/auth-schema";
 import { categories, guides, products, productSizes, reviews } from "@/db/schema";
@@ -49,9 +49,15 @@ export async function bootstrapAdmin(): Promise<{ ok: boolean; error?: string }>
   const sessionUser = await getSessionUser(await headers());
   if (!sessionUser) return { ok: false, error: "Connectez-vous d'abord." };
   const db = await getDb();
-  const [existing] = await db.select({ n: count() }).from(user).where(eq(user.role, "Admin"));
-  if ((existing?.n ?? 0) > 0) return { ok: false, error: "Un administrateur existe déjà." };
-  await db.update(user).set({ role: "Admin" }).where(eq(user.id, sessionUser.id));
+  // Attribution conditionnelle en une requête (audit S-7) : deux amorçages
+  // simultanés ne peuvent pas créer deux admins.
+  const updated = await db.update(user).set({ role: "Admin" })
+    .where(and(
+      eq(user.id, sessionUser.id),
+      sql`NOT EXISTS (SELECT 1 FROM "user" WHERE role = 'Admin')`,
+    ))
+    .returning();
+  if (updated.length === 0) return { ok: false, error: "Un administrateur existe déjà." };
   return { ok: true };
 }
 

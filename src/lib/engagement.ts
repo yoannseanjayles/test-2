@@ -4,6 +4,7 @@ import { getDb } from "@/db";
 import { newsletterSubscribers, restockAlerts } from "@/db/auth-schema";
 import { contactSchema } from "@/lib/checkout-schemas";
 import { sendContactMessage } from "@/lib/email";
+import { RATE_LIMITED_ERROR, rateLimit } from "@/lib/rate-limit";
 
 /** Alerte restock (H15) — l'e-mail de retour en stock partira via l'admin (Phase 7). */
 export async function subscribeRestock(input: {
@@ -11,6 +12,9 @@ export async function subscribeRestock(input: {
   size: string;
   email: string;
 }): Promise<{ ok: boolean; error?: string }> {
+  if (!(await rateLimit("restock-alert", 20, 10 * 60 * 1000))) {
+    return { ok: false, error: RATE_LIMITED_ERROR };
+  }
   const parsed = contactSchema.safeParse({ email: input.email });
   if (!parsed.success) return { ok: false, error: "Adresse e-mail invalide." };
   const db = await getDb();
@@ -30,6 +34,9 @@ export async function submitContactMessage(input: {
   orderNumber?: string;
   message: string;
 }): Promise<{ ok: boolean; error?: string }> {
+  if (!(await rateLimit("contact", 5, 10 * 60 * 1000))) {
+    return { ok: false, error: RATE_LIMITED_ERROR };
+  }
   const parsed = contactSchema.safeParse({ email: input.email });
   const name = input.name.trim().slice(0, 80);
   const message = input.message.trim().slice(0, 4000);
@@ -54,6 +61,9 @@ export async function submitContactMessage(input: {
 
 /** Inscription newsletter (D-021) — consentement horodaté. */
 export async function subscribeNewsletter(email: string): Promise<{ ok: boolean; error?: string }> {
+  if (!(await rateLimit("newsletter", 10, 10 * 60 * 1000))) {
+    return { ok: false, error: RATE_LIMITED_ERROR };
+  }
   const parsed = contactSchema.safeParse({ email });
   if (!parsed.success) return { ok: false, error: "Adresse e-mail invalide." };
   const db = await getDb();

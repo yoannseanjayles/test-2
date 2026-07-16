@@ -10,6 +10,7 @@ import { addressSchema, contactSchema } from "@/lib/checkout-schemas";
 import { shippingMethods, shippingPrice, type ShippingMethodId } from "@/lib/shipping";
 import { getShippingConfig } from "@/lib/admin-settings";
 import { releaseStock, reserveStock } from "@/lib/stock";
+import { RATE_LIMITED_ERROR, rateLimit } from "@/lib/rate-limit";
 import type { CartLine } from "@/lib/cart";
 import { sendOrderConfirmation } from "@/lib/email";
 
@@ -36,6 +37,9 @@ export async function placeOrder(input: {
   shippingMethod: ShippingMethodId;
   lines: CartLine[];
 }): Promise<PlacedOrder> {
+  if (!(await rateLimit("place-order", 10, 10 * 60 * 1000))) {
+    return { ok: false, error: RATE_LIMITED_ERROR };
+  }
   const contact = contactSchema.safeParse({ email: input.email });
   const address = addressSchema.safeParse(input.address);
   if (!contact.success || !address.success || input.lines.length === 0) {
@@ -231,6 +235,7 @@ export async function claimOrder(number: string): Promise<{ ok: boolean }> {
 
 /** Suivi invité : numéro + e-mail (sans compte). */
 export async function findOrder(number: string, email: string): Promise<OrderDto | null> {
+  if (!(await rateLimit("find-order", 20, 10 * 60 * 1000))) return null;
   const db = await getDb();
   const [row] = await db.select().from(orders)
     .where(eq(orders.number, number.trim().toUpperCase()));
