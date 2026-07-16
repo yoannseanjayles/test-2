@@ -548,15 +548,30 @@ const ORDER_FILTERS = [
   { id: "issues", label: "Annulées / échecs", match: (s: string) => s === "Annulée" || s === "Échec de paiement" || s === "En attente de paiement" },
 ] as const;
 
+/** Taille de page des commandes (audit S-6). */
+const ORDERS_PAGE = 100;
+
 function OrdersSection() {
   const [ordersList, setOrdersList] = useState<AdminOrderDto[] | null>(null);
+  const [total, setTotal] = useState(0);
   const [open, setOpen] = useState<string | null>(null);
   const [feedback, setFeedback] = useState("");
   const [busy, setBusy] = useState(false);
   const [filter, setFilter] = useState<(typeof ORDER_FILTERS)[number]["id"]>("all");
 
-  const refresh = () => listAdminOrders().then(setOrdersList).catch(() => setOrdersList([]));
+  // Recharge tout ce qui est déjà affiché (au moins une page).
+  const refresh = (loaded?: number) =>
+    listAdminOrders(0, Math.max(ORDERS_PAGE, loaded ?? 0))
+      .then(({ rows, total: n }) => { setOrdersList(rows); setTotal(n); })
+      .catch(() => setOrdersList([]));
   useEffect(() => { refresh(); }, []);
+
+  const loadMore = () => {
+    if (!ordersList) return;
+    listAdminOrders(ordersList.length, ORDERS_PAGE)
+      .then(({ rows, total: n }) => { setOrdersList([...ordersList, ...rows]); setTotal(n); })
+      .catch(() => {});
+  };
 
   if (ordersList === null) {
     return <p aria-busy="true" className="text-body-sm text-bark-700">Chargement des commandes…</p>;
@@ -568,7 +583,7 @@ function OrdersSection() {
     const result = await setOrderStatus(number, next);
     setBusy(false);
     setFeedback(result.ok ? `${number} → ${next}. ${result.info ?? ""}` : (result.error ?? "Erreur."));
-    if (result.ok) refresh();
+    if (result.ok) refresh(ordersList.length);
   };
 
   const activeFilter = ORDER_FILTERS.find((f) => f.id === filter)!;
@@ -699,6 +714,16 @@ function OrdersSection() {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+      {ordersList.length < total && (
+        <div className="text-center">
+          <Button variant="secondary" onClick={loadMore}>
+            Afficher plus ({total - ordersList.length} commande{total - ordersList.length > 1 ? "s" : ""} restante{total - ordersList.length > 1 ? "s" : ""})
+          </Button>
+          <p className="text-caption mt-2 text-bark-500">
+            Les filtres portent sur les {ordersList.length} commandes chargées (sur {total}).
+          </p>
         </div>
       )}
     </section>
