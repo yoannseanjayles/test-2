@@ -9,7 +9,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { Check, Lock, PencilLine } from "lucide-react";
-import { cartSubtotal, useCart } from "@/lib/cart";
+import { useCart } from "@/lib/cart";
+import { useCartProducts } from "@/lib/use-cart-products";
 import { useShippingConfig } from "@/lib/use-shipping-config";
 import {
   addressSchema,
@@ -22,7 +23,6 @@ import {
   type ContactValues,
   type ShippingMethodId,
 } from "@/lib/checkout";
-import { getProductBySlug } from "@/lib/catalog";
 import { placeOrder as placeOrderAction } from "@/lib/orders";
 import { formatPrice } from "@/lib/format";
 import { Button, FormField } from "@/components/ui";
@@ -62,7 +62,9 @@ export function CheckoutFlow() {
 
   // Tarifs livraison depuis les réglages boutique (jalon 4), repli D-039.
   const shippingConfig = useShippingConfig();
-  const subtotal = cartSubtotal(lines);
+  // Prix et noms résolus depuis la base (audit M-1) — mêmes montants que le
+  // recalcul serveur de placeOrder.
+  const { get, subtotal } = useCartProducts(lines);
   const shipping = shippingPrice(shippingMethod, subtotal, shippingConfig);
   const total = subtotal + shipping;
 
@@ -411,7 +413,7 @@ export function CheckoutFlow() {
           <h2 className="font-heading text-h3 font-semibold text-bark-900">Votre commande</h2>
           <ul className="mt-4 divide-y divide-border">
             {lines.map((line) => {
-              const product = getProductBySlug(line.slug);
+              const product = get(line.slug);
               if (!product) return null;
               return (
                 <li key={`${line.slug}-${line.size}-${line.color}`} className="flex justify-between gap-3 py-2.5 text-body-sm">

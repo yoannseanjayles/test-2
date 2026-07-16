@@ -4,9 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { ChevronDown, Minus, Plus, Trash2 } from "lucide-react";
-import { cartSubtotal, useCart, type CartLine } from "@/lib/cart";
+import { useCart, type CartLine } from "@/lib/cart";
 import { useShippingConfig } from "@/lib/use-shipping-config";
-import { getProductBySlug, productPath } from "@/lib/catalog";
+import { useCartProducts } from "@/lib/use-cart-products";
+import type { CartProduct } from "@/lib/cart-data";
 import { formatPrice } from "@/lib/format";
 import { illustrations, productImages } from "@/lib/media";
 import { Button, FormField } from "@/components/ui";
@@ -22,7 +23,8 @@ export function CartPageContent() {
   useEffect(() => setHydrated(true), []);
 
   const shippingConfig = useShippingConfig();
-  const subtotal = cartSubtotal(lines);
+  // Lignes résolues depuis la base (audit M-1).
+  const { get, subtotal } = useCartProducts(lines);
 
   if (!hydrated) {
     return <div className="mx-auto max-w-page px-4 py-16 lg:px-6" aria-busy="true" />;
@@ -57,7 +59,11 @@ export function CartPageContent() {
           <FreeShippingBar subtotal={subtotal} />
           <ul className="mt-4 divide-y divide-border border-y border-border">
             {lines.map((line) => (
-              <CartPageLine key={`${line.slug}-${line.size}-${line.color}`} line={line} />
+              <CartPageLine
+                key={`${line.slug}-${line.size}-${line.color}`}
+                line={line}
+                product={get(line.slug)}
+              />
             ))}
           </ul>
         </div>
@@ -118,19 +124,45 @@ function PromoCode() {
   );
 }
 
-function CartPageLine({ line }: { line: CartLine }) {
+function CartPageLine({
+  line,
+  product,
+}: {
+  line: CartLine;
+  product: CartProduct | null | undefined;
+}) {
   const { setQuantity, remove } = useCart();
-  const product = getProductBySlug(line.slug);
-  if (!product) return null;
+  if (product === undefined) {
+    return <li aria-busy="true" className="py-5 text-body-sm text-bark-500">Chargement…</li>;
+  }
+  if (product === null) {
+    return (
+      <li className="flex items-center justify-between gap-3 py-5">
+        <p className="text-body-sm text-bark-700">
+          Cet article n'est plus disponible ({line.size} · {line.color}).
+        </p>
+        <button
+          type="button"
+          onClick={() => remove(line)}
+          className="text-label inline-flex min-h-10 items-center gap-1.5 text-bark-500 hover:text-error"
+        >
+          <Trash2 aria-hidden="true" className="size-4" />
+          Retirer
+        </button>
+      </li>
+    );
+  }
   const image = productImages[line.slug]?.[0];
   const size = product.sizes.find((s) => s.name === line.size);
   const lowStock = size !== undefined && size.stock > 0 && size.stock <= 3;
 
   return (
     <li className="flex gap-4 py-5">
-      <Link href={productPath(product)} className="w-24 shrink-0 overflow-hidden rounded-md sm:w-28">
+      <Link href={product.path} className="w-24 shrink-0 overflow-hidden rounded-md sm:w-28">
         {image ? (
           <Image src={image.src} alt="" sizes="112px" className="aspect-square h-auto w-full object-cover" />
+        ) : product.imageUrl ? (
+          <Image src={product.imageUrl} alt="" width={224} height={224} sizes="112px" className="aspect-square h-auto w-full object-cover" />
         ) : (
           <Placeholder tone={product.tone} ratio="1 / 1" />
         )}
@@ -138,7 +170,7 @@ function CartPageLine({ line }: { line: CartLine }) {
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <Link
-            href={productPath(product)}
+            href={product.path}
             className="font-heading text-body font-semibold text-bark-900 hover:text-action"
           >
             {product.name}

@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useOrder, shippingMethods } from "@/lib/checkout";
 import { useCart } from "@/lib/cart";
-import { getProductBySlug } from "@/lib/catalog";
+import { useCartProducts } from "@/lib/use-cart-products";
 import { claimOrder } from "@/lib/orders";
 import { signUp, useSession } from "@/lib/auth-client";
 import { formatPrice } from "@/lib/format";
@@ -22,6 +22,8 @@ import { Button, FormField } from "@/components/ui";
 export function ConfirmationContent() {
   const order = useOrder((state) => state.lastOrder);
   const clearCart = useCart((state) => state.clear);
+  // Noms/prix des lignes résolus depuis la base (audit M-1).
+  const { get } = useCartProducts(order?.lines ?? []);
   const searchParams = useSearchParams();
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
@@ -107,7 +109,7 @@ export function ConfirmationContent() {
         <h2 className="font-heading text-h3 font-semibold text-bark-900">Récapitulatif</h2>
         <ul className="mt-4 divide-y divide-border">
           {order.lines.map((line) => {
-            const product = getProductBySlug(line.slug);
+            const product = get(line.slug);
             if (!product) return null;
             return (
               <li key={`${line.slug}-${line.size}-${line.color}`} className="flex justify-between gap-3 py-2.5 text-body-sm">
