@@ -35,7 +35,8 @@ const DDL = [
     supplier_ref text, source_url text,
     features jsonb NOT NULL DEFAULT '[]'::jsonb,
     specifications jsonb NOT NULL DEFAULT '[]'::jsonb,
-    field_visibility jsonb NOT NULL DEFAULT '{}'::jsonb)`,
+    field_visibility jsonb NOT NULL DEFAULT '{}'::jsonb,
+    archived boolean NOT NULL DEFAULT false)`,
   `CREATE TABLE IF NOT EXISTS guides (
     slug text PRIMARY KEY, title text NOT NULL, excerpt text NOT NULL,
     animal text NOT NULL, pillar boolean NOT NULL DEFAULT false,
@@ -123,6 +124,7 @@ const DDL = [
   `ALTER TABLE products ADD COLUMN IF NOT EXISTS specifications jsonb NOT NULL DEFAULT '[]'::jsonb`,
   `ALTER TABLE products ADD COLUMN IF NOT EXISTS field_visibility jsonb NOT NULL DEFAULT '{}'::jsonb`,
   `ALTER TABLE orders ADD COLUMN IF NOT EXISTS return_reason text`,
+  `ALTER TABLE products ADD COLUMN IF NOT EXISTS archived boolean NOT NULL DEFAULT false`,
 ];
 
 type Database = Awaited<ReturnType<typeof createDb>>;

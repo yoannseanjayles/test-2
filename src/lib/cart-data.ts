@@ -1,6 +1,6 @@
 "use server";
 
-import { inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { products, productSizes } from "@/db/schema";
 import { isFieldVisible } from "@/lib/catalog/types";
@@ -30,7 +30,9 @@ export async function fetchCartProducts(slugs: string[]): Promise<CartProduct[]>
   const wanted = [...new Set(slugs)].slice(0, 60);
   if (wanted.length === 0) return [];
   const db = await getDb();
-  const rows = await db.select().from(products).where(inArray(products.slug, wanted));
+  // Produit archivé = retiré de la vente : la ligne s'affiche indisponible.
+  const rows = await db.select().from(products)
+    .where(and(inArray(products.slug, wanted), eq(products.archived, false)));
   const sizes = await db.select().from(productSizes)
     .where(inArray(productSizes.productSlug, wanted));
   return rows.map((p) => ({

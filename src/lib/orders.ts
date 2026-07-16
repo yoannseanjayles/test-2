@@ -1,7 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
-import { desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { orderLines, orders, user } from "@/db/auth-schema";
 import { products } from "@/db/schema";
@@ -57,10 +57,14 @@ export async function placeOrder(input: {
 
   const db = await getDb();
   // Recalcul serveur : prix lus en base, jamais depuis le client (D-033).
+  // Les produits archivés (corbeille) ne sont pas commandables.
   const rows = await db
     .select({ slug: products.slug, name: products.name, price: products.price })
     .from(products)
-    .where(inArray(products.slug, input.lines.map((l) => l.slug)));
+    .where(and(
+      inArray(products.slug, input.lines.map((l) => l.slug)),
+      eq(products.archived, false),
+    ));
   const bySlug = new Map(rows.map((r) => [r.slug, r]));
   if (input.lines.some((l) => !bySlug.has(l.slug))) {
     return { ok: false, error: "Un article du panier n'est plus disponible." };

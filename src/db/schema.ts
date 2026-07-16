@@ -50,6 +50,8 @@ export const products = pgTable("products", {
   specifications: jsonb("specifications").$type<{ label: string; value: string }[]>().notNull().default([]),
   /** Visibilité par champ sur la fiche publique (images, features, specifications) — true par défaut. */
   fieldVisibility: jsonb("field_visibility").$type<Record<string, boolean>>().notNull().default({}),
+  /** Corbeille (P2 audit) : produit retiré de la vente, restaurable — jamais montré en boutique. */
+  archived: boolean("archived").notNull().default(false),
 });
 
 /** Réglages boutique (7.1 jalon 4) — clé/valeur JSON (config livraison D-039). */

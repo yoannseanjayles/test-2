@@ -84,17 +84,21 @@ export type AdminSummary = {
 export async function getAdminSummary(): Promise<AdminSummary> {
   await requireRole("Ops", "Catalogue", "Éditorial");
   const db = await getDb();
-  const [orderRows, sizeRows, [draftCount], [guideCount], [subscriberCount], [productCount]] =
+  const [orderRows, sizeRows, [draftCount], [guideCount], [subscriberCount], [productCount], archivedRows] =
     await Promise.all([
       db.select({ status: orders.status }).from(orders),
       db.select().from(productSizes),
       db.select({ n: count() }).from(importDrafts).where(eq(importDrafts.status, "draft")),
       db.select({ n: count() }).from(guides),
       db.select({ n: count() }).from(newsletterSubscribers),
-      db.select({ n: count() }).from(products),
+      db.select({ n: count() }).from(products).where(eq(products.archived, false)),
+      db.select({ slug: products.slug }).from(products).where(eq(products.archived, true)),
     ]);
+  // Les produits en corbeille ne comptent ni dans le catalogue ni en rupture.
+  const archivedSlugs = new Set(archivedRows.map((r) => r.slug));
   const stockBySlug = new Map<string, number>();
   for (const s of sizeRows) {
+    if (archivedSlugs.has(s.productSlug)) continue;
     stockBySlug.set(s.productSlug, (stockBySlug.get(s.productSlug) ?? 0) + s.stock);
   }
   const totals = [...stockBySlug.values()];
@@ -128,6 +132,7 @@ export type AdminProduct = {
   features: string[];
   specifications: { label: string; value: string }[];
   fieldVisibility: Record<string, boolean>;
+  archived: boolean;
 };
 
 export async function listAdminProducts(): Promise<AdminProduct[]> {
@@ -142,8 +147,30 @@ export async function listAdminProducts(): Promise<AdminProduct[]> {
     supplierRef: p.supplierRef, sourceUrl: p.sourceUrl,
     imageCount: p.imageUrls.length, features: p.features,
     specifications: p.specifications, fieldVisibility: p.fieldVisibility,
+    archived: p.archived,
     sizes: sizes.filter((s) => s.productSlug === p.slug).map((s) => ({ name: s.name, stock: s.stock })),
   }));
+}
+
+/** Corbeille (P2 audit) : retire le produit de la vente, restaurable à tout moment. */
+export async function archiveAdminProduct(slug: string): Promise<{ ok: boolean; error?: string }> {
+  await requireRole("Catalogue");
+  const db = await getDb();
+  const updated = await db.update(products).set({ archived: true })
+    .where(eq(products.slug, slug)).returning();
+  if (updated.length === 0) return { ok: false, error: "Produit introuvable." };
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+export async function restoreAdminProduct(slug: string): Promise<{ ok: boolean; error?: string }> {
+  await requireRole("Catalogue");
+  const db = await getDb();
+  const updated = await db.update(products).set({ archived: false })
+    .where(eq(products.slug, slug)).returning();
+  if (updated.length === 0) return { ok: false, error: "Produit introuvable." };
+  revalidatePath("/", "layout");
+  return { ok: true };
 }
 
 export async function updateAdminProduct(input: {
