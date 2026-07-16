@@ -1,7 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
-import { desc, eq } from "drizzle-orm";
+import { count, desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { orderLines, orders, user } from "@/db/auth-schema";
 import { requireRole } from "@/lib/admin";
@@ -29,12 +29,23 @@ export type AdminOrderDto = {
   lines: { productName: string; size: string; color: string; quantity: number; unitPrice: number }[];
 };
 
-export async function listAdminOrders(): Promise<AdminOrderDto[]> {
+/** Page de commandes (audit S-6) — lignes chargées pour la page seulement. */
+export async function listAdminOrders(
+  offset = 0,
+  limit = 100,
+): Promise<{ rows: AdminOrderDto[]; total: number }> {
   await requireRole("Ops");
   const db = await getDb();
-  const rows = await db.select().from(orders).orderBy(desc(orders.createdAt));
-  const lines = await db.select().from(orderLines);
-  return rows.map((r) => ({
+  const [totalRow] = await db.select({ n: count() }).from(orders);
+  const rows = await db.select().from(orders)
+    .orderBy(desc(orders.createdAt))
+    .limit(Math.min(Math.max(1, limit), 500))
+    .offset(Math.max(0, offset));
+  const lines = rows.length > 0
+    ? await db.select().from(orderLines)
+        .where(inArray(orderLines.orderId, rows.map((r) => r.id)))
+    : [];
+  const dtos = rows.map((r) => ({
     number: r.number,
     email: r.email,
     status: r.status,
@@ -51,6 +62,7 @@ export async function listAdminOrders(): Promise<AdminOrderDto[]> {
         quantity: l.quantity, unitPrice: l.unitPrice,
       })),
   }));
+  return { rows: dtos, total: totalRow?.n ?? 0 };
 }
 
 /** Statuts où l'argent a été encaissé — seuls cas où annuler doit rembourser. */
