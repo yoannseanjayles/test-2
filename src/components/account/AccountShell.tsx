@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
-import { signIn, signOut, signUp, useSession } from "@/lib/auth-client";
+import { authClient, signIn, signOut, signUp, useSession } from "@/lib/auth-client";
 import { Button, FormField } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -69,8 +69,9 @@ export function AccountShell({ title, children }: { title: string; children: Rea
 
 function AuthForm() {
   const router = useRouter();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
@@ -90,10 +91,18 @@ function AuthForm() {
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
+    setInfo("");
     setLoading(true);
     const data = new FormData(event.currentTarget);
     const email = String(data.get("email") ?? "");
     const password = String(data.get("password") ?? "");
+    if (mode === "forgot") {
+      // Réponse volontairement identique que l'adresse existe ou non.
+      await authClient.requestPasswordReset({ email, redirectTo: "/compte/reinitialisation" }).catch(() => {});
+      setLoading(false);
+      setInfo("Si un compte existe pour cette adresse, un e-mail de réinitialisation vient de partir.");
+      return;
+    }
     const result =
       mode === "signup"
         ? await signUp.email({ email, password, name: String(data.get("firstName") ?? "") })
@@ -113,14 +122,16 @@ function AuthForm() {
   return (
     <div className="mx-auto max-w-md px-4 py-12 lg:py-16">
       <h1 className="font-display text-h1 font-[560] text-bark-900">
-        {mode === "signin" ? "Connexion" : "Créer un compte"}
+        {mode === "signin" ? "Connexion" : mode === "signup" ? "Créer un compte" : "Mot de passe oublié"}
       </h1>
       <p className="mt-3 text-body-sm text-bark-700">
-        Suivi de commande, retours en un clic et profil animal — le compte
-        reste optionnel pour commander.
+        {mode === "forgot"
+          ? "Indiquez votre adresse e-mail : nous vous envoyons un lien pour choisir un nouveau mot de passe."
+          : "Suivi de commande, retours en un clic et profil animal — le compte reste optionnel pour commander."}
       </p>
       <button
         type="button"
+        hidden={mode === "forgot"}
         onClick={googleSignIn}
         disabled={googleLoading}
         className="mt-6 flex min-h-12 w-full items-center justify-center gap-3 rounded-sm border border-border bg-cream-50 px-4 text-body font-medium text-bark-900 transition-colors duration-150 hover:border-bark-300 disabled:opacity-60"
@@ -133,36 +144,54 @@ function AuthForm() {
         </svg>
         {googleLoading ? "Redirection vers Google…" : "Continuer avec Google"}
       </button>
-      <div aria-hidden="true" className="mt-5 flex items-center gap-3 text-caption text-bark-500">
-        <span className="h-px flex-1 bg-border" />
-        ou par e-mail
-        <span className="h-px flex-1 bg-border" />
-      </div>
+      {mode !== "forgot" && (
+        <div aria-hidden="true" className="mt-5 flex items-center gap-3 text-caption text-bark-500">
+          <span className="h-px flex-1 bg-border" />
+          ou par e-mail
+          <span className="h-px flex-1 bg-border" />
+        </div>
+      )}
       <form className="mt-5 flex flex-col gap-4" onSubmit={submit}>
         {mode === "signup" && (
           <FormField label="Prénom" name="firstName" required autoComplete="given-name" />
         )}
         <FormField label="Adresse e-mail" name="email" type="email" required autoComplete="email" />
-        <FormField
-          label="Mot de passe"
-          name="password"
-          type="password"
-          required
-          minLength={8}
-          autoComplete={mode === "signup" ? "new-password" : "current-password"}
-          help={mode === "signup" ? "8 caractères minimum." : undefined}
-        />
+        {mode !== "forgot" && (
+          <FormField
+            label="Mot de passe"
+            name="password"
+            type="password"
+            required
+            minLength={8}
+            autoComplete={mode === "signup" ? "new-password" : "current-password"}
+            help={mode === "signup" ? "8 caractères minimum." : undefined}
+          />
+        )}
         <Button type="submit" loading={loading}>
-          {mode === "signin" ? "Se connecter" : "Créer mon compte"}
+          {mode === "signin" ? "Se connecter" : mode === "signup" ? "Créer mon compte" : "Recevoir le lien"}
         </Button>
         <p aria-live="assertive" className="text-body-sm text-error">{error}</p>
+        <p aria-live="polite" className="text-body-sm text-success">{info}</p>
       </form>
+      {mode === "signin" && (
+        <button
+          type="button"
+          onClick={() => { setMode("forgot"); setError(""); setInfo(""); }}
+          className="text-label mt-2 block min-h-11 text-bark-700 underline-offset-4 hover:underline"
+        >
+          Mot de passe oublié ?
+        </button>
+      )}
       <button
         type="button"
-        onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+        onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(""); setInfo(""); }}
         className="text-label mt-2 min-h-11 text-action underline-offset-4 hover:underline"
       >
-        {mode === "signin" ? "Pas encore de compte ? Créez-le ici." : "Déjà un compte ? Connectez-vous."}
+        {mode === "signin"
+          ? "Pas encore de compte ? Créez-le ici."
+          : mode === "signup"
+            ? "Déjà un compte ? Connectez-vous."
+            : "Retour à la connexion."}
       </button>
     </div>
   );

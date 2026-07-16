@@ -54,6 +54,15 @@ export async function sendVerificationEmail(to: string, url: string) {
   );
 }
 
+/** Réinitialisation de mot de passe (Better Auth, audit M-6). */
+export async function sendPasswordResetEmail(to: string, url: string) {
+  await sendEmail(
+    to,
+    "Réinitialisez votre mot de passe — chien et chat",
+    `<p>Vous avez demandé à réinitialiser votre mot de passe :</p><p><a href="${escapeHtml(url)}">Choisir un nouveau mot de passe</a></p><p>Ce lien expire rapidement. Si vous n'êtes pas à l'origine de cette demande, ignorez ce message — votre mot de passe reste inchangé.</p>`,
+  );
+}
+
 /** Formulaire de contact : message relayé à la boutique (répondre = répondre au client). */
 export async function sendContactMessage(input: {
   name: string;

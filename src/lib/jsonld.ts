@@ -1,11 +1,8 @@
 import { isOutOfStock, productPath, type Product } from "@/lib/catalog";
+import { SITE_URL } from "@/lib/site";
 
-/**
- * Données structurées centralisées (5.0 §4). L'URL de production est fictive
- * tant que le domaine n'est pas choisi (Phase 6).
- */
+/** Données structurées centralisées (5.0 §4) — URL canonique de lib/site.ts. */
 
-const SITE_URL = "https://www.chienetchat.example";
 const SITE_NAME = "chien et chat";
 
 export function organizationJsonLd() {
