@@ -5,11 +5,14 @@ import { shippingMethods } from "@/lib/shipping";
 import { getShippingConfig } from "@/lib/admin-settings";
 import { formatPrice } from "@/lib/format";
 
-export const metadata: Metadata = {
-  title: "Livraison & retours",
-  description:
-    "Livraison France, Belgique, Suisse et Luxembourg — offerte dès 79 €. Retours offerts — 30 jours pour changer d'avis.",
-};
+/** Seuil lu en base (audit M-9) — mêmes montants que le checkout. */
+export async function generateMetadata(): Promise<Metadata> {
+  const { freeShippingCents } = await getShippingConfig();
+  return {
+    title: "Livraison & retours",
+    description: `Livraison France, Belgique, Suisse et Luxembourg — offerte dès ${formatPrice(freeShippingCents)}. Retours offerts — 30 jours pour changer d'avis.`,
+  };
+}
 
 /**
  * Page dédiée alimentée par la même configuration que le checkout et les

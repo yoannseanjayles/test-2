@@ -328,9 +328,17 @@ correspondent à aucune logique implémentée.
 | S-2 Message quantité trompeur | ✅ Corrigé | Message explicite « Maximum 20 exemplaires par article ». |
 | S-3 Injection HTML e-mails | ✅ Corrigé | Échappement systématique du contenu variable + journalisation des échecs d'envoi. |
 
-**Restent ouverts** (par ordre de priorité) : M-1 (panier branché sur la base —
-refonte des lookups client), M-3 (envoi des alertes restock), M-4 (fenêtre de
-30 jours et frais du 2ᵉ retour), M-6 (réinitialisation de mot de passe), M-7
-(téléphone, choix du point relais, cas Suisse), M-10 (rapatriement des images
-AliExpress, validation de sous-catégorie), mentions légales/médiateur, et les
-points P2.
+**Étapes suivantes, mergées une à une :**
+
+| Étape / PR | Contenu |
+|---|---|
+| Étape 2 — PR #559 | **M-1** : panier, checkout et confirmation résolus depuis la base (`lib/cart-data.ts` + hook `useCartProducts`, repli statique le temps de la réponse) ; lignes retirées de la vente affichées comme indisponibles et retirables ; photos fournisseur dans le panier. |
+| Étape 3 — PR #560 | **M-3** : alertes restock réellement envoyées au resaisi du stock (puis purgées ; en attente sans `RESEND_API_KEY`). **M-4** : retours bornés à 30 jours (+ marge d'acheminement), textes unifiés « Retours offerts — 30 jours » partout ; la facturation 4,90 € du 2ᵉ retour, jamais implémentée, est abandonnée. |
+| Étape 4 — PR #561 | **M-6** : « Mot de passe oublié ? » + page `/compte/reinitialisation` (Better Auth + Resend, sans énumération de comptes). **M-7 partiel** : téléphone requis à l'adresse de livraison. **S-5** : `sitemap.xml` + `robots.txt`, URL canonique centralisée (`lib/site.ts`, `NEXT_PUBLIC_SITE_URL`). |
+| Étape 5 | **M-9 (reliquat)** : métadescriptions (layout, livraison-retours) lisant le seuil en base. **M-10 partiel** : sous-catégorie validée côté serveur à la publication d'un import. |
+
+**Restent ouverts** : M-7 (sélection du point relais — intégration transporteur ;
+cas Suisse), M-10 (rapatriement des images AliExpress vers un stockage propre),
+mentions légales + médiateur de la consommation (juridique), export/suppression
+RGPD self-service, et les points P2 (pagination admin, rate limiting, recherche
+insensible aux accents, corbeille produit, tri de `src/media/a-trier/`).
