@@ -61,14 +61,16 @@ async function hydrate(rows: ProductRow[]): Promise<Product[]> {
 
 export async function fetchProducts(animal?: Animal, subcategory?: string): Promise<Product[]> {
   const db = await getDb();
+  // Les produits archivés (corbeille admin) n'apparaissent jamais en boutique.
   const conditions = [
+    eq(products.archived, false),
     ...(animal ? [eq(products.animal, animal)] : []),
     ...(subcategory ? [eq(products.subcategory, subcategory)] : []),
   ];
   const rows = await db
     .select()
     .from(products)
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .orderBy(asc(products.curatedRank));
   return hydrate(rows);
 }
@@ -82,7 +84,12 @@ export async function fetchProduct(
   const rows = await db
     .select()
     .from(products)
-    .where(and(eq(products.slug, slug), eq(products.animal, animal), eq(products.subcategory, subcategory)));
+    .where(and(
+      eq(products.slug, slug),
+      eq(products.animal, animal),
+      eq(products.subcategory, subcategory),
+      eq(products.archived, false),
+    ));
   const [product] = await hydrate(rows);
   return product;
 }

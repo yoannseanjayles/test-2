@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useSession, signOut } from "@/lib/auth-client";
 import {
+  archiveAdminProduct,
   bootstrapAdmin,
   deleteAdminProduct,
   getAdminSummary,
@@ -22,6 +23,7 @@ import {
   listAdminProducts,
   listDrafts,
   publishDraft,
+  restoreAdminProduct,
   updateAdminProduct,
   type AdminProduct,
   type AdminSummary,
@@ -734,6 +736,7 @@ const STOCK_FILTERS = [
   { id: "all", label: "Tous", match: () => true },
   { id: "low", label: "Stock faible", match: (stock: number) => stock > 0 && stock <= 5 },
   { id: "out", label: "Rupture", match: (stock: number) => stock === 0 },
+  { id: "archived", label: "Corbeille", match: () => true },
 ] as const;
 
 function Catalogue() {
@@ -757,7 +760,10 @@ function Catalogue() {
 
   const activeStock = STOCK_FILTERS.find((f) => f.id === stockFilter)!;
   const q = query.trim().toLowerCase();
+  const archivedCount = items.filter((p) => p.archived).length;
   const visible = items.filter((p) => {
+    // La corbeille est un filtre exclusif : archivés d'un côté, actifs de l'autre.
+    if (p.archived !== (stockFilter === "archived")) return false;
     const stock = p.sizes.reduce((a, s) => a + s.stock, 0);
     if (!activeStock.match(stock)) return false;
     if (!q) return true;
@@ -768,7 +774,7 @@ function Catalogue() {
     <div className="flex flex-col gap-4">
       <SectionHeader
         title="Catalogue"
-        description={`${items.length} produits — prix, stocks, rang de sélection (H17) et note de curation (D-025).`}
+        description={`${items.length - archivedCount} produits en vente${archivedCount > 0 ? ` (+ ${archivedCount} en corbeille)` : ""} — prix, stocks, rang de sélection (H17) et note de curation (D-025).`}
       />
       <div className="flex flex-wrap items-center gap-3">
         <input
@@ -961,25 +967,63 @@ function EditForm({ product, onDone }: { product: AdminProduct; onDone: () => vo
       <div className="mt-5 flex flex-wrap items-center gap-3">
         <Button type="submit" loading={saving}>Enregistrer</Button>
         <Button type="button" variant="ghost" onClick={onDone}>Annuler</Button>
-        <button
-          type="button"
-          disabled={deleting}
-          onClick={async () => {
-            const message =
-              `Supprimer définitivement « ${product.name} » ?\n\n` +
-              "Ses avis, stocks et alertes de retour en stock seront supprimés. " +
-              "Les commandes déjà passées conservent leur historique.";
-            if (!window.confirm(message)) return;
-            setDeleting(true);
-            const result = await deleteAdminProduct(product.slug);
-            setDeleting(false);
-            if (!result.ok) { setError(result.error ?? "Erreur."); return; }
-            onDone();
-          }}
-          className="text-label ml-auto min-h-11 rounded-md px-4 text-error transition-colors duration-150 hover:bg-error/10 disabled:opacity-50"
-        >
-          {deleting ? "Suppression…" : "Supprimer ce produit"}
-        </button>
+        {product.archived ? (
+          <>
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={async () => {
+                setDeleting(true);
+                const result = await restoreAdminProduct(product.slug);
+                setDeleting(false);
+                if (!result.ok) { setError(result.error ?? "Erreur."); return; }
+                onDone();
+              }}
+              className="text-label ml-auto min-h-11 rounded-md px-4 text-action transition-colors duration-150 hover:bg-pine-50 disabled:opacity-50"
+            >
+              Restaurer en boutique
+            </button>
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={async () => {
+                const message =
+                  `Supprimer définitivement « ${product.name} » ?\n\n` +
+                  "Ses avis, stocks et alertes de retour en stock seront supprimés — irréversible. " +
+                  "Les commandes déjà passées conservent leur historique.";
+                if (!window.confirm(message)) return;
+                setDeleting(true);
+                const result = await deleteAdminProduct(product.slug);
+                setDeleting(false);
+                if (!result.ok) { setError(result.error ?? "Erreur."); return; }
+                onDone();
+              }}
+              className="text-label min-h-11 rounded-md px-4 text-error transition-colors duration-150 hover:bg-error/10 disabled:opacity-50"
+            >
+              {deleting ? "…" : "Supprimer définitivement"}
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            disabled={deleting}
+            onClick={async () => {
+              const message =
+                `Mettre « ${product.name} » à la corbeille ?\n\n` +
+                "Le produit disparaît de la boutique immédiatement mais reste " +
+                "restaurable depuis le filtre « Corbeille » du catalogue.";
+              if (!window.confirm(message)) return;
+              setDeleting(true);
+              const result = await archiveAdminProduct(product.slug);
+              setDeleting(false);
+              if (!result.ok) { setError(result.error ?? "Erreur."); return; }
+              onDone();
+            }}
+            className="text-label ml-auto min-h-11 rounded-md px-4 text-error transition-colors duration-150 hover:bg-error/10 disabled:opacity-50"
+          >
+            {deleting ? "…" : "Mettre à la corbeille"}
+          </button>
+        )}
       </div>
       <p aria-live="assertive" className="mt-2 text-body-sm text-error">{error}</p>
     </form>
