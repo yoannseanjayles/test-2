@@ -1,4 +1,4 @@
-import { averageRating, isOutOfStock, productPath, type Product } from "@/lib/catalog";
+import { isOutOfStock, productPath, type Product } from "@/lib/catalog";
 
 /**
  * Données structurées centralisées (5.0 §4). L'URL de production est fictive
@@ -46,7 +46,6 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
 }
 
 export function productJsonLd(product: Product) {
-  const rating = averageRating(product);
   return {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -63,13 +62,9 @@ export function productJsonLd(product: Product) {
         ? "https://schema.org/OutOfStock"
         : "https://schema.org/InStock",
     },
-    ...(rating !== null && {
-      aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: rating,
-        reviewCount: product.reviews.length,
-      },
-    }),
+    // Pas d'aggregateRating tant que les avis ne proviennent pas de vrais
+    // clients (audit C-5) — exposer une note issue d'avis de démonstration
+    // serait une pratique trompeuse.
   };
 }
 

@@ -5,7 +5,9 @@ import { products as mockProducts, subcategories as mockSubcategories } from "./
 import { getFeatured } from "./catalog";
 
 describe("bascule mock → base (6.1 jalon 1, H37)", () => {
-  it("restitue le catalogue complet à l'identique", async () => {
+  // 20 s : le premier accès démarre PGlite (WASM) et seede la base — ~3,5 s
+  // à vide, davantage sous charge (CI).
+  it("restitue le catalogue complet à l'identique", { timeout: 20_000 }, async () => {
     const fromDb = await fetchProducts();
     expect(fromDb).toHaveLength(mockProducts.length);
     const ambre = fromDb.find((p) => p.slug === "collier-cuir-ambre")!;

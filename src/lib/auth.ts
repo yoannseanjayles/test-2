@@ -3,6 +3,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { getDb } from "@/db";
 import * as authSchema from "@/db/auth-schema";
+import { sendVerificationEmail } from "@/lib/email";
 
 /**
  * Better Auth (6.0/D-051) — e-mail + mot de passe, sessions en base,
@@ -13,6 +14,16 @@ import * as authSchema from "@/db/auth-schema";
 
 async function createAuth() {
   const db = await getDb();
+  // Garde de production (audit C-7) : jamais de secret de session par défaut
+  // face à de vrais utilisateurs. Le build Next (SSG) reste permis sans la
+  // variable — seule l'exécution en production l'exige.
+  if (
+    process.env.NODE_ENV === "production" &&
+    !process.env.BETTER_AUTH_SECRET &&
+    process.env.NEXT_PHASE !== "phase-production-build"
+  ) {
+    throw new Error("BETTER_AUTH_SECRET est requis en production (sessions signées).");
+  }
   const google =
     process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
       ? {
@@ -20,10 +31,20 @@ async function createAuth() {
           clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         }
       : null;
+  // Vérification d'e-mail (audit C-4) : activée dès que l'envoi d'e-mails est
+  // configuré. Elle conditionne le rattachement des commandes par adresse
+  // (lib/orders.ts) et bloque la connexion des inscriptions non confirmées.
+  const canSendEmails = Boolean(process.env.RESEND_API_KEY);
   return betterAuth({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     database: drizzleAdapter(db as any, { provider: "pg", schema: authSchema }),
-    emailAndPassword: { enabled: true },
+    emailAndPassword: { enabled: true, requireEmailVerification: canSendEmails },
+    emailVerification: {
+      sendOnSignUp: canSendEmails,
+      sendVerificationEmail: async ({ user, url }) => {
+        await sendVerificationEmail(user.email, url);
+      },
+    },
     ...(google ? { socialProviders: { google } } : {}),
     // Liaison de comptes : une connexion Google avec le même e-mail rejoint
     // le compte existant (Google fournit des e-mails vérifiés) au lieu d'en
@@ -31,7 +52,7 @@ async function createAuth() {
     account: {
       accountLinking: { enabled: true, trustedProviders: ["google"] },
     },
-    // Secret de développement uniquement — BETTER_AUTH_SECRET requis en production.
+    // Secret de développement uniquement — refusé en production ci-dessus.
     secret: process.env.BETTER_AUTH_SECRET ?? "dev-only-secret-chien-et-chat",
     // Sans BETTER_AUTH_URL, l'URL de base est inférée de la requête entrante.
     ...(process.env.BETTER_AUTH_URL ? { baseURL: process.env.BETTER_AUTH_URL } : {}),

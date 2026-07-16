@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { Check, Lock, PencilLine } from "lucide-react";
 import { cartSubtotal, useCart } from "@/lib/cart";
 import { useShippingConfig } from "@/lib/use-shipping-config";
@@ -27,11 +30,16 @@ import { cn } from "@/lib/utils";
 
 const steps = ["Coordonnées", "Livraison", "Paiement"] as const;
 
+/** Clé publiable Stripe — sans elle, le tunnel reste en mode démonstration. */
+const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
+
 /**
  * Checkout linéaire 3 étapes sur une URL (D-032) : invité par défaut
- * (D-004/D-014), express avant le formulaire, stepper avec édition en place,
- * validation à la sortie du champ (D-033), données préservées à l'échec.
- * Paiement simulé — PSP en iframe (Stripe + PayPal, H20) à la Phase 6.
+ * (D-004/D-014), stepper avec édition en place, validation à la sortie du
+ * champ (D-033), données préservées à l'échec. Paiement réel via le Payment
+ * Element Stripe quand les clés sont posées ; mode démonstration explicite
+ * sinon. CGV à accepter avant paiement (opposabilité).
  */
 export function CheckoutFlow() {
   const router = useRouter();
@@ -46,6 +54,10 @@ export function CheckoutFlow() {
   const [shippingMethod, setShippingMethod] = useState<ShippingMethodId>("domicile");
   const [placing, setPlacing] = useState(false);
   const [payError, setPayError] = useState("");
+  const [cgvAccepted, setCgvAccepted] = useState(false);
+  const [cgvError, setCgvError] = useState(false);
+  // Paiement Stripe en cours : PaymentIntent créé, Payment Element affiché.
+  const [payment, setPayment] = useState<{ clientSecret: string; total: number } | null>(null);
   useEffect(() => setHydrated(true), []);
 
   // Tarifs livraison depuis les réglages boutique (jalon 4), repli D-039.
@@ -69,7 +81,7 @@ export function CheckoutFlow() {
     return <div className="mx-auto max-w-page px-4 py-16 lg:px-6" aria-busy="true" />;
   }
 
-  if (lines.length === 0 && !placing) {
+  if (lines.length === 0 && !placing && !payment) {
     return (
       <div className="mx-auto max-w-page px-4 py-16 text-center lg:px-6">
         <h1 className="font-display text-h1 font-[560] text-bark-900">
@@ -85,8 +97,13 @@ export function CheckoutFlow() {
     );
   }
 
-  // Enregistrement serveur : prix et total recalculés depuis la base (D-033).
+  // Enregistrement serveur : prix, stock et total recalculés depuis la base
+  // (D-033). Avec Stripe, la commande n'est confirmée qu'après paiement.
   const placeOrder = async () => {
+    if (!cgvAccepted) {
+      setCgvError(true);
+      return;
+    }
     setPlacing(true);
     setPayError("");
     const result = await placeOrderAction({
@@ -111,8 +128,19 @@ export function CheckoutFlow() {
       shipping,
       total: result.total!,
     });
-    // clientSecret présent = Stripe configuré : le Payment Element prend le
-    // relais (confirmation via webhook). Sinon : commande démo enregistrée.
+    if (result.clientSecret) {
+      // Stripe configuré : le Payment Element encaisse — le panier n'est
+      // vidé qu'une fois le paiement abouti (page de confirmation).
+      if (!stripePromise) {
+        setPlacing(false);
+        setPayError("Paiement indisponible : NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY manque côté client.");
+        return;
+      }
+      setPayment({ clientSecret: result.clientSecret, total: result.total! });
+      setPlacing(false);
+      return;
+    }
+    // Mode démonstration : commande enregistrée directement.
     clearCart();
     router.push("/checkout/confirmation");
   };
@@ -142,32 +170,13 @@ export function CheckoutFlow() {
 
       <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_380px] lg:items-start">
         <div className="flex flex-col gap-6">
-          {/* Paiements express avant le formulaire (D-004/D-032) */}
-          {step === 0 && (
-            <div className="rounded-lg border border-border bg-cream-50 p-5">
-              <p className="text-label text-bark-700">Commande express</p>
-              <div className="mt-3 flex flex-wrap gap-3">
-                <Button variant="secondary" disabled title="Disponible avec le PSP en Phase 6">
-                  Apple Pay (bientôt)
-                </Button>
-                <Button variant="secondary" disabled title="Disponible avec le PSP en Phase 6">
-                  PayPal (bientôt)
-                </Button>
-              </div>
-              <p className="text-caption mt-2 text-bark-700">
-                Les paiements express arrivent avec l'intégration du prestataire
-                de paiement (Phase 6, H20).
-              </p>
-            </div>
-          )}
-
           {/* Étape 1 — Coordonnées (invité par défaut, D-014) */}
           <section className="rounded-lg border border-border bg-cream-50 p-5 lg:p-6">
             <header className="flex items-center justify-between">
               <h2 className="font-heading text-h3 font-semibold text-bark-900">
                 1. Coordonnées
               </h2>
-              {step > 0 && (
+              {step > 0 && !payment && (
                 <button
                   type="button"
                   onClick={() => setStep(0)}
@@ -215,7 +224,7 @@ export function CheckoutFlow() {
               <h2 className="font-heading text-h3 font-semibold text-bark-900">
                 2. Livraison
               </h2>
-              {step > 1 && (
+              {step > 1 && !payment && (
                 <button
                   type="button"
                   onClick={() => setStep(1)}
@@ -331,7 +340,7 @@ export function CheckoutFlow() {
             )}
           </section>
 
-          {/* Étape 3 — Paiement (iframe PSP simulée, D-033/H20) */}
+          {/* Étape 3 — Paiement (Payment Element Stripe, D-033/H20) */}
           <section
             className={cn(
               "rounded-lg border border-border bg-cream-50 p-5 lg:p-6",
@@ -341,19 +350,57 @@ export function CheckoutFlow() {
             <h2 className="font-heading text-h3 font-semibold text-bark-900">3. Paiement</h2>
             {step === 2 && (
               <div className="mt-4">
-                <div className="rounded-md border border-dashed border-bark-300 bg-cream-100 p-5 text-center">
-                  <Lock aria-hidden="true" className="mx-auto size-5 text-bark-500" strokeWidth={1.75} />
-                  <p className="mt-2 text-body-sm text-bark-700">
-                    L'iframe de paiement sécurisé (Stripe / PayPal — conformité
-                    PCI, D-033) s'affichera ici à la Phase 6. Les prix sont
-                    recalculés côté serveur avant tout débit.
-                  </p>
-                </div>
-                <Button className="mt-4 w-full" onClick={placeOrder} loading={placing}>
-                  Payer {formatPrice(total)}
-                  {process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ? "" : " (démonstration)"}
-                </Button>
-                <p aria-live="assertive" className="mt-2 text-body-sm text-error">{payError}</p>
+                {payment && stripePromise ? (
+                  <Elements stripe={stripePromise} options={{ clientSecret: payment.clientSecret }}>
+                    <StripePaymentForm total={payment.total} />
+                  </Elements>
+                ) : (
+                  <>
+                    {!publishableKey && (
+                      <div className="rounded-md border border-dashed border-bark-300 bg-cream-100 p-5 text-center">
+                        <Lock aria-hidden="true" className="mx-auto size-5 text-bark-500" strokeWidth={1.75} />
+                        <p className="mt-2 text-body-sm text-bark-700">
+                          Mode démonstration : aucun paiement réel n'est encaissé.
+                          La commande est enregistrée avec le statut
+                          « Payée (démonstration) ».
+                        </p>
+                      </div>
+                    )}
+                    <label className="mt-4 flex items-start gap-3 text-body-sm text-bark-700">
+                      <input
+                        type="checkbox"
+                        checked={cgvAccepted}
+                        onChange={(event) => {
+                          setCgvAccepted(event.target.checked);
+                          if (event.target.checked) setCgvError(false);
+                        }}
+                        className="mt-0.5 size-4 shrink-0 accent-pine-700"
+                      />
+                      <span>
+                        J'ai lu et j'accepte les{" "}
+                        <Link href="/cgv" target="_blank" className="text-action underline-offset-4 hover:underline">
+                          conditions générales de vente
+                        </Link>{" "}
+                        et la{" "}
+                        <Link href="/confidentialite" target="_blank" className="text-action underline-offset-4 hover:underline">
+                          politique de confidentialité
+                        </Link>
+                        .
+                      </span>
+                    </label>
+                    {cgvError && (
+                      <p className="mt-2 text-body-sm text-error">
+                        Merci d'accepter les conditions générales de vente pour continuer.
+                      </p>
+                    )}
+                    <Button className="mt-4 w-full" onClick={placeOrder} loading={placing}>
+                      {publishableKey
+                        ? `Continuer vers le paiement de ${formatPrice(total)}`
+                        : `Payer ${formatPrice(total)} (démonstration)`}
+                    </Button>
+                    <p aria-live="assertive" className="mt-2 text-body-sm text-error">{payError}</p>
+                  </>
+                )}
               </div>
             )}
           </section>
@@ -388,11 +435,52 @@ export function CheckoutFlow() {
             </div>
             <div className="flex justify-between border-t border-border pt-2 text-body text-bark-900">
               <dt className="font-semibold">Total TTC</dt>
-              <dd className="text-price text-lg">{formatPrice(total)}</dd>
+              <dd className="text-price text-lg">{formatPrice(payment?.total ?? total)}</dd>
             </div>
           </dl>
         </aside>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Formulaire Stripe : le Payment Element encaisse le montant du
+ * PaymentIntent (recalculé serveur). Succès = redirection vers la
+ * confirmation ; le statut définitif vient du webhook.
+ */
+function StripePaymentForm({ total }: { total: number }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const pay = async () => {
+    if (!stripe || !elements) return;
+    setSubmitting(true);
+    setError("");
+    const result = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: `${window.location.origin}/checkout/confirmation?paiement=stripe`,
+      },
+    });
+    // On ne revient ici qu'en cas d'échec — sinon Stripe redirige.
+    setError(result.error.message ?? "Le paiement n'a pas abouti — réessayez.");
+    setSubmitting(false);
+  };
+
+  return (
+    <div>
+      <PaymentElement />
+      <Button className="mt-4 w-full" onClick={pay} loading={submitting} disabled={!stripe || !elements}>
+        Payer {formatPrice(total)}
+      </Button>
+      <p className="text-caption mt-2 flex items-center justify-center gap-1.5 text-bark-700">
+        <Lock aria-hidden="true" className="size-3.5" strokeWidth={1.75} />
+        Paiement sécurisé par Stripe — vos données bancaires ne transitent jamais par nos serveurs.
+      </p>
+      <p aria-live="assertive" className="mt-2 text-body-sm text-error">{error}</p>
     </div>
   );
 }

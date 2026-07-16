@@ -31,8 +31,7 @@ function Orders() {
   if (ordersList === null) {
     return <p aria-busy="true" className="text-body-sm text-bark-700">Chargement…</p>;
   }
-  const order = ordersList[0];
-  if (!order) {
+  if (ordersList.length === 0) {
     return (
       <div className="rounded-lg bg-cream-50 p-6 shadow-card">
         <p className="text-body text-bark-700">Aucune commande pour l'instant.</p>
@@ -43,6 +42,22 @@ function Orders() {
     );
   }
 
+  // Historique complet (audit M-2) — chaque commande avec sa timeline et
+  // son retour self-service.
+  return (
+    <div className="flex flex-col gap-10">
+      {ordersList.map((order) => (
+        <OrderCard
+          key={order.number}
+          order={order}
+          onDone={() => listMyOrders().then(setOrdersList)}
+        />
+      ))}
+    </div>
+  );
+}
+
+function OrderCard({ order, onDone }: { order: OrderDto; onDone: () => void }) {
   const method = shippingMethods.find((m) => m.id === order.shippingMethod);
   const currentStep = statusIndex(order.status);
 
@@ -51,6 +66,9 @@ function Orders() {
       <section className="rounded-lg bg-cream-50 p-6 shadow-card">
         <h2 className="font-heading text-h3 font-semibold text-bark-900">
           Commande {order.number}
+          <span className="text-body-sm ml-2 font-normal text-bark-700">
+            — {new Date(order.createdAt).toLocaleDateString("fr-FR")}
+          </span>
         </h2>
         {/* Timeline des statuts (D-016) — badge seul pour les statuts hors parcours. */}
         {currentStep >= 0 ? (
@@ -92,7 +110,7 @@ function Orders() {
         </p>
       </section>
 
-      <ReturnFlow order={order} onDone={() => listMyOrders().then(setOrdersList)} />
+      <ReturnFlow order={order} onDone={onDone} />
     </div>
   );
 }

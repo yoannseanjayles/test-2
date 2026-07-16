@@ -1,10 +1,15 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { orders } from "@/db/auth-schema";
+import { orderLines, orders } from "@/db/auth-schema";
+import { sendOrderConfirmation } from "@/lib/email";
+import { releaseStockForOrder } from "@/lib/stock";
 
 /**
  * Webhook Stripe (6.0 §3) : signature vérifiée, source de vérité des
- * statuts (D-016). Payée au paiement confirmé — le stock suivra (H39).
+ * statuts (D-016). La confirmation client (statut « Payée » + e-mail) part
+ * d'ici — jamais avant le paiement. Idempotent : la transition ne
+ * s'applique que depuis « En attente de paiement », les relances Stripe ne
+ * renvoient donc ni e-mail ni double restitution de stock.
  */
 export async function POST(request: Request) {
   const secretKey = process.env.STRIPE_SECRET_KEY;
@@ -27,9 +32,34 @@ export async function POST(request: Request) {
 
   if (event.type === "payment_intent.succeeded" || event.type === "payment_intent.payment_failed") {
     const intent = event.data.object;
-    const status = event.type === "payment_intent.succeeded" ? "Payée" : "Échec de paiement";
+    const succeeded = event.type === "payment_intent.succeeded";
     const db = await getDb();
-    await db.update(orders).set({ status }).where(eq(orders.paymentIntentId, intent.id));
+    const updated = await db
+      .update(orders)
+      .set({ status: succeeded ? "Payée" : "Échec de paiement" })
+      .where(and(
+        eq(orders.paymentIntentId, intent.id),
+        eq(orders.status, "En attente de paiement"),
+      ))
+      .returning();
+    const [order] = updated;
+    if (order) {
+      if (succeeded) {
+        const lines = await db.select().from(orderLines).where(eq(orderLines.orderId, order.id));
+        void sendOrderConfirmation({
+          number: order.number,
+          email: order.email,
+          total: order.total,
+          lines: lines.map((l) => ({
+            productSlug: l.productSlug, productName: l.productName, size: l.size,
+            color: l.color, quantity: l.quantity, unitPrice: l.unitPrice,
+          })),
+        });
+      } else {
+        // Paiement non abouti : le stock réservé redevient vendable.
+        await releaseStockForOrder(order.id);
+      }
+    }
   }
   return Response.json({ received: true });
 }

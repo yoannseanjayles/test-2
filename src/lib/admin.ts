@@ -32,6 +32,19 @@ export async function getAdminUser(): Promise<AdminUser | null> {
  * peut prendre le rôle Admin. En production : comptes créés en base.
  */
 export async function bootstrapAdmin(): Promise<{ ok: boolean; error?: string }> {
+  // Audit C-7 : en production sans base persistante, la base en mémoire se
+  // vide à chaque redéploiement et ce bouton redeviendrait disponible pour
+  // le premier visiteur venu. On l'interdit donc hors base réelle.
+  if (
+    process.env.NODE_ENV === "production" &&
+    !process.env.DATABASE_URL &&
+    process.env.ALLOW_ADMIN_BOOTSTRAP !== "1"
+  ) {
+    return {
+      ok: false,
+      error: "Amorçage désactivé en production sans DATABASE_URL (posez la variable Neon, ou ALLOW_ADMIN_BOOTSTRAP=1 pour une démo).",
+    };
+  }
   const sessionUser = await getSessionUser(await headers());
   if (!sessionUser) return { ok: false, error: "Connectez-vous d'abord." };
   const db = await getDb();

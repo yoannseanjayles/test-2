@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { ChevronDown, Minus, Plus, Trash2 } from "lucide-react";
 import { cartSubtotal, useCart, type CartLine } from "@/lib/cart";
+import { useShippingConfig } from "@/lib/use-shipping-config";
 import { getProductBySlug, productPath } from "@/lib/catalog";
 import { formatPrice } from "@/lib/format";
 import { illustrations, productImages } from "@/lib/media";
@@ -20,6 +21,7 @@ export function CartPageContent() {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
 
+  const shippingConfig = useShippingConfig();
   const subtotal = cartSubtotal(lines);
 
   if (!hydrated) {
@@ -69,7 +71,7 @@ export function CartPageContent() {
             </div>
             <div className="flex justify-between">
               <dt>Livraison</dt>
-              <dd>{subtotal >= 7900 ? "Offerte" : "calculée au paiement"}</dd>
+              <dd>{subtotal >= shippingConfig.freeShippingCents ? "Offerte" : "calculée au paiement"}</dd>
             </div>
           </dl>
           <PromoCode />

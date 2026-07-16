@@ -3,11 +3,12 @@
 import { headers } from "next/headers";
 import { desc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { orderLines, orders } from "@/db/auth-schema";
+import { orderLines, orders, user } from "@/db/auth-schema";
 import { requireRole } from "@/lib/admin";
 import { getSessionUser } from "@/lib/auth";
 import { isReturnEligible, orderTransitions } from "@/lib/account";
 import { sendOrderStatusUpdate } from "@/lib/email";
+import { releaseStockForOrder } from "@/lib/stock";
 
 /**
  * Commandes & Ops (7.1 jalon 3) — transitions de statuts D-016 gardées
@@ -99,6 +100,12 @@ export async function setOrderStatus(
   }
 
   await db.update(orders).set({ status: next }).where(eq(orders.id, order.id));
+  // Annulation : le stock réservé redevient vendable — sauf depuis « Échec
+  // de paiement », déjà restitué par le webhook. « Remboursée » (retour)
+  // reste manuel : l'état des articles retournés doit être contrôlé.
+  if (next === "Annulée" && order.status !== "Échec de paiement") {
+    await releaseStockForOrder(order.id);
+  }
   void sendOrderStatusUpdate({ number: order.number, email: order.email }, next);
   return { ok: true, info };
 }
@@ -113,9 +120,13 @@ export async function requestReturn(
   const db = await getDb();
   const [order] = await db.select().from(orders).where(eq(orders.number, number));
   if (!order) return { ok: false, error: "Commande introuvable." };
+  // Propriété par e-mail réservée aux adresses vérifiées (audit C-4).
+  const [account] = await db.select().from(user).where(eq(user.id, sessionUser.id));
   const owns =
     order.userId === sessionUser.id ||
-    order.email.toLowerCase() === sessionUser.email.toLowerCase();
+    (account !== undefined &&
+      account.emailVerified &&
+      order.email.toLowerCase() === account.email.toLowerCase());
   if (!owns) return { ok: false, error: "Cette commande n'est pas rattachée à votre compte." };
   if (!isReturnEligible(order.status)) {
     return {

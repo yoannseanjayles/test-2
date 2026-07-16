@@ -51,11 +51,6 @@ export default async function HomePage() {
     )
     .filter(({ review }) => review.rating === 5)
     .slice(0, 3);
-  const allReviews = products.flatMap((p) => p.reviews);
-  const globalAverage =
-    Math.round(
-      (allReviews.reduce((acc, r) => acc + r.rating, 0) / allReviews.length) * 10,
-    ) / 10;
 
   return (
     <>
@@ -207,8 +202,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-page px-4 py-12 lg:px-6 lg:py-16">
           <SectionHeading id="avis" title="Ils nous font confiance" />
           <p className="mt-2 text-body-sm text-bark-700">
-            {globalAverage.toLocaleString("fr-FR")} sur 5 — {allReviews.length} avis
-            vérifiés sur l'ensemble du catalogue.
+            Retours de propriétaires sur les pièces de la sélection.
           </p>
           <ul className="mt-8 grid gap-6 lg:grid-cols-3">
             {highlightedReviews.map(({ review, productName }) => (

@@ -11,7 +11,6 @@ const navItems = [
   { label: "Tableau de bord", href: "/compte" },
   { label: "Mes commandes", href: "/compte/commandes" },
   { label: "Mes animaux", href: "/compte/animaux" },
-  { label: "Mes adresses", href: "/compte/adresses" },
   { label: "Mes informations", href: "/compte/informations" },
 ];
 
