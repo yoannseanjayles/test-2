@@ -160,7 +160,17 @@ async function createDb() {
  */
 const globalStore = globalThis as unknown as { __chienEtChatDb?: Promise<Database> };
 
+/**
+ * Un échec d'initialisation (Neon momentanément injoignable au démarrage…)
+ * ne doit pas rester mis en cache : sinon toute l'instance serverless reste
+ * cassée jusqu'au prochain redémarrage à froid — la requête suivante retente.
+ */
 export function getDb(): Promise<Database> {
-  globalStore.__chienEtChatDb ??= createDb();
+  if (!globalStore.__chienEtChatDb) {
+    globalStore.__chienEtChatDb = createDb().catch((error) => {
+      globalStore.__chienEtChatDb = undefined;
+      throw error;
+    });
+  }
   return globalStore.__chienEtChatDb;
 }
