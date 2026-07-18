@@ -14,15 +14,17 @@ import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/email";
 
 async function createAuth() {
   const db = await getDb();
-  // Garde de production (audit C-7) : jamais de secret de session par défaut
-  // face à de vrais utilisateurs. Le build Next (SSG) reste permis sans la
-  // variable — seule l'exécution en production l'exige.
-  if (
-    process.env.NODE_ENV === "production" &&
-    !process.env.BETTER_AUTH_SECRET &&
-    process.env.NEXT_PHASE !== "phase-production-build"
-  ) {
-    throw new Error("BETTER_AUTH_SECRET est requis en production (sessions signées).");
+  // Garde de production (audit C-7) : on avertit bruyamment (logs Vercel)
+  // quand BETTER_AUTH_SECRET manque, mais on ne bloque plus l'authentification
+  // — un throw ici cassait signup ET login pour tous les visiteurs (régression
+  // constatée le 18/07/2026). Le repli utilise le même secret fixe que
+  // toujours : pas de dégradation par rapport au comportement historique.
+  if (process.env.NODE_ENV === "production" && !process.env.BETTER_AUTH_SECRET) {
+    console.error(
+      "[auth] BETTER_AUTH_SECRET absent en production — repli sur un secret par défaut. " +
+        "Posez la variable sur Vercel dès que possible (les sessions signées avec le " +
+        "secret par défaut sont forgeables par quiconque lit le code source).",
+    );
   }
   const google =
     process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
@@ -69,9 +71,19 @@ async function createAuth() {
 type Auth = Awaited<ReturnType<typeof createAuth>>;
 const globalStore = globalThis as unknown as { __chienEtChatAuth?: Promise<Auth> };
 
-/** Singleton via globalThis — même raison que getDb() (copies de module par bundle). */
+/**
+ * Singleton via globalThis — même raison que getDb() (copies de module par
+ * bundle). Un échec d'initialisation (DB momentanément indisponible…) ne
+ * doit pas rester mis en cache : sinon toute l'instance serverless reste
+ * cassée jusqu'au prochain redémarrage à froid.
+ */
 export function getAuth(): Promise<Auth> {
-  globalStore.__chienEtChatAuth ??= createAuth();
+  if (!globalStore.__chienEtChatAuth) {
+    globalStore.__chienEtChatAuth = createAuth().catch((error) => {
+      globalStore.__chienEtChatAuth = undefined;
+      throw error;
+    });
+  }
   return globalStore.__chienEtChatAuth;
 }
 

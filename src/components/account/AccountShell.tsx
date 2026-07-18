@@ -109,10 +109,14 @@ function AuthForm() {
         : await signIn.email({ email, password });
     setLoading(false);
     if (result.error) {
+      // « Code » distingue un e-mail non vérifié d'un identifiant réellement
+      // incorrect — les deux renvoient un statut 403 (audit).
       setError(
-        result.error.status === 401 || result.error.status === 403
-          ? "E-mail ou mot de passe incorrect."
-          : (result.error.message ?? "Une erreur est survenue — réessayez."),
+        result.error.code === "EMAIL_NOT_VERIFIED"
+          ? "Confirmez votre adresse e-mail avant de vous connecter — vérifiez votre boîte de réception (et les spams)."
+          : result.error.status === 401 || result.error.status === 403
+            ? "E-mail ou mot de passe incorrect."
+            : (result.error.message ?? "Une erreur est survenue — réessayez."),
       );
       return;
     }
