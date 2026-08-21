@@ -8,6 +8,7 @@ import { newsletterSubscribers, orders, restockAlerts, user } from "@/db/auth-sc
 import { categories, guides, products, productSizes, reviews } from "@/db/schema";
 import { getSessionUser } from "@/lib/auth";
 import { sendRestockAlert } from "@/lib/email";
+import { isServingProduction } from "@/lib/runtime-env";
 
 /**
  * Actions back-office (7.1 jalon 1) — garde serveur par rôle (D-017/H42),
@@ -31,23 +32,33 @@ export async function getAdminUser(): Promise<AdminUser | null> {
 /**
  * Amorçage démo (H42) : tant qu'aucun admin n'existe, l'utilisateur connecté
  * peut prendre le rôle Admin. En production : comptes créés en base.
+ *
+ * Audit 2026-08 (CR-2) — le garde précédent ne se déclenchait QUE si
+ * `DATABASE_URL` était absente, c'est-à-dire jamais en production réelle.
+ * Sur une base neuve, le premier visiteur inscrit qui cliquait devenait donc
+ * administrateur : la page /admin est un composant client servi publiquement,
+ * bouton compris. Le rôle est désormais réservé à une adresse désignée hors
+ * du code (`ADMIN_BOOTSTRAP_EMAIL`), et seulement si elle est vérifiée.
  */
 export async function bootstrapAdmin(): Promise<{ ok: boolean; error?: string }> {
-  // Audit C-7 : en production sans base persistante, la base en mémoire se
-  // vide à chaque redéploiement et ce bouton redeviendrait disponible pour
-  // le premier visiteur venu. On l'interdit donc hors base réelle.
-  if (
-    process.env.NODE_ENV === "production" &&
-    !process.env.DATABASE_URL &&
-    process.env.ALLOW_ADMIN_BOOTSTRAP !== "1"
-  ) {
-    return {
-      ok: false,
-      error: "Amorçage désactivé en production sans DATABASE_URL (posez la variable Neon, ou ALLOW_ADMIN_BOOTSTRAP=1 pour une démo).",
-    };
-  }
   const sessionUser = await getSessionUser(await headers());
   if (!sessionUser) return { ok: false, error: "Connectez-vous d'abord." };
+
+  if (isServingProduction()) {
+    const allowed = process.env.ADMIN_BOOTSTRAP_EMAIL?.trim().toLowerCase();
+    // Message identique dans les deux cas : ne pas révéler si la variable
+    // est posée, ni sur quelle adresse.
+    if (!allowed || sessionUser.email.trim().toLowerCase() !== allowed) {
+      return {
+        ok: false,
+        error: "Amorçage désactivé en production. Attribuez le rôle en base : UPDATE \"user\" SET role = 'Admin' WHERE email = '…'.",
+      };
+    }
+    if (!sessionUser.emailVerified) {
+      return { ok: false, error: "Vérifiez votre adresse e-mail avant d'amorcer le compte administrateur." };
+    }
+  }
+
   const db = await getDb();
   // Attribution conditionnelle en une requête (audit S-7) : deux amorçages
   // simultanés ne peuvent pas créer deux admins.

@@ -4,6 +4,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { getDb } from "@/db";
 import * as authSchema from "@/db/auth-schema";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/email";
+import { isServingProduction } from "@/lib/runtime-env";
 
 /**
  * Better Auth (6.0/D-051) — e-mail + mot de passe, sessions en base,
@@ -13,19 +14,26 @@ import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/email";
  */
 
 async function createAuth() {
-  const db = await getDb();
-  // Garde de production (audit C-7) : on avertit bruyamment (logs Vercel)
-  // quand BETTER_AUTH_SECRET manque, mais on ne bloque plus l'authentification
-  // — un throw ici cassait signup ET login pour tous les visiteurs (régression
-  // constatée le 18/07/2026). Le repli utilise le même secret fixe que
-  // toujours : pas de dégradation par rapport au comportement historique.
-  if (process.env.NODE_ENV === "production" && !process.env.BETTER_AUTH_SECRET) {
-    console.error(
-      "[auth] BETTER_AUTH_SECRET absent en production — repli sur un secret par défaut. " +
-        "Posez la variable sur Vercel dès que possible (les sessions signées avec le " +
-        "secret par défaut sont forgeables par quiconque lit le code source).",
+  // Garde de production (audit C-7, rouverte puis refermée par l'audit
+  // 2026-08 CR-1) : le secret de repli est en clair dans un dépôt public —
+  // s'en contenter en production rend TOUTES les sessions forgeables, rôle
+  // Admin compris. On échoue donc fermé.
+  //
+  // Le premier correctif de C-7 avait été annulé le 18/07/2026 parce qu'il
+  // cassait signup et login : il se déclenchait aussi pendant `next build`,
+  // où NODE_ENV vaut déjà "production". `isServingProduction()` exclut la
+  // phase de compilation — le garde ne s'applique qu'aux requêtes réelles.
+  if (isServingProduction() && !process.env.BETTER_AUTH_SECRET) {
+    throw new Error(
+      "[auth] BETTER_AUTH_SECRET absent en production — démarrage refusé. " +
+        "Le secret de repli est public (dépôt GitHub) : toute session signée " +
+        "avec lui est forgeable. Posez la variable sur Vercel " +
+        "(`openssl rand -base64 32`), puis purgez la table `session`.",
     );
   }
+  // Après le garde : une erreur de configuration doit se voir avant toute
+  // tentative de connexion à la base.
+  const db = await getDb();
   const google =
     process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
       ? {

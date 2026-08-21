@@ -3,6 +3,7 @@ import { sql as rawSql } from "drizzle-orm";
 import * as schema from "./schema";
 import * as authSchema from "./auth-schema";
 import { seedIfEmpty } from "./seed";
+import { isServingProduction } from "@/lib/runtime-env";
 
 /**
  * Client base de données (6.0/H38) :
@@ -143,6 +144,20 @@ async function createDb() {
     await applySchema(db);
     await seedIfEmpty(db);
     return db;
+  }
+  // Garde de production (audit 2026-08, EL-4) : sans ce contrôle, une
+  // production dépourvue de DATABASE_URL bascule SILENCIEUSEMENT sur la base
+  // en mémoire — commandes, comptes et sessions effacés à chaque démarrage à
+  // froid, catalogue de démonstration réinjecté, et la course à l'amorçage
+  // admin (CR-2) rejouée indéfiniment. La phase de compilation reste
+  // autorisée : la CI et les clones frais buildent sans base.
+  if (isServingProduction()) {
+    throw new Error(
+      "[db] DATABASE_URL absent en production — démarrage refusé. " +
+        "Le repli PGlite est une base en mémoire, effacée à chaque démarrage " +
+        "à froid : les commandes et les comptes seraient perdus. Posez la " +
+        "chaîne de connexion Neon sur Vercel.",
+    );
   }
   const { PGlite } = await import("@electric-sql/pglite");
   const { drizzle } = await import("drizzle-orm/pglite");
