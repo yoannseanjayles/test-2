@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { count, desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { orderLines, orders, user } from "@/db/auth-schema";
@@ -118,7 +119,7 @@ export async function setOrderStatus(
   if (next === "Annulée" && order.status !== "Échec de paiement") {
     await releaseStockForOrder(order.id);
   }
-  void sendOrderStatusUpdate({ number: order.number, email: order.email }, next);
+  after(() => sendOrderStatusUpdate({ number: order.number, email: order.email }, next));
   return { ok: true, info };
 }
 
@@ -151,6 +152,6 @@ export async function requestReturn(
   await db.update(orders)
     .set({ status: "Retour en cours", returnReason: reason.trim().slice(0, 200) || null })
     .where(eq(orders.id, order.id));
-  void sendOrderStatusUpdate({ number: order.number, email: order.email }, "Retour en cours");
+  after(() => sendOrderStatusUpdate({ number: order.number, email: order.email }, "Retour en cours"));
   return { ok: true };
 }

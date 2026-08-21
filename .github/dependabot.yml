@@ -1,0 +1,34 @@
+# Dependabot (audit 2026-08, MO-5).
+#
+# Le référentiel place les dépendances hallucinées, obsolètes ou vulnérables
+# parmi les risques propres au vibe coding : l'audit d'août a trouvé
+# 19 vulnérabilités dont une SSRF Next.js directement exploitable sur les
+# Server Actions. Sans veille automatique, l'écart se recreuse en semaines.
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    # Les correctifs de sécurité arrivent séparément et sans regroupement,
+    # pour être fusionnables immédiatement.
+    groups:
+      dev-dependencies:
+        dependency-type: development
+        update-types: [minor, patch]
+      production-patch:
+        dependency-type: production
+        update-types: [patch]
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "ci"

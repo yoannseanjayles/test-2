@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { orderLines, orders, user } from "@/db/auth-schema";
@@ -8,6 +9,8 @@ import { products } from "@/db/schema";
 import { getSessionUser } from "@/lib/auth";
 import { addressSchema, contactSchema } from "@/lib/checkout-schemas";
 import { CGV_VERSION } from "@/lib/legal";
+import { reportError } from "@/lib/observability";
+import { isServingProduction } from "@/lib/runtime-env";
 import { shippingMethods, shippingPrice, type ShippingMethodId } from "@/lib/shipping";
 import { getShippingConfig } from "@/lib/admin-settings";
 import { releaseStock, reserveStock } from "@/lib/stock";
@@ -106,6 +109,14 @@ export async function placeOrder(input: {
     let paymentIntentId: string | null = null;
     let status = "Payée (démonstration)";
     if (process.env.STRIPE_SECRET_KEY) {
+      // Garde-fou clé de test (audit 2026-08, MO-2) : une `sk_test_` oubliée
+      // en production encaisse dans le vide — les commandes semblent payées
+      // et aucun euro n'arrive. Mieux vaut refuser la commande bruyamment.
+      if (isServingProduction() && process.env.STRIPE_SECRET_KEY.startsWith("sk_test_")) {
+        reportError("orders", new Error("Clé Stripe de test en production"), { orderNumber: number });
+        await releaseStock(stockLines);
+        return { ok: false, error: "Le paiement est momentanément indisponible — réessayez plus tard." };
+      }
       const { default: Stripe } = await import("stripe");
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
       const intent = await stripe.paymentIntents.create({
@@ -113,7 +124,14 @@ export async function placeOrder(input: {
         currency: "eur",
         automatic_payment_methods: { enabled: true },
         receipt_email: contact.data.email,
-        metadata: { orderNumber: number },
+        // `userId` en plus du numéro (audit 2026-08, MO-2) : la réconciliation
+        // et les litiges se règlent depuis le tableau de bord Stripe, sans
+        // aller-retour avec la base.
+        metadata: {
+          orderNumber: number,
+          userId: sessionUser?.id ?? "invité",
+          customerEmail: contact.data.email,
+        },
       });
       clientSecret = intent.client_secret;
       paymentIntentId = intent.id;
@@ -150,7 +168,11 @@ export async function placeOrder(input: {
     // confirmation part du webhook une fois le paiement réellement validé
     // (audit C-1/C-3) — jamais avant.
     if (!paymentIntentId) {
-      void sendOrderConfirmation({
+      // `after()` plutôt que `void` (audit 2026-08, MO-1) : sur Vercel, l'instance
+      // gèle dès la réponse renvoyée et tue les promesses non attendues — des
+      // e-mails de confirmation partaient dans le vide. `after()` diffère le
+      // travail tout en garantissant qu'il s'exécute avant le gel.
+      after(() => sendOrderConfirmation({
         number,
         email: contact.data.email,
         total,
@@ -162,13 +184,13 @@ export async function placeOrder(input: {
           quantity: l.quantity,
           unitPrice: bySlug.get(l.slug)!.price,
         })),
-      });
+      }));
     }
 
     return { ok: true, number, total, clientSecret };
   } catch (error) {
     await releaseStock(stockLines);
-    console.error("[orders] Échec d'enregistrement de commande :", error);
+    reportError("orders", error, { orderNumber: number, total });
     return { ok: false, error: "Impossible d'enregistrer la commande — réessayez." };
   }
 }

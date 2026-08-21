@@ -99,6 +99,11 @@ const DDL = [
   `CREATE TABLE IF NOT EXISTS restock_alerts (
     id text PRIMARY KEY, product_slug text NOT NULL, size text NOT NULL,
     email text NOT NULL, created_at timestamp NOT NULL DEFAULT now())`,
+  `CREATE TABLE IF NOT EXISTS rate_limit_hits (
+    id text PRIMARY KEY, bucket text NOT NULL,
+    hit_at timestamp NOT NULL DEFAULT now())`,
+  `CREATE INDEX IF NOT EXISTS idx_rate_limit_bucket
+    ON rate_limit_hits (bucket, hit_at)`,
   `CREATE TABLE IF NOT EXISTS newsletter_subscribers (
     email text PRIMARY KEY, created_at timestamp NOT NULL DEFAULT now())`,
   `CREATE TABLE IF NOT EXISTS import_drafts (

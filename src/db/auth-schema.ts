@@ -129,3 +129,19 @@ export const importDrafts = pgTable("import_drafts", {
   status: text("status").$type<"draft" | "published">().notNull().default("draft"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+/**
+ * Compteur de limitation de débit partagé (audit 2026-08, EL-5).
+ *
+ * Le compteur précédent vivait dans la mémoire du processus : sur Vercel,
+ * chaque instance serverless avait le sien et il repartait de zéro à chaque
+ * démarrage à froid — la limite réelle valait `max × nombre d'instances`.
+ * Une ligne par tentative, purgée à la volée : la base est déjà là, aucun
+ * service tiers à provisionner.
+ */
+export const rateLimitHits = pgTable("rate_limit_hits", {
+  id: text("id").primaryKey(),
+  /** `action:identifiant` — l'identifiant est une IP ou un couple IP+chemin. */
+  bucket: text("bucket").notNull(),
+  hitAt: timestamp("hit_at").notNull().defaultNow(),
+});

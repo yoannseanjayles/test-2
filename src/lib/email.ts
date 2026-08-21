@@ -1,6 +1,7 @@
 import "server-only";
 import type { OrderDto } from "@/lib/orders";
 import { formatPrice } from "@/lib/format";
+import { reportError } from "@/lib/observability";
 
 /**
  * E-mails transactionnels (6.0) via l'API Resend quand RESEND_API_KEY est
@@ -30,7 +31,7 @@ async function sendEmail(to: string, subject: string, html: string, replyTo?: st
       ...(replyTo ? { reply_to: replyTo } : {}),
     }),
   }).catch((error) => {
-    console.error(`[email] Échec d'envoi « ${subject} » à ${to}:`, error);
+    reportError("email", error, { subject, to });
   });
 }
 

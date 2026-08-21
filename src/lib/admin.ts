@@ -9,6 +9,7 @@ import { categories, guides, products, productSizes, reviews } from "@/db/schema
 import { getSessionUser } from "@/lib/auth";
 import { sendRestockAlert } from "@/lib/email";
 import { isServingProduction } from "@/lib/runtime-env";
+import { rejectNonPageFile } from "@/lib/import-guard";
 
 /**
  * Actions back-office (7.1 jalon 1) — garde serveur par rôle (D-017/H42),
@@ -301,6 +302,7 @@ import { desc } from "drizzle-orm";
 
 export type ImportReport = { fileName: string; ok: boolean; title?: string; error?: string };
 
+
 export async function importAliexpressFiles(formData: FormData): Promise<ImportReport[]> {
   await requireRole("Catalogue");
   const db = await getDb();
@@ -310,7 +312,11 @@ export async function importAliexpressFiles(formData: FormData): Promise<ImportR
     const fileName = entry.name;
     try {
       if (entry.size > 15 * 1024 * 1024) throw new Error("Fichier > 15 Mo.");
-      const raw = Buffer.from(await entry.arrayBuffer()).toString("utf-8");
+      if (entry.size === 0) throw new Error("Fichier vide.");
+      const buffer = Buffer.from(await entry.arrayBuffer());
+      const rejection = rejectNonPageFile(fileName, entry.type, buffer);
+      if (rejection) throw new Error(rejection);
+      const raw = buffer.toString("utf-8");
       const parsed = parseAliexpressPage(raw);
       if (!parsed) throw new Error("Titre introuvable — page non reconnue.");
       await db.insert(importDrafts).values({

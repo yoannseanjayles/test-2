@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { orderLines, orders } from "@/db/auth-schema";
@@ -46,7 +47,11 @@ export async function POST(request: Request) {
     if (order) {
       if (succeeded) {
         const lines = await db.select().from(orderLines).where(eq(orderLines.orderId, order.id));
-        void sendOrderConfirmation({
+        // `after()` plutôt que `void` (audit 2026-08, MO-1) : sur Vercel, l'instance
+        // gèle dès la réponse renvoyée et tue les promesses non attendues — des
+        // e-mails de confirmation partaient dans le vide. `after()` diffère le
+        // travail tout en garantissant qu'il s'exécute avant le gel.
+        after(() => sendOrderConfirmation({
           number: order.number,
           email: order.email,
           total: order.total,
@@ -54,7 +59,7 @@ export async function POST(request: Request) {
             productSlug: l.productSlug, productName: l.productName, size: l.size,
             color: l.color, quantity: l.quantity, unitPrice: l.unitPrice,
           })),
-        });
+        }));
       } else {
         // Paiement non abouti : le stock réservé redevient vendable.
         await releaseStockForOrder(order.id);
