@@ -350,19 +350,21 @@ Même convention que `docs/audit-2026-07-reprise.md` §6.
 | EL-2 En-têtes de sécurité | ✅ Corrigé | 6 en-têtes + CSP en Report-Only dans `next.config.ts`, hors middleware pour ne pas intercepter le webhook. Vérifiés sur `next start`. |
 | EL-3 XSS via JSON-LD | ✅ Corrigé | `jsonLdScript()` échappe `<`, `>` et `&` sur les 10 sites d'injection. Couvert par `src/lib/jsonld.test.ts`. |
 | EL-4 Base mémoire en production | ✅ Corrigé | Démarrage refusé sans `DATABASE_URL` hors phase de compilation. `.env.example` ajouté (12 variables). |
-| EL-5 Rate limiting en mémoire | ⏳ Ouvert | Upstash Redis à brancher, y compris sur le `rateLimit` de Better Auth. |
-| EL-6 Aucun monitoring | ⏳ Ouvert | Sentry + `error.tsx` / `global-error.tsx`. |
+| EL-5 Rate limiting en mémoire | ✅ Corrigé | Compteur déplacé en base (`rate_limit_hits`, purge à la volée, repli mémoire si la base tombe) — aucun service tiers à provisionner. Surtout : `/api/auth/*` est désormais couvert (10 connexions / 10 min, 5 inscriptions ou réinitialisations / h), contrôle posé dans le route handler et non dans un middleware. Vérifié : 429 à la 11ᵉ tentative, `get-session` non limité. |
+| EL-6 Aucun monitoring | ✅ Corrigé (avec réserve) | `error.tsx` et `global-error.tsx` ajoutées, digest affiché au visiteur pour le support. `lib/observability.ts` émet une ligne JSON par incident. **Sentry n'est pas installé** (compte et DSN requis) : le point de branchement est marqué dans `reportError()`, tout le code applicatif y passe déjà. |
 | EL-7 Consentement CGV | ✅ Corrigé | `placeOrder` reçoit, vérifie et horodate `cgvAccepted` ; colonnes `cgv_accepted_at` / `cgv_version`. Bouton final : « Commander avec obligation de paiement ». |
-| MO-1 Traitement asynchrone | ⏳ Ouvert | `waitUntil()` ou file d'attente. |
-| MO-2 Clés & métadonnées Stripe | ⏳ Ouvert | Garde-fou `sk_test_`, `userId` en metadata. |
-| MO-3 Bornes des champs d'adresse | ⏳ Ouvert | `.max()` sur les champs texte. |
-| MO-4 Contrôle MIME à l'import | ⏳ Ouvert | Magic bytes côté serveur. |
-| MO-5 CI sans audit de sécurité | ⏳ Ouvert | `pnpm audit`, `pnpm lint`, Dependabot. |
+| MO-1 Traitement asynchrone | ✅ Corrigé | Les quatre `void send…` deviennent `after(() => …)` (`next/server`, stable en 15.5) : sur Vercel l'instance gèle dès la réponse et tuait les promesses non attendues. Aucune dépendance ajoutée. |
+| MO-2 Clés & métadonnées Stripe | ✅ Corrigé | Une `sk_test_` en production fait refuser la commande, restituer le stock et journaliser l'incident. `metadata` porte `userId` et `customerEmail`. |
+| MO-3 Bornes des champs d'adresse | ✅ Corrigé | `.max()` sur prénom (60), nom (60), adresse (200), ville (80), e-mail (254, RFC 5321). |
+| MO-4 Contrôle MIME à l'import | ✅ Corrigé | Extension, type MIME, huit signatures binaires (ZIP, MZ, ELF, PDF, PNG, GIF, RAR, gzip) et détection d'octet nul. Extrait dans `lib/import-guard.ts` pour être testable hors module `"use server"` — 7 cas. |
+| MO-5 CI sans audit de sécurité | ✅ Corrigé | Second job `securite` : audit bloquant sur les dépendances de production, audit complet informatif, scan de secrets sur tout l'historique, refus de tout `.env` versionné — sans action tierce. `.github/dependabot.yml` ajouté. `pnpm lint` écarté : le projet n'a aucune configuration ESLint. Le gating du déploiement se règle côté Vercel, pas dans le dépôt. |
 | MO-6 Formulaire de rétractation | ✅ Corrigé | Annexe ajoutée aux CGV (`lib/legal.ts`), section « Rétractation » complétée. `LegalPage` accepte un `appendix`. |
 | MO-7 Avis fictifs & code promo | ✅ Corrigé | 14 avis retirés, section « Ils nous font confiance » masquée si vide, « N avis vérifiés » → « N avis », champ « code promo » supprimé. `filters.test.ts` réécrit sur des avis injectés. |
-| MO-8 Pages admin/compte côté client | ⏳ Ouvert | Défense en profondeur ; aucune donnée ne fuit aujourd'hui. |
+| MO-8 Pages admin/compte côté client | ✅ Corrigé | Layout serveur sur `/admin` : `notFound()` pour un visiteur anonyme (plutôt qu'une redirection, qui révélerait le back-office). La garde porte sur la session et non sur le rôle, pour que l'écran d'amorçage reste atteignable. `/admin` passe de ○ à ƒ. `/compte/*` volontairement non gardé : la page porte le formulaire de connexion. Limite assumée : le chunk JS reste téléchargeable à son URL. |
 
-**Vérifications** : `tsc --noEmit` propre · 63/63 tests (12 → 13 fichiers) · build de 78 pages **sans aucune variable d'environnement** · en-têtes et gardes confirmés sur un serveur de production local.
+**Vérifications** : `tsc --noEmit` propre · 70/70 tests (12 → 14 fichiers) · build de 78 pages **sans aucune variable d'environnement** · en conditions réelles : `/admin` en 404 anonyme, `/` et `/compte` en 200, 6 en-têtes de sécurité émis, 429 à la 11ᵉ tentative de connexion.
+
+**Reste ouvert : CR-4 seul** — mentions légales, e-mail et téléphone directs, adhésion à un médiateur agréé. Écarté de ce chantier à la demande du commanditaire ; c'est du travail juridique, pas du code, et l'adhésion au médiateur reste le chemin critique du planning.
 
 ⚠️ **Avant de fusionner** : CR-1 et EL-4 échouent désormais *fermé*. Poser `BETTER_AUTH_SECRET` et `DATABASE_URL` sur Vercel (scopes Production et Preview, valeurs distinctes) **avant** la fusion, sinon l'authentification et la base refuseront de démarrer.
 
