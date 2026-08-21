@@ -334,6 +334,38 @@ Second point : le bouton final affiche `Payer 49,90 €` (`CheckoutFlow.tsx:488`
 
 ---
 
+---
+
+## État des correctifs (branche `securite/audit-2026-08`)
+
+Même convention que `docs/audit-2026-07-reprise.md` §6.
+
+| Constat | État | Détail |
+|---|---|---|
+| CR-1 Secret de session de repli | ✅ Corrigé | Échec dur rétabli (`auth.ts`), placé avant l'ouverture de la base. Nouveau `lib/runtime-env.ts` : `isServingProduction()` exclut `NEXT_PHASE=phase-production-build`, ce qui évite la régression du 18/07. **Reste à poser `BETTER_AUTH_SECRET` sur Vercel et à purger la table `session`.** |
+| CR-2 Escalade via `bootstrapAdmin` | ✅ Corrigé | Amorçage réservé à `ADMIN_BOOTSTRAP_EMAIL`, adresse vérifiée exigée, message identique que la variable soit posée ou non. |
+| CR-3 19 vulnérabilités | ✅ Corrigé | `next` 15.5.20 → 15.5.23, `postcss` → 8.5.26, overrides `nanoid` / `brace-expansion` / `sharp`. 19 → 3, les 3 restantes en devDependencies (storybook, drizzle-kit). Lockfile régénéré avec pnpm 10. |
+| CR-4 Mentions légales | ⏳ Ouvert | Hors code : immatriculation, e-mail et téléphone directs, adhésion à un médiateur agréé. Chemin critique du planning. |
+| EL-1 `claimOrder` sans e-mail vérifié | ✅ Corrigé | `emailVerified` exigé, aligné sur `listMyOrders` et `requestReturn`. |
+| EL-2 En-têtes de sécurité | ✅ Corrigé | 6 en-têtes + CSP en Report-Only dans `next.config.ts`, hors middleware pour ne pas intercepter le webhook. Vérifiés sur `next start`. |
+| EL-3 XSS via JSON-LD | ✅ Corrigé | `jsonLdScript()` échappe `<`, `>` et `&` sur les 10 sites d'injection. Couvert par `src/lib/jsonld.test.ts`. |
+| EL-4 Base mémoire en production | ✅ Corrigé | Démarrage refusé sans `DATABASE_URL` hors phase de compilation. `.env.example` ajouté (12 variables). |
+| EL-5 Rate limiting en mémoire | ⏳ Ouvert | Upstash Redis à brancher, y compris sur le `rateLimit` de Better Auth. |
+| EL-6 Aucun monitoring | ⏳ Ouvert | Sentry + `error.tsx` / `global-error.tsx`. |
+| EL-7 Consentement CGV | ✅ Corrigé | `placeOrder` reçoit, vérifie et horodate `cgvAccepted` ; colonnes `cgv_accepted_at` / `cgv_version`. Bouton final : « Commander avec obligation de paiement ». |
+| MO-1 Traitement asynchrone | ⏳ Ouvert | `waitUntil()` ou file d'attente. |
+| MO-2 Clés & métadonnées Stripe | ⏳ Ouvert | Garde-fou `sk_test_`, `userId` en metadata. |
+| MO-3 Bornes des champs d'adresse | ⏳ Ouvert | `.max()` sur les champs texte. |
+| MO-4 Contrôle MIME à l'import | ⏳ Ouvert | Magic bytes côté serveur. |
+| MO-5 CI sans audit de sécurité | ⏳ Ouvert | `pnpm audit`, `pnpm lint`, Dependabot. |
+| MO-6 Formulaire de rétractation | ✅ Corrigé | Annexe ajoutée aux CGV (`lib/legal.ts`), section « Rétractation » complétée. `LegalPage` accepte un `appendix`. |
+| MO-7 Avis fictifs & code promo | ✅ Corrigé | 14 avis retirés, section « Ils nous font confiance » masquée si vide, « N avis vérifiés » → « N avis », champ « code promo » supprimé. `filters.test.ts` réécrit sur des avis injectés. |
+| MO-8 Pages admin/compte côté client | ⏳ Ouvert | Défense en profondeur ; aucune donnée ne fuit aujourd'hui. |
+
+**Vérifications** : `tsc --noEmit` propre · 63/63 tests (12 → 13 fichiers) · build de 78 pages **sans aucune variable d'environnement** · en-têtes et gardes confirmés sur un serveur de production local.
+
+⚠️ **Avant de fusionner** : CR-1 et EL-4 échouent désormais *fermé*. Poser `BETTER_AUTH_SECRET` et `DATABASE_URL` sur Vercel (scopes Production et Preview, valeurs distinctes) **avant** la fusion, sinon l'authentification et la base refuseront de démarrer.
+
 ## Limites de cet audit
 
 Analyse **statique** du dépôt à l'état du commit `003dbab`, complétée par un build de production et l'inspection du bundle client. N'ont **pas** pu être vérifiés, faute d'accès :
