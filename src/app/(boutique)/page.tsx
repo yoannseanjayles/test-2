@@ -17,7 +17,7 @@ import { getShippingConfig } from "@/lib/admin-settings";
 import { formatPrice } from "@/lib/format";
 
 import { media, universeCards } from "@/lib/media";
-import { organizationJsonLd, webSiteJsonLd } from "@/lib/jsonld";
+import { organizationJsonLd, webSiteJsonLd, jsonLdScript } from "@/lib/jsonld";
 
 export async function generateMetadata(): Promise<Metadata> {
   const seuil = formatPrice((await getShippingConfig()).freeShippingCents);
@@ -56,11 +56,11 @@ export default async function HomePage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd()) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(organizationJsonLd()) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteJsonLd()) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(webSiteJsonLd()) }}
       />
 
       {/* S3 — Hero statique (D-020) : M-HOME-01, texte posé sur l'espace négatif gauche du visuel. */}
@@ -197,7 +197,10 @@ export default async function HomePage() {
         </section>
       </div>
 
-      {/* S8 — Preuve sociale (fond teinté, pas de widget tiers — H6). */}
+      {/* S8 — Preuve sociale (fond teinté, pas de widget tiers — H6).
+          Masquée tant qu'aucun avis réel n'existe (audit 2026-08, MO-7) :
+          les avis de démonstration ont été retirés. */}
+      {highlightedReviews.length > 0 && (
       <section aria-labelledby="avis" className="bg-sage-50">
         <div className="mx-auto max-w-page px-4 py-12 lg:px-6 lg:py-16">
           <SectionHeading id="avis" title="Ils nous font confiance" />
@@ -213,6 +216,7 @@ export default async function HomePage() {
           </ul>
         </div>
       </section>
+      )}
 
       {/* S9 — Newsletter (D-021 : jamais de pop-up). */}
       <section aria-labelledby="newsletter" className="mx-auto max-w-page px-4 py-12 lg:px-6 lg:py-16">

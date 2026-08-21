@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { BadgeCheck } from "lucide-react";
 import { Breadcrumb, ProductCard, SectionHeading } from "@/components/commerce";
 import { fetchGuide, fetchGuides, fetchProducts } from "@/lib/api";
-import { breadcrumbJsonLd } from "@/lib/jsonld";
+import { breadcrumbJsonLd, jsonLdScript } from "@/lib/jsonld";
 import { formatMonth } from "@/lib/format";
 
 type Params = { slug: string };
@@ -45,7 +45,7 @@ export default async function GuidePage({ params }: { params: Promise<Params> })
     <div className="mx-auto max-w-page px-4 pb-16 lg:px-6">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(crumbs)) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbJsonLd(crumbs)) }}
       />
       <div className="py-6">
         <Breadcrumb items={crumbs} />

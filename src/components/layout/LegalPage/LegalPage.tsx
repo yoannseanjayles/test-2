@@ -1,16 +1,20 @@
 import { Scale } from "lucide-react";
+import type { ReactNode } from "react";
 
 type LegalPageProps = {
   title: string;
   updated: string;
   sections: { heading: string; body: string }[];
+  /** Bloc libre rendu après les sections numérotées — formulaire type de
+   *  rétractation, tableaux, annexes (audit 2026-08, MO-6). */
+  appendix?: ReactNode;
 };
 
 /**
  * Gabarit des pages juridiques — structure définitive, textes de travail :
  * la version finale sera validée par un juriste avant le lancement (H30).
  */
-export function LegalPage({ title, updated, sections }: LegalPageProps) {
+export function LegalPage({ title, updated, sections, appendix }: LegalPageProps) {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 lg:px-6">
       <h1 className="font-display text-h1 font-[560] text-bark-900">{title}</h1>
@@ -28,6 +32,7 @@ export function LegalPage({ title, updated, sections }: LegalPageProps) {
           <p className="mt-2 text-body-sm leading-relaxed text-bark-700">{section.body}</p>
         </section>
       ))}
+      {appendix}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { Breadcrumb, ListingExplorer } from "@/components/commerce";
 import { fetchFeatured, fetchNewProducts } from "@/lib/api";
 import { media } from "@/lib/media";
-import { breadcrumbJsonLd, itemListJsonLd } from "@/lib/jsonld";
+import { breadcrumbJsonLd, itemListJsonLd, jsonLdScript } from "@/lib/jsonld";
 
 export const metadata: Metadata = {
   title: "Nouveautés — les dernières pièces sélectionnées",
@@ -22,11 +22,11 @@ export default async function NouveautesPage() {
     <div className="mx-auto max-w-page px-4 lg:px-6">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(crumbs)) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbJsonLd(crumbs)) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd(prods)) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(itemListJsonLd(prods)) }}
       />
 
       <div className="pt-6">

@@ -5,6 +5,24 @@ import { SITE_URL } from "@/lib/site";
 
 const SITE_NAME = "chien et chat";
 
+/**
+ * Sérialisation sûre pour `<script type="application/ld+json">` (audit
+ * 2026-08, EL-3).
+ *
+ * `JSON.stringify` n'échappe pas `<` : un nom de produit contenant
+ * `</script>` referme le bloc et tout ce qui suit s'exécute. Ces champs sont
+ * pré-remplis par le parseur AliExpress depuis une page fournisseur
+ * arbitraire (`og:title`) et ne sont filtrés qu'en longueur — le contenu
+ * n'est pas de confiance. À utiliser partout où un objet JSON-LD part dans
+ * `dangerouslySetInnerHTML`, jamais `JSON.stringify` nu.
+ */
+export function jsonLdScript(data: unknown): string {
+  return JSON.stringify(data)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
+}
+
 export function organizationJsonLd() {
   return {
     "@context": "https://schema.org",

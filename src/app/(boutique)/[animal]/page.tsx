@@ -12,7 +12,7 @@ import { animalLabels, isAnimal, type Animal } from "@/lib/catalog";
 import { fetchFeatured, fetchGuidesFor, fetchProducts, fetchSubcategories } from "@/lib/api";
 
 import { categoryImages, universeBanners } from "@/lib/media";
-import { breadcrumbJsonLd } from "@/lib/jsonld";
+import { breadcrumbJsonLd, jsonLdScript } from "@/lib/jsonld";
 import type { PlaceholderTone } from "@/components/commerce";
 
 type Params = { animal: string };
@@ -65,7 +65,7 @@ export default async function AnimalPage({ params }: { params: Promise<Params> }
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
+          __html: jsonLdScript(
             breadcrumbJsonLd([{ name: label, path: `/${animal}` }]),
           ),
         }}

@@ -3,19 +3,23 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { ChevronDown, Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Plus, Trash2 } from "lucide-react";
 import { useCart, type CartLine } from "@/lib/cart";
 import { useShippingConfig } from "@/lib/use-shipping-config";
 import { useCartProducts } from "@/lib/use-cart-products";
 import type { CartProduct } from "@/lib/cart-data";
 import { formatPrice } from "@/lib/format";
 import { illustrations, productImages } from "@/lib/media";
-import { Button, FormField } from "@/components/ui";
 import { FreeShippingBar, Placeholder } from "@/components/commerce";
 
 /**
- * Contenu panier — FreeShippingBar en tête (D-029), code promo replié
- * (D-030, anti-fuite), prix TTC (H18). Persistant localement (D-030).
+ * Contenu panier — FreeShippingBar en tête (D-029), prix TTC (H18).
+ * Persistant localement (D-030).
+ *
+ * Le champ « code promo » (D-030) a été retiré (audit 2026-08, MO-7) : il
+ * n'a jamais été branché et répondait « Code inconnu » à toute saisie.
+ * Afficher un champ promotionnel inopérant est une promesse commerciale non
+ * tenue — à réintroduire le jour où les codes existent réellement.
  */
 export function CartPageContent() {
   const lines = useCart((state) => state.lines);
@@ -80,7 +84,6 @@ export function CartPageContent() {
               <dd>{subtotal >= shippingConfig.freeShippingCents ? "Offerte" : "calculée au paiement"}</dd>
             </div>
           </dl>
-          <PromoCode />
           <Link
             href="/checkout"
             className="text-label mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-md bg-action px-6 py-3 text-white transition duration-150 hover:bg-action-hover"
@@ -96,33 +99,6 @@ export function CartPageContent() {
   );
 }
 
-/** Code promo replié par défaut (D-030) — validation serveur en Phase 6. */
-function PromoCode() {
-  const [message, setMessage] = useState("");
-  return (
-    <details className="group mt-5 border-t border-border pt-4">
-      <summary className="text-label flex cursor-pointer list-none items-center justify-between text-bark-700 [&::-webkit-details-marker]:hidden">
-        Vous avez un code promo ?
-        <ChevronDown aria-hidden="true" className="size-4 transition-transform duration-150 group-open:rotate-180" />
-      </summary>
-      <form
-        className="mt-3 flex items-end gap-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          setMessage("Code inconnu — la validation des codes arrive avec la Phase 6.");
-        }}
-      >
-        <FormField label="Code promo" name="promo" className="flex-1" />
-        <Button type="submit" variant="secondary" className="shrink-0">
-          Appliquer
-        </Button>
-      </form>
-      <p aria-live="polite" className="mt-2 text-body-sm text-bark-700">
-        {message}
-      </p>
-    </details>
-  );
-}
 
 function CartPageLine({
   line,

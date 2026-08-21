@@ -5,7 +5,7 @@ import { Breadcrumb, ListingExplorer, SeoTextBlock } from "@/components/commerce
 import { animalLabels, isAnimal, subcategories } from "@/lib/catalog";
 import { fetchFeatured, fetchGuideForSubcategory, fetchProducts, fetchSubcategories, fetchSubcategory } from "@/lib/api";
 
-import { breadcrumbJsonLd, itemListJsonLd } from "@/lib/jsonld";
+import { breadcrumbJsonLd, itemListJsonLd, jsonLdScript } from "@/lib/jsonld";
 
 type Params = { animal: string; sousCategorie: string };
 
@@ -58,11 +58,11 @@ export default async function SubcategoryPage({
     <div className="mx-auto max-w-page px-4 lg:px-6">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(crumbs)) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbJsonLd(crumbs)) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd(prods)) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(itemListJsonLd(prods)) }}
       />
 
       <div className="pt-6">

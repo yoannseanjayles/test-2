@@ -7,6 +7,7 @@ import { orderLines, orders, user } from "@/db/auth-schema";
 import { products } from "@/db/schema";
 import { getSessionUser } from "@/lib/auth";
 import { addressSchema, contactSchema } from "@/lib/checkout-schemas";
+import { CGV_VERSION } from "@/lib/legal";
 import { shippingMethods, shippingPrice, type ShippingMethodId } from "@/lib/shipping";
 import { getShippingConfig } from "@/lib/admin-settings";
 import { releaseStock, reserveStock } from "@/lib/stock";
@@ -36,9 +37,19 @@ export async function placeOrder(input: {
   address: Record<string, string>;
   shippingMethod: ShippingMethodId;
   lines: CartLine[];
+  /** Acceptation explicite des CGV (audit 2026-08, EL-7). */
+  cgvAccepted: boolean;
 }): Promise<PlacedOrder> {
   if (!(await rateLimit("place-order", 10, 10 * 60 * 1000))) {
     return { ok: false, error: RATE_LIMITED_ERROR };
+  }
+  // Opposabilité des CGV (audit 2026-08, EL-7) : le contrôle existait
+  // uniquement dans le composant React — un appel direct à cette Server
+  // Action créait donc une commande sans acceptation, et rien n'était
+  // conservé pour le prouver. Vérifié ici, puis horodaté avec la révision
+  // acceptée à l'enregistrement.
+  if (input.cgvAccepted !== true) {
+    return { ok: false, error: "Merci d'accepter les conditions générales de vente pour continuer." };
   }
   const contact = contactSchema.safeParse({ email: input.email });
   const address = addressSchema.safeParse(input.address);
@@ -121,6 +132,8 @@ export async function placeOrder(input: {
       shipping,
       total,
       paymentIntentId,
+      cgvAcceptedAt: new Date(),
+      cgvVersion: CGV_VERSION,
     });
     await db.insert(orderLines).values(input.lines.map((l) => ({
       id: crypto.randomUUID(),
@@ -229,10 +242,16 @@ export async function claimOrder(number: string): Promise<{ ok: boolean }> {
   const sessionUser = await getSessionUser(await headers());
   if (!sessionUser) return { ok: false };
   const db = await getDb();
+  // Adresse vérifiée exigée (audit 2026-08, EL-1) — même règle que
+  // listMyOrders et requestReturn, qui la contrôlaient déjà. Sans elle, il
+  // suffisait de s'inscrire avec l'adresse d'un tiers et de connaître un
+  // numéro de commande invité pour se l'approprier définitivement.
+  const [account] = await db.select().from(user).where(eq(user.id, sessionUser.id));
+  if (!account?.emailVerified) return { ok: false };
   const [row] = await db.select().from(orders)
     .where(eq(orders.number, number.trim().toUpperCase()));
   if (!row || row.userId !== null) return { ok: false };
-  if (row.email.toLowerCase() !== sessionUser.email.toLowerCase()) return { ok: false };
+  if (row.email.toLowerCase() !== account.email.toLowerCase()) return { ok: false };
   await db.update(orders).set({ userId: sessionUser.id }).where(eq(orders.id, row.id));
   return { ok: true };
 }

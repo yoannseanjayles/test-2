@@ -113,6 +113,9 @@ export function CheckoutFlow() {
       address: address! as unknown as Record<string, string>,
       shippingMethod,
       lines,
+      // Le serveur revérifie et horodate (audit 2026-08, EL-7) : la garde
+      // ci-dessus n'est qu'un confort d'interface.
+      cgvAccepted,
     });
     if (!result.ok) {
       setPlacing(false);
@@ -405,9 +408,13 @@ export function CheckoutFlow() {
                       </p>
                     )}
                     <Button className="mt-4 w-full" onClick={placeOrder} loading={placing}>
+                      {/* Mention explicite de l'obligation de paiement
+                          (art. L.221-5 c. conso., audit 2026-08 EL-7) sur le
+                          bouton qui clôt la commande — en mode démonstration
+                          c'est celui-ci, avec Stripe c'est le suivant. */}
                       {publishableKey
                         ? `Continuer vers le paiement de ${formatPrice(total)}`
-                        : `Payer ${formatPrice(total)} (démonstration)`}
+                        : `Commander avec obligation de paiement — ${formatPrice(total)} (démonstration)`}
                     </Button>
                     <p aria-live="assertive" className="mt-2 text-body-sm text-error">{payError}</p>
                   </>
@@ -484,8 +491,11 @@ function StripePaymentForm({ total }: { total: number }) {
   return (
     <div>
       <PaymentElement />
+      {/* Bouton final : mention non ambiguë de l'obligation de paiement
+          exigée par l'article L.221-5 du Code de la consommation
+          (audit 2026-08, EL-7). */}
       <Button className="mt-4 w-full" onClick={pay} loading={submitting} disabled={!stripe || !elements}>
-        Payer {formatPrice(total)}
+        Commander avec obligation de paiement — {formatPrice(total)}
       </Button>
       <p className="text-caption mt-2 flex items-center justify-center gap-1.5 text-bark-700">
         <Lock aria-hidden="true" className="size-3.5" strokeWidth={1.75} />

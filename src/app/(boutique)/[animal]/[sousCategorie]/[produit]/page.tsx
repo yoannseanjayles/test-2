@@ -15,7 +15,7 @@ import { fetchGuideForSubcategory, fetchProduct, fetchProducts, fetchProductsByS
 import { getShippingConfig } from "@/lib/admin-settings";
 import { formatPrice } from "@/lib/format";
 
-import { breadcrumbJsonLd, productJsonLd } from "@/lib/jsonld";
+import { breadcrumbJsonLd, productJsonLd, jsonLdScript } from "@/lib/jsonld";
 
 type Params = { animal: string; sousCategorie: string; produit: string };
 
@@ -98,11 +98,11 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
     <div className="mx-auto max-w-page px-4 pb-24 lg:px-6 lg:pb-16">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd(product)) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(productJsonLd(product)) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(crumbs)) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbJsonLd(crumbs)) }}
       />
 
       {/* S1 — Fil d'Ariane */}
@@ -171,7 +171,10 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
                 <span className="text-h3 text-bark-700"> / 5</span>
               </p>
               <p className="text-body-sm mt-1 text-bark-700">
-                {product.reviews.length} avis vérifié{product.reviews.length > 1 ? "s" : ""}
+                {/* « avis vérifiés » retiré (audit 2026-08, MO-7) : rien ne
+                    rattache un avis à un achat réel. Le mot « avis » est
+                    invariable au pluriel. */}
+                {product.reviews.length} avis
               </p>
               <ul className="mt-4 flex flex-col gap-1.5">
                 {distribution.map(({ stars, count }) => (

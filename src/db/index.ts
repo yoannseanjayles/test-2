@@ -88,6 +88,7 @@ const DDL = [
     address text NOT NULL, shipping_method text NOT NULL,
     subtotal integer NOT NULL, shipping integer NOT NULL, total integer NOT NULL,
     payment_intent_id text, return_reason text,
+    cgv_accepted_at timestamp, cgv_version text,
     created_at timestamp NOT NULL DEFAULT now())`,
   `CREATE TABLE IF NOT EXISTS order_lines (
     id text PRIMARY KEY,
@@ -126,6 +127,9 @@ const DDL = [
   `ALTER TABLE products ADD COLUMN IF NOT EXISTS field_visibility jsonb NOT NULL DEFAULT '{}'::jsonb`,
   `ALTER TABLE orders ADD COLUMN IF NOT EXISTS return_reason text`,
   `ALTER TABLE products ADD COLUMN IF NOT EXISTS archived boolean NOT NULL DEFAULT false`,
+  // Preuve d'acceptation des CGV (audit 2026-08, EL-7).
+  `ALTER TABLE orders ADD COLUMN IF NOT EXISTS cgv_accepted_at timestamp`,
+  `ALTER TABLE orders ADD COLUMN IF NOT EXISTS cgv_version text`,
 ];
 
 type Database = Awaited<ReturnType<typeof createDb>>;

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getProducts } from "./index";
+import type { Review } from "./types";
 import {
   applyFilters,
   emptyFilters,
@@ -50,8 +51,22 @@ describe("filtres de listing (spec 2.1 Listing)", () => {
     const selection = sortProducts(colliers, "selection");
     expect(selection[0]?.slug).toBe("collier-cuir-ambre");
 
-    const notes = sortProducts(colliers, "notes");
-    expect(notes[0]?.reviews.length).toBeGreaterThan(0);
+    // Les avis de démonstration ont été retirés du catalogue (audit
+    // 2026-08, MO-7) : le tri par note se vérifie sur des avis injectés,
+    // ce qui teste la fonction plutôt que le jeu de données.
+    const review = (rating: Review["rating"]) => ({
+      author: "Testeur", rating, title: "Titre", text: "Texte",
+      context: "Contexte", date: "2026-01-01", verified: false,
+    });
+    const notes = sortProducts(
+      [
+        { ...colliers[0]!, slug: "note-basse", reviews: [review(3)] },
+        { ...colliers[1]!, slug: "note-haute", reviews: [review(5)] },
+        { ...colliers[2]!, slug: "sans-avis", reviews: [] },
+      ],
+      "notes",
+    );
+    expect(notes.map((p) => p.slug)).toEqual(["note-haute", "note-basse", "sans-avis"]);
   });
 
   it("compte les valeurs de facette en excluant la facette elle-même", () => {

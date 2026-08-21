@@ -74,6 +74,14 @@ export const orders = pgTable("orders", {
   paymentIntentId: text("payment_intent_id"),
   /** Motif du retour self-service (D-035) — renseigné au passage en « Retour en cours ». */
   returnReason: text("return_reason"),
+  /**
+   * Preuve d'acceptation des CGV (audit 2026-08, EL-7) : horodatage et
+   * révision acceptée. En cas de litige, il faut pouvoir démontrer QUELLES
+   * conditions le client a acceptées — une case cochée côté navigateur ne
+   * prouve rien.
+   */
+  cgvAcceptedAt: timestamp("cgv_accepted_at"),
+  cgvVersion: text("cgv_version"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
