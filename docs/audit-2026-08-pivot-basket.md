@@ -500,12 +500,23 @@ d'écart qui se découvre en production.
 La bascule sur une base existante impose une purge **dans l'ordre des clés
 étrangères** : `reviews` → `product_sizes` → `products` → `categories`
 (`product_sizes.product_slug` et `reviews.product_slug` référencent
-`products.slug`). Rien dans le dépôt ne fait ce travail aujourd'hui.
+`products.slug`). `scripts/db-reset.mjs` fait désormais ce travail : il vide le
+schéma `public` en une instruction `DROP … CASCADE`, ce qui règle l'ordre des clés
+étrangères sans l'énumérer, et laisse le bootstrap de `db/index.ts` rejouer le DDL
+puis le seed au premier accès. Aperçu par défaut, purge sur `--confirm`.
 
 **Recommandation** : ne pas purger la base de production à la main. Créer une
 branche Neon neuve pour le catalogue baskets et basculer `DATABASE_URL`. Noter que
 la garde des guides est **indépendante** de celle des produits (`seedIfEmpty` teste
 les deux séparément) : purger les produits ne réinjecte pas les guides.
+
+**Décision (23/08/2026)** : la purge a été retenue plutôt que la branche neuve —
+le site n'a jamais été exploité en boutique de baskets, les données en place sont
+celles de la démonstration animalière. `pnpm db:reset --confirm` remplace donc la
+bascule de `DATABASE_URL`. Conséquence à ne pas perdre de vue : la purge emporte
+aussi `"user"`, `orders` et `order_lines` — comptes clients et commandes de
+l'ancienne boutique compris. L'amorçage administrateur est donc à refaire
+(`ADMIN_BOOTSTRAP_EMAIL`).
 
 ### OU-3 — Les pièges du dépôt restent intégralement valables pendant le chantier
 

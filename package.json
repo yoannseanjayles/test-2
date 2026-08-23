@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "db:reset": "node --env-file-if-exists=.env.local scripts/db-reset.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.4",
