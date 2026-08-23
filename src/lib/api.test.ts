@@ -14,7 +14,15 @@ import { getFeatured } from "./catalog";
 describe("bascule mock → base (6.1 jalon 1, H37)", () => {
   // 20 s : le premier accès démarre PGlite (WASM) et seede la base — ~3,5 s
   // à vide, davantage sous charge (CI).
-  it("restitue le catalogue complet à l'identique", { timeout: 30_000 }, async () => {
+  /*
+   * Ce test amorce PGlite : creation du schema, puis insertion du catalogue
+   * entier et de ses variantes, plus d'un millier de lignes. L'ouverture du
+   * rayon Ensembles a ajoute six produits et une centaine de variantes, ce qui
+   * a suffi a franchir les 30 s d'origine quand la suite tourne en entier et
+   * que les fichiers se disputent la machine. La marge est relevee plutot que
+   * de laisser un test rouge une fois sur deux.
+   */
+  it("restitue le catalogue complet à l'identique", { timeout: 90_000 }, async () => {
     const fromDb = await fetchProducts();
     expect(fromDb).toHaveLength(mockProducts.length);
     const af1 = fromDb.find((p) => p.slug === "air-force-1-07")!;

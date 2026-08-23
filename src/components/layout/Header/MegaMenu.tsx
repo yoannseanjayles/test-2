@@ -1,9 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import type { NavSection } from "@/lib/navigation";
+import { menuImages } from "@/lib/media";
 import { cn } from "@/lib/utils";
 
 type MegaMenuProps = {
@@ -43,6 +45,9 @@ export function MegaMenu({ sections }: MegaMenuProps) {
       {sections.map((section) => {
         const isOpen = openLabel === section.label;
         const hasPanel = Boolean(section.columns?.length);
+        /* Tous les rayons n'ont pas de visuel de mise en avant : on lit une
+           fois, plutot que d'indexer trois fois dans le rendu. */
+        const visuel = menuImages[section.label];
 
         return (
           <li
@@ -135,12 +140,33 @@ export function MegaMenu({ sections }: MegaMenuProps) {
                       onClick={() => setOpenLabel(null)}
                       className="group relative flex flex-col justify-end overflow-hidden bg-bark-900 p-7"
                     >
-                      <span
-                        aria-hidden="true"
-                        className="font-display pointer-events-none absolute -right-3 -top-5 text-[6rem] leading-none text-volt/15"
-                      >
-                        {section.label}
-                      </span>
+                      {visuel && (
+                        <>
+                          <Image
+                            src={visuel}
+                            alt=""
+                            fill
+                            sizes="340px"
+                            className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                          />
+                          {/* Le texte est blanc : sans ce voile, il devient
+                              illisible dès que la photo s'éclaircit. */}
+                          <span
+                            aria-hidden="true"
+                            className="absolute inset-0 bg-gradient-to-t from-bark-900 via-bark-900/70 to-bark-900/20"
+                          />
+                        </>
+                      )}
+                      {/* Le mot géant ne sert plus de fond quand il y a une
+                          photo — il reste pour les rayons qui n'en ont pas. */}
+                      {!visuel && (
+                        <span
+                          aria-hidden="true"
+                          className="font-display pointer-events-none absolute -right-3 -top-5 text-[6rem] leading-none text-volt/15"
+                        >
+                          {section.label}
+                        </span>
+                      )}
                       <p className="font-display relative text-h3 leading-none text-white">
                         {section.highlight.title}
                       </p>

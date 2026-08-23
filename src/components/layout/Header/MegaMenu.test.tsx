@@ -40,11 +40,22 @@ describe("MegaMenu", () => {
     );
   });
 
-  it("annonce les rayons pas encore ouverts", () => {
+  it("n'annonce plus Ensembles comme fermé depuis son ouverture", () => {
     render(<MegaMenu sections={mainNav} />);
     const ensembles = screen.getByRole("link", { name: /Ensembles/ });
     expect(ensembles).toHaveAttribute("href", "/ensembles");
-    expect(ensembles).toHaveTextContent("Bientôt");
+    expect(ensembles).not.toHaveTextContent("Bientôt");
+  });
+
+  it("annonce les rayons pas encore ouverts", async () => {
+    render(<MegaMenu sections={mainNav} />);
+    const trigger = screen.getByRole("button", { name: "Afficher le menu Homme" });
+    trigger.focus();
+    await userEvent.keyboard("{Enter}");
+    // Accessoires reste fermé : c'est lui qui porte désormais la mention.
+    const casquettes = screen.getByRole("link", { name: /Casquettes/ });
+    expect(casquettes).toHaveAttribute("href", "/accessoires");
+    expect(casquettes).toHaveTextContent("bientôt");
   });
 
   it("ferme le panneau avec Échap (4.1 §10)", async () => {

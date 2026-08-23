@@ -19,6 +19,18 @@
 
 const THIRD = 1 / 3;
 
+/**
+ * Échelle textile. Les tailles vêtement ne se trient ni comme des nombres ni
+ * comme du texte : l'ordre alphabétique rendrait « L, M, S, XL ». Le rayon
+ * Ensembles partage la facette Taille avec les chaussures, les deux systèmes
+ * doivent donc cohabiter dans une même liste triée.
+ */
+const APPAREL_ORDER = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL"];
+
+function apparelRank(size: string): number {
+  return APPAREL_ORDER.indexOf(size.trim().toUpperCase());
+}
+
 /** Valeur numérique d'une pointure, ou `NaN` hors référentiel. */
 export function sizeValue(size: string): number {
   return Number(size.replace(",", "."));
@@ -34,8 +46,15 @@ export function compareSizes(a: string, b: string): number {
   const aNum = Number.isFinite(na);
   const bNum = Number.isFinite(nb);
   if (aNum && bNum) return na - nb;
+  // Les pointures passent avant les tailles textile : un listing mixte range
+  // les chaussures puis les vêtements, jamais l'inverse.
   if (aNum) return -1;
   if (bNum) return 1;
+  const ra = apparelRank(a);
+  const rb = apparelRank(b);
+  if (ra !== -1 && rb !== -1) return ra - rb;
+  if (ra !== -1) return -1;
+  if (rb !== -1) return 1;
   return a.localeCompare(b, "fr");
 }
 

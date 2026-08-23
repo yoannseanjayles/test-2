@@ -36,7 +36,14 @@ export type NavColumn = {
 export type NavSection = NavLink & {
   /** Colonnes du méga-menu ; absentes = lien simple dans la barre. */
   columns?: NavColumn[];
-  /** Accroche du panneau de mise en avant, à droite du méga-menu. */
+  /**
+   * Accroche du panneau de mise en avant, à droite du méga-menu.
+   *
+   * Le visuel n'est pas porté ici mais dans `lib/media` (`menuImages`),
+   * indexé par l'intitulé du rayon : ce module est importé côté client comme
+   * côté serveur, y coller des imports d'images alourdirait chaque bundle qui
+   * ne lit que les libellés.
+   */
   highlight?: { title: string; text: string; href: string; cta: string };
 };
 
@@ -61,9 +68,9 @@ export const brandLinks: NavLink[] = [
 
 /** Rayons textile — annoncés, pas encore ouverts. */
 const textileLinks: NavLink[] = [
-  { label: "Ensembles de sport", href: "/ensembles", soon: true },
-  { label: "Sweats & hoodies", href: "/ensembles", soon: true },
-  { label: "Pantalons & joggings", href: "/ensembles", soon: true },
+  { label: "Ensembles de sport", href: "/ensembles" },
+  { label: "Sweats & hoodies", href: "/ensembles" },
+  { label: "Pantalons & joggings", href: "/ensembles" },
 ];
 
 const accessoryLinks: NavLink[] = [
@@ -136,7 +143,6 @@ export const mainNav: NavSection[] = [
   {
     label: "Ensembles",
     href: "/ensembles",
-    soon: true,
   },
   { label: "Nouveautés", href: "/nouveautes" },
   { label: "Guides", href: "/guides" },
@@ -205,7 +211,7 @@ export const footerColumns: { title: string; links: NavLink[] }[] = [
       { label: "Femme", href: "/femme" },
       { label: "Chaussures", href: "/chaussures" },
       { label: "Nouveautés", href: "/nouveautes" },
-      { label: "Ensembles de sport", href: "/ensembles", soon: true },
+      { label: "Ensembles de sport", href: "/ensembles" },
       { label: "Accessoires", href: "/accessoires", soon: true },
     ],
   },

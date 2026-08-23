@@ -32,6 +32,13 @@ import { EditorialCard } from "../EditorialCard/EditorialCard";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 24;
+/*
+ * Au-dela de ce nombre de valeurs, une facette se replie derriere « Voir
+ * plus ». Une grille de pointures va de 35 a 48 avec demies et tiers : sans
+ * repli, la colonne de filtres devient un mur qui pousse les facettes
+ * suivantes hors de l'ecran.
+ */
+const FACET_VISIBLE = 8;
 const GENRE_ORDER: Genre[] = ["homme", "femme", "mixte", "enfant"];
 
 /*
@@ -138,6 +145,25 @@ export function ListingExplorer({
     brands: facetCounts(products, filters, "brands", facetValues.brands, facetMatchers.brands),
   };
 
+  /* Compteur de la facette Disponibilite, calcule comme les autres : les
+     autres filtres s'appliquent, celui-ci est neutralise. Sans cela le
+     nombre affiche serait celui du listing entier. */
+  const inStockCount = useMemo(
+    () =>
+      applyFilters(products, { ...filters, inStock: false }).filter((p) =>
+        p.variants.some((v) => v.stock > 0),
+      ).length,
+    [products, filters],
+  );
+
+  /* « Pointure » sur un sweat n'a pas de sens. Le libelle suit le rayon :
+     textile pur -> Taille, sinon Pointure. Un listing mixte (nouveautes,
+     genre) garde Pointure, qui reste le mot juste pour la majorite. */
+  const sizeFacetLabel =
+    products.length > 0 && products.every((p) => p.subcategory === "textile")
+      ? "Taille"
+      : "Pointure";
+
   const toggle = (key: "genres" | "sizes" | "materials" | "colors" | "brands", value: string) => {
     setFilters((prev) => {
       const list = prev[key] as string[];
@@ -154,7 +180,7 @@ export function ListingExplorer({
       onRemove: () => toggle("genres", g),
     })),
     ...filters.sizes.map((s) => ({
-      label: `Pointure ${formatSize(s)}`,
+      label: `${sizeFacetLabel} ${formatSize(s)}`,
       onRemove: () => toggle("sizes", s),
     })),
     ...filters.materials.map((m) => ({ label: m, onRemove: () => toggle("materials", m) })),
@@ -169,10 +195,33 @@ export function ListingExplorer({
     ...(filters.priceMax !== undefined
       ? [{ label: `Jusqu'à ${filters.priceMax} €`, onRemove: () => setFilters((p) => ({ ...p, priceMax: undefined })) }]
       : []),
+    ...(filters.inStock
+      ? [{ label: "En stock", onRemove: () => setFilters((p) => ({ ...p, inStock: false })) }]
+      : []),
   ];
 
   const facetPanel = (
     <div className="flex flex-col gap-6">
+      {/*
+        La disponibilite ouvre le panneau : c'est le filtre le plus utilise
+        apres la pointure, et le seul qui reponde a « je veux l'acheter
+        maintenant ». Le compteur annonce le resultat avant le clic.
+      */}
+      <fieldset>
+        <legend className="sr-only">Disponibilité</legend>
+        <label className="flex min-h-11 cursor-pointer items-center gap-3 border border-border bg-cream-50 px-3 text-body-sm text-bark-700">
+          <input
+            type="checkbox"
+            checked={filters.inStock}
+            onChange={() =>
+              setFilters((prev) => ({ ...prev, inStock: !prev.inStock }))
+            }
+            className="size-4 accent-bark-900"
+          />
+          <span className="flex-1">En stock uniquement</span>
+          <span className="text-caption text-bark-500">{inStockCount}</span>
+        </label>
+      </fieldset>
       {withBrandFacet && facetValues.brands.length > 1 && (
         <FacetGroup
           title="Marque"
@@ -200,7 +249,7 @@ export function ListingExplorer({
         />
       )}
       <FacetGroup
-        title="Pointure"
+        title={sizeFacetLabel}
         values={facetValues.sizes}
         selected={filters.sizes}
         counts={counts.sizes}
@@ -268,6 +317,20 @@ export function ListingExplorer({
       {/* Facettes desktop : colonne sticky */}
       <aside className="hidden lg:block">
         <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pr-2">
+          {/*
+            Le nombre de resultats ouvre la colonne et vit dans une region
+            polie : un lecteur d'ecran entend le listing se reduire au fil des
+            cases cochees, sans que le focus quitte la facette.
+          */}
+          <p
+            aria-live="polite"
+            className="text-label mb-5 border-b border-border pb-3 text-bark-900"
+          >
+            {filtered.length} produit{filtered.length > 1 ? "s" : ""}
+            {activeCount > 0 && (
+              <span className="text-bark-500"> sur {products.length}</span>
+            )}
+          </p>
           {facetPanel}
         </div>
       </aside>
@@ -448,12 +511,21 @@ function FacetGroup({
   labelFor?: (value: string) => string;
   onToggle: (value: string) => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
   if (values.length === 0) return null;
+  /* Une valeur cochee reste toujours visible : replier un filtre actif le
+     rendrait impossible a retirer depuis la colonne. */
+  const repliable = values.length > FACET_VISIBLE;
+  const visibles =
+    repliable && !expanded
+      ? values.filter((v, i) => i < FACET_VISIBLE || selected.includes(v))
+      : values;
+  const caches = values.length - visibles.length;
   return (
     <fieldset>
       <legend className="text-label mb-3 w-full border-b border-border pb-2 text-bark-900">{title}</legend>
       <ul className="flex flex-col gap-1">
-        {values.map((value) => {
+        {visibles.map((value) => {
           const isSelected = selected.includes(value);
           const count = counts[value] ?? 0;
           const disabled = !isSelected && count === 0;
@@ -479,6 +551,16 @@ function FacetGroup({
           );
         })}
       </ul>
+      {repliable && (
+        <button
+          type="button"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((v) => !v)}
+          className="text-label mt-2 min-h-10 text-action underline-offset-4 hover:underline"
+        >
+          {expanded ? "Voir moins" : `Voir les ${caches} autres`}
+        </button>
+      )}
     </fieldset>
   );
 }

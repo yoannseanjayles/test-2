@@ -49,6 +49,8 @@ describe("filtres de listing (spec 2.1 Listing)", () => {
     expect(result.map((p) => p.slug).sort()).toEqual([
       "gel-kayano-14",
       "gel-kayano-20",
+      // Rayon Ensembles : la facette Prix est transverse aux deux rayons.
+      "polaire-legere-zippee",
       "progrid-omni-9",
       "progrid-ride-1",
     ]);

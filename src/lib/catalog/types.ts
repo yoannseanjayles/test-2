@@ -11,17 +11,36 @@
 /** Axe de navigation primaire — référentiel fermé (D-055, D-058). */
 export type Brand = "on" | "nike" | "saucony" | "asics" | "salomon";
 
-/** Niveau sous-catégorie — usage du modèle (D-055). */
-export type Usage = "running" | "lifestyle" | "sportstyle";
+/**
+ * Niveau sous-catégorie — usage du modèle (D-055).
+ *
+ * `textile` est l'usage du rayon Ensembles. Il partage la route
+ * `/[marque]/[usage]` avec les chaussures parce que l'axe primaire reste la
+ * marque : un ensemble On se range sous On, pas dans un silo parallèle. Ce
+ * qui le distingue tient en un point — ses variantes portent des tailles
+ * vêtement et non des pointures.
+ */
+export type Usage = "running" | "lifestyle" | "sportstyle" | "textile";
 
 export const usageLabels: Record<Usage, string> = {
   running: "Running",
   lifestyle: "Lifestyle",
   sportstyle: "Sportstyle",
+  textile: "Ensembles",
 };
 
 export function isUsage(value: string): value is Usage {
-  return value === "running" || value === "lifestyle" || value === "sportstyle";
+  return (
+    value === "running" ||
+    value === "lifestyle" ||
+    value === "sportstyle" ||
+    value === "textile"
+  );
+}
+
+/** Le rayon textile — seul usage dont les variantes ne sont pas des pointures. */
+export function isTextile(product: { subcategory: Usage }): boolean {
+  return product.subcategory === "textile";
 }
 
 /**

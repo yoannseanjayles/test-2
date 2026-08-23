@@ -1,4 +1,4 @@
-import { count } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { categories, guides, products, productVariants, reviews } from "./schema";
 import { products as demoProducts, subcategories } from "@/lib/catalog/data";
 import { guideSeed } from "@/lib/guides";
@@ -10,9 +10,13 @@ import { guideSeed } from "@/lib/guides";
  * ⚠️ Cette idempotence est un piège sur une base persistante (audit pivot,
  * OU-2) : remplacer `data.ts` ne produit aucun effet sur une base déjà
  * peuplée. En PGlite (dev, CI, build) la base est reconstruite à chaque
- * démarrage et l'écart ne se voit pas. La bascule d'un catalogue à l'autre
- * passe par une branche Neon neuve, pas par une purge manuelle — et la garde
- * de schéma de `db/index.ts` refuse désormais de démarrer sur l'ancien.
+ * démarrage et l'écart ne se voit pas.
+ *
+ * D'où les **gardes indépendantes** : guides, puis rayon textile. Chacune
+ * teste la présence de *son* contenu, si bien qu'une base seedée avant
+ * l'ouverture d'un rayon le reçoit au démarrage suivant, sans que rien du
+ * catalogue existant ne soit touché. Ce n'est pas une migration — c'est un
+ * appoint, et il ne s'exécute qu'une fois.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function seedIfEmpty(db: any): Promise<void> {
@@ -34,7 +38,10 @@ export async function seedIfEmpty(db: any): Promise<void> {
   }
 
   const [existing] = await db.select({ n: count() }).from(products);
-  if (existing && existing.n > 0) return;
+  if (existing && existing.n > 0) {
+    await seedTextileIfMissing(db);
+    return;
+  }
 
   await db.insert(categories).values(subcategories.map((s) => ({
     brand: s.brand,
@@ -90,4 +97,72 @@ export async function seedIfEmpty(db: any): Promise<void> {
     })),
   );
   if (allReviews.length > 0) await db.insert(reviews).values(allReviews);
+}
+
+/**
+ * Appoint du rayon Ensembles sur une base déjà peuplée.
+ *
+ * La production a été seedée avant l'ouverture du rayon : sans cette garde,
+ * elle n'aurait jamais que les chaussures, et `/ensembles` afficherait un
+ * listing vide. On teste la présence du textile, pas celle du catalogue, pour
+ * les mêmes raisons que la garde des guides.
+ *
+ * Rien n'est mis à jour ni supprimé : un produit textile retiré par le
+ * back-office ne réapparaît pas, puisque la garde ne se déclenche que si le
+ * rayon est entièrement absent.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function seedTextileIfMissing(db: any): Promise<void> {
+  const [existingTextile] = await db
+    .select({ n: count() })
+    .from(products)
+    .where(eq(products.subcategory, "textile"));
+  if (existingTextile && existingTextile.n > 0) return;
+
+  const rayon = demoProducts.filter((p) => p.subcategory === "textile");
+  if (rayon.length === 0) return;
+
+  const rubriques = subcategories.filter((s) => s.slug === "textile");
+  if (rubriques.length > 0) {
+    await db
+      .insert(categories)
+      .values(rubriques.map((s) => ({
+        brand: s.brand,
+        slug: s.slug,
+        label: s.label,
+        description: s.description,
+      })))
+      .onConflictDoNothing();
+  }
+
+  await db.insert(products).values(rayon.map((p) => ({
+    slug: p.slug,
+    name: p.name,
+    brand: p.brand,
+    subcategory: p.subcategory,
+    price: p.price,
+    shortDescription: p.shortDescription,
+    curatorNote: p.curatorNote,
+    material: p.material,
+    details: p.details,
+    colors: p.colors,
+    genres: p.genres,
+    sizeAdvice: p.sizeAdvice ?? null,
+    isNew: p.isNew,
+    curatedRank: p.curatedRank,
+    pairsWith: p.pairsWith,
+    tone: p.tone,
+  })));
+
+  const variantes = rayon.flatMap((p) =>
+    p.variants.map((v) => ({
+      productSlug: p.slug,
+      color: v.color,
+      size: v.size,
+      stock: v.stock,
+    })),
+  );
+  for (let i = 0; i < variantes.length; i += 200) {
+    await db.insert(productVariants).values(variantes.slice(i, i + 200));
+  }
 }

@@ -101,6 +101,22 @@ export async function fetchProductsBySlugs(slugs: string[]): Promise<Product[]> 
   return slugs.map((s) => bySlug.get(s)).filter((p) => p !== undefined);
 }
 
+/**
+ * Les deux rayons, séparés là où la distinction compte.
+ *
+ * Le rayon Chaussures ne doit pas se remplir de sweats, et le rayon Ensembles
+ * ne doit rien montrer d'autre. Partout ailleurs — nouveautés, listings par
+ * genre, accueil — les deux cohabitent : c'est une même boutique, et la
+ * facette Marque suffit à s'y retrouver.
+ */
+export async function fetchShoes(): Promise<Product[]> {
+  return (await fetchProducts()).filter((p) => p.subcategory !== "textile");
+}
+
+export async function fetchTextile(): Promise<Product[]> {
+  return fetchProducts(undefined, "textile");
+}
+
 /** Sélection curée (H17). */
 export async function fetchFeatured(n: number, brand?: Brand): Promise<Product[]> {
   return (await fetchProducts(brand)).slice(0, n);

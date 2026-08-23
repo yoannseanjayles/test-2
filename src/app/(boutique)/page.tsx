@@ -5,7 +5,7 @@ import { ArrowRight, Ruler, RotateCcw, ShieldCheck } from "lucide-react";
 import {
   CategoryCard,
   EditorialCard,
-  HeroWord,
+  HeroCarousel,
   ProductCard,
   ReviewCard,
   SectionHeading,
@@ -17,7 +17,7 @@ import { fetchFeatured, fetchGuides, fetchProducts } from "@/lib/api";
 import { getShippingConfig } from "@/lib/admin-settings";
 import { formatPrice } from "@/lib/format";
 
-import { media, universeCards } from "@/lib/media";
+import { heroSlides, media, universeCards } from "@/lib/media";
 import { Placeholder } from "@/components/commerce";
 import type { Brand } from "@/lib/catalog";
 import { organizationJsonLd, webSiteJsonLd, jsonLdScript } from "@/lib/jsonld";
@@ -83,7 +83,7 @@ const heroPanels = [
     /* Le panneau homme est un aplat cyan : un trait cyan s'y noierait, le
        volt est la couleur de signature du rayon et tranche dessus. */
     accent: "var(--color-volt)",
-    image: media.heroHomme,
+    slides: heroSlides.homme,
   },
   {
     word: "Femme",
@@ -93,7 +93,7 @@ const heroPanels = [
     tone: "signal" as const,
     /* Le panneau femme est violet profond : le cyan du thème y ressort. */
     accent: "var(--color-sky)",
-    image: media.heroFemme,
+    slides: heroSlides.femme,
   },
 ];
 
@@ -161,46 +161,22 @@ export default async function HomePage() {
           Treize modèles, cinq marques. Baskets On, Nike, Saucony, ASICS et Salomon.
         </h1>
         <div className="grid lg:grid-cols-2">
-          {heroPanels.map((panel) => (
-            <Link
+          {heroPanels.map((panel, index) => (
+            <HeroCarousel
               key={panel.href}
+              word={panel.word}
               href={panel.href}
-              className="group relative flex min-h-[58vh] items-center justify-center overflow-hidden lg:min-h-[76vh]"
-            >
-              {panel.image ? (
-                <Image
-                  src={panel.image}
-                  alt=""
-                  fill
-                  priority
-                  sizes="(min-width: 1024px) 50vw, 100vw"
-                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                />
-              ) : (
-                <Placeholder
-                  tone={panel.tone}
-                  ratio="4 / 5"
-                  className="absolute inset-0 h-full transition-transform duration-700 ease-out group-hover:scale-105"
-                />
-              )}
-              <span
-                aria-hidden="true"
-                className="absolute inset-0 bg-bark-900/30 bg-gradient-to-t from-bark-900/80 via-bark-900/20 to-bark-900/45"
-              />
-              <div className="relative flex flex-col items-center px-6 text-center">
-                <p className="text-label text-white/80">{panel.kicker}</p>
-                <HeroWord
-                  word={panel.word}
-                  color={panel.accent}
-                  className="mt-3"
-                />
-                <p className="mt-4 max-w-xs text-body-sm text-white/80">{panel.text}</p>
-                <span className="text-label mt-7 inline-flex items-center gap-3 border border-white/70 px-8 py-3.5 text-white transition-colors duration-250 group-hover:border-white group-hover:bg-white group-hover:text-bark-900">
-                  Découvrir
-                  <ArrowRight aria-hidden="true" className="size-4" />
-                </span>
-              </div>
-            </Link>
+              kicker={panel.kicker}
+              text={panel.text}
+              cta="Découvrir"
+              accent={panel.accent}
+              slides={panel.slides}
+              tone={panel.tone}
+              /* Une seule image prioritaire sur la page : celle du premier
+                 panneau. Les deux le seraient qu'elles se disputeraient la
+                 bande passante du premier rendu. */
+              priority={index === 0}
+            />
           ))}
         </div>
       </section>

@@ -1,6 +1,7 @@
-import type { Product, ProductColor, ProductVariant, Subcategory } from "./types";
+import type { Product, ProductColor, ProductVariant, Subcategory, Usage } from "./types";
 import type { Brand } from "./types";
 import { sizesForBrand } from "./brands";
+import { textileModels } from "./textile";
 
 /**
  * Catalogue — 13 modèles, 5 marques, 88 coloris (D-053, jalon 3).
@@ -31,6 +32,9 @@ export const subcategories: Subcategory[] = [
   { brand: "saucony", slug: "lifestyle", label: "Originals", description: "Deux rééditions d'archive. Les mentions de stabilité appartiennent à leur passé running et n'ont plus de valeur prescriptive." },
   { brand: "asics", slug: "sportstyle", label: "SportStyle", description: "Deux rééditions de la gamme SportStyle — à ne pas confondre avec les GEL-KAYANO de running actuelles." },
   { brand: "salomon", slug: "sportstyle", label: "Sportstyle", description: "L'héritage trail passé en ville : équipement technique complet, deux coloris doublés GORE-TEX." },
+  { brand: "on", slug: "textile", label: "Ensembles", description: "Le vestiaire d'entraînement On : pièces sobres, coupes droites, matières respirantes. Les tailles vont du XS au XXL." },
+  { brand: "nike", slug: "textile", label: "Ensembles", description: "Sweats, joggings et ensembles molleton. Les coupes sont volontairement amples — l'esprit du rayon lifestyle, en textile." },
+  { brand: "salomon", slug: "textile", label: "Ensembles", description: "Les pièces d'extérieur passées en ville : coupe-vent, polaires légères, matières qui sèchent vite." },
 ];
 
 /**
@@ -62,8 +66,22 @@ function demoStock(slug: string, color: string, size: string): number {
   return roll < 2 ? 0 : roll - 1;
 }
 
-function variantsFor(slug: string, brand: Brand, colors: ProductColor[]): ProductVariant[] {
-  const sizes = offeredSizes(brand);
+/**
+ * Tailles du rayon textile. Elles ne passent pas par `sizesForBrand` : les
+ * grilles de `brands.ts` sont des grilles de **chaussant**, elles ne disent
+ * rien d'un sweat. Tant qu'aucune marque n'a fourni sa table de mesures
+ * vêtement, on s'en tient à l'échelle commune, sans inventer de tour de
+ * poitrine par marque — une correspondance inventée se paie en retours.
+ */
+const APPAREL_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
+
+function variantsFor(
+  slug: string,
+  brand: Brand,
+  colors: ProductColor[],
+  subcategory: Usage,
+): ProductVariant[] {
+  const sizes = subcategory === "textile" ? APPAREL_SIZES : offeredSizes(brand);
   return colors.flatMap((color) =>
     sizes.map((size) => ({
       color: color.name,
@@ -75,7 +93,15 @@ function variantsFor(slug: string, brand: Brand, colors: ProductColor[]): Produc
 
 /** Les variantes sont dérivées des coloris et de la grille de la marque. */
 function model(product: Omit<Product, "variants">): Product {
-  return { ...product, variants: variantsFor(product.slug, product.brand, product.colors) };
+  return {
+    ...product,
+    variants: variantsFor(
+      product.slug,
+      product.brand,
+      product.colors,
+      product.subcategory,
+    ),
+  };
 }
 
 export const products: Product[] = [
@@ -751,4 +777,7 @@ export const products: Product[] = [
       { label: "Prix public conseillé Salomon", value: "180 € — version GORE-TEX ≈ 200 €" },
     ],
   }),
+  // Rayon Ensembles — les donnees vivent dans `textile.ts`, les variantes
+  // sont derivees ici comme pour les chaussures (echelle vetement).
+  ...textileModels.map(model),
 ];

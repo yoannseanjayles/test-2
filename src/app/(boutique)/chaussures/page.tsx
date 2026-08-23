@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ListingExplorer, SeoTextBlock } from "@/components/commerce";
 import { PageHero } from "@/components/layout/PageHero/PageHero";
-import { fetchFeatured, fetchProducts } from "@/lib/api";
+import { fetchFeatured, fetchShoes } from "@/lib/api";
 import { media } from "@/lib/media";
 import { breadcrumbJsonLd, itemListJsonLd, jsonLdScript } from "@/lib/jsonld";
 import { usageLinks, brandLinks } from "@/lib/navigation";
@@ -22,7 +22,8 @@ export const metadata: Metadata = {
  * celle-ci est la vitrine du rayon, avec toutes les facettes.
  */
 export default async function ChaussuresPage() {
-  const [prods, fallback] = await Promise.all([fetchProducts(), fetchFeatured(3)]);
+  // Rayon Chaussures : le textile a le sien, il n'a rien a faire ici.
+  const [prods, fallback] = await Promise.all([fetchShoes(), fetchFeatured(3)]);
   const crumbs = [{ name: "Chaussures", path: "/chaussures" }];
 
   return (

@@ -30,7 +30,17 @@ export type Filters = {
   colors: string[];
   priceMin?: number;
   priceMax?: number;
+  /**
+   * Disponibilité. Sur une boutique de chaussures c'est le filtre le plus
+   * demandé après la pointure : un modèle épuisé dans toutes ses tailles
+   * reste légitimement au listing (il s'y affiche « Bientôt de retour »),
+   * mais quelqu'un qui veut acheter aujourd'hui doit pouvoir l'écarter.
+   */
+  inStock: boolean;
 };
+
+/** Les facettes à valeurs multiples — celles que `facetCounts` sait compter. */
+export type MultiFacet = "brands" | "genres" | "sizes" | "materials" | "colors";
 
 export const emptyFilters: Filters = {
   brands: [],
@@ -38,6 +48,7 @@ export const emptyFilters: Filters = {
   sizes: [],
   materials: [],
   colors: [],
+  inStock: false,
 };
 
 /**
@@ -83,6 +94,9 @@ export function matchesFilters(product: Product, filters: Filters): boolean {
   if (filters.priceMax !== undefined && product.price > filters.priceMax * 100) {
     return false;
   }
+  if (filters.inStock && !product.variants.some((v) => v.stock > 0)) {
+    return false;
+  }
   return true;
 }
 
@@ -116,7 +130,7 @@ export function sortProducts(prods: Product[], sort: SortKey): Product[] {
  * elle-même exclue du calcul (compteurs par valeur, combinaisons vides
  * désactivées — spec Listing S3).
  */
-export function facetCounts<K extends keyof Filters>(
+export function facetCounts<K extends MultiFacet>(
   prods: Product[],
   filters: Filters,
   facet: K,
@@ -149,7 +163,8 @@ export function countActiveFilters(filters: Filters): number {
     filters.materials.length +
     filters.colors.length +
     (filters.priceMin !== undefined ? 1 : 0) +
-    (filters.priceMax !== undefined ? 1 : 0)
+    (filters.priceMax !== undefined ? 1 : 0) +
+    (filters.inStock ? 1 : 0)
   );
 }
 
@@ -163,6 +178,7 @@ export function filtersToSearchParams(filters: Filters, sort: SortKey): URLSearc
   if (filters.colors.length) params.set("couleur", filters.colors.join(","));
   if (filters.priceMin !== undefined) params.set("prix-min", String(filters.priceMin));
   if (filters.priceMax !== undefined) params.set("prix-max", String(filters.priceMax));
+  if (filters.inStock) params.set("dispo", "1");
   if (sort !== "selection") params.set("tri", sort);
   return params;
 }
@@ -191,6 +207,7 @@ export function filtersFromSearchParams(params: URLSearchParams): {
       colors: list("couleur"),
       priceMin: num("prix-min"),
       priceMax: num("prix-max"),
+      inStock: params.get("dispo") === "1",
     },
     sort,
   };
