@@ -510,6 +510,12 @@ branche Neon neuve pour le catalogue baskets et basculer `DATABASE_URL`. Noter q
 la garde des guides est **indépendante** de celle des produits (`seedIfEmpty` teste
 les deux séparément) : purger les produits ne réinjecte pas les guides.
 
+**Deux façons de purger.** `pnpm db:reset --confirm` depuis un poste, ce qui
+suppose d'avoir `DATABASE_URL` sous la main ; ou `ALLOW_LEGACY_PURGE=1` sur
+Vercel, auquel cas la garde de `db/index.ts` purge elle-même au prochain
+démarrage — build compris, puisqu'il lit le catalogue. La seconde évite de sortir
+la chaîne de connexion de son coffre. Les deux aboutissent au même état.
+
 **Décision (23/08/2026)** : la purge a été retenue plutôt que la branche neuve —
 le site n'a jamais été exploité en boutique de baskets, les données en place sont
 celles de la démonstration animalière. `pnpm db:reset --confirm` remplace donc la

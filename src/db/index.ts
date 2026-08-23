@@ -144,11 +144,19 @@ const DDL = [
 
 type Database = Awaited<ReturnType<typeof createDb>>;
 
-async function applySchema(db: { execute: (query: ReturnType<typeof rawSql.raw>) => Promise<unknown> }) {
+async function applySchema(db: Executor) {
   await assertNotLegacySchema(db);
   for (const statement of DDL) {
     await db.execute(rawSql.raw(statement));
   }
+}
+
+type Executor = { execute: (query: ReturnType<typeof rawSql.raw>) => Promise<unknown> };
+
+/** Normalise le retour des deux drivers : Neon rend `{ rows }`, PGlite un tableau. */
+function toRows(result: unknown): unknown[] {
+  if (Array.isArray(result)) return result;
+  return (result as { rows?: unknown[] })?.rows ?? [];
 }
 
 /**
@@ -158,29 +166,71 @@ async function applySchema(db: { execute: (query: ReturnType<typeof rawSql.raw>)
  * colliers, et échouerait plus tard à l'écriture — en production, sur une
  * base que rien ne purge entre deux déploiements.
  *
- * On échoue donc au démarrage, en nommant le remède. Le remède n'est **pas**
- * de purger la base de production à la main : c'est de créer une branche Neon
- * neuve et d'y pointer `DATABASE_URL`.
+ * Deux issues, selon `ALLOW_LEGACY_PURGE` :
+ *
+ * - **absente (défaut)** — on échoue au démarrage, comme avant.
+ * - **`"1"`** — on purge le schéma `public`, et `applySchema` reconstruit
+ *   derrière. C'est la bascule décidée le 23/08/2026 : la boutique n'a jamais
+ *   été exploitée en baskets, les données en place sont celles de la
+ *   démonstration animalière. Poser la variable sur Vercel évite d'avoir à
+ *   sortir `DATABASE_URL` de son coffre pour purger depuis un poste.
+ *
+ * La purge ne peut pas s'emballer : elle ne se déclenche que sur détection du
+ * schéma animalier, qui disparaît au premier passage. Laisser la variable en
+ * place ne rejoue donc rien — mais autant la retirer une fois la bascule
+ * faite, comme ce bloc, qui n'a plus de raison d'être ensuite.
  */
-async function assertNotLegacySchema(
-  db: { execute: (query: ReturnType<typeof rawSql.raw>) => Promise<unknown> },
-) {
-  const result = (await db.execute(
-    rawSql.raw(
-      `SELECT 1 AS legacy FROM information_schema.columns
-       WHERE table_name = 'products' AND column_name = 'animal' LIMIT 1`,
+async function assertNotLegacySchema(db: Executor) {
+  const rows = toRows(
+    await db.execute(
+      rawSql.raw(
+        `SELECT 1 AS legacy FROM information_schema.columns
+         WHERE table_name = 'products' AND column_name = 'animal' LIMIT 1`,
+      ),
     ),
-  )) as { rows?: unknown[] } | unknown[];
-  const rows = Array.isArray(result) ? result : (result.rows ?? []);
-  if (rows.length > 0) {
+  );
+  if (rows.length === 0) return;
+
+  if (process.env.ALLOW_LEGACY_PURGE !== "1") {
     throw new Error(
       "[db] Schéma animalier détecté (products.animal existe encore). " +
         "Le pivot baskets (D-053) change la forme du catalogue : l'axe est la " +
-        "marque et le stock est porté par product_variants. Créez une branche " +
-        "Neon neuve et pointez-y DATABASE_URL — ne purgez pas la base " +
-        "existante à la main.",
+        "marque et le stock est porté par product_variants. Posez " +
+        "ALLOW_LEGACY_PURGE=1 pour purger la base au prochain démarrage, ou " +
+        "créez une branche Neon neuve et pointez-y DATABASE_URL.",
     );
   }
+
+  await purgePublicSchema(db);
+}
+
+/**
+ * Vide le schéma `public`. Le `CASCADE` règle l'ordre des clés étrangères
+ * sans avoir à l'énumérer — reviews et product_variants référencent products,
+ * session/account/shoe_profiles référencent "user", order_lines référence
+ * orders. Une seule instruction : le driver HTTP Neon n'en accepte pas plus
+ * par requête.
+ */
+async function purgePublicSchema(db: Executor) {
+  const tables = toRows(
+    await db.execute(
+      rawSql.raw(
+        `SELECT table_name FROM information_schema.tables
+         WHERE table_schema = 'public' AND table_type = 'BASE TABLE'`,
+      ),
+    ),
+  ).map((r) => (r as { table_name: string }).table_name);
+
+  if (tables.length === 0) return;
+
+  const liste = tables.map((t) => `"${t}"`).join(", ");
+  await db.execute(rawSql.raw(`DROP TABLE IF EXISTS ${liste} CASCADE`));
+  console.warn(
+    `[db] Purge du schéma animalier : ${tables.length} table(s) supprimée(s) — ` +
+      `${tables.join(", ")}. Le DDL et le seed baskets sont rejoués derrière. ` +
+      `Comptes et commandes de l'ancienne boutique compris : l'amorçage ` +
+      `administrateur est à refaire (ADMIN_BOOTSTRAP_EMAIL).`,
+  );
 }
 
 async function createDb() {
