@@ -1,8 +1,8 @@
 {
-  "name": "chien-et-chat",
+  "name": "snikerz",
   "version": "0.1.0",
   "private": true,
-  "description": "chien et chat — e-commerce premium d'accessoires pour animaux (front-end Next.js 15)",
+  "description": "snikerz — e-commerce de baskets : 13 modèles, 5 marques (front-end Next.js 15).",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { TrackingForm } from "./TrackingForm";
+import { PageHero } from "@/components/layout/PageHero/PageHero";
 
 export const metadata: Metadata = {
   title: "Suivi de commande",
@@ -9,13 +10,16 @@ export const metadata: Metadata = {
 /** Suivi invité (sitemap 1.2) : numéro + e-mail, sans compte. */
 export default function TrackingPage() {
   return (
-    <div className="mx-auto max-w-xl px-4 py-12 lg:px-6">
-      <h1 className="font-display text-h1 font-[560] text-bark-900">Suivi de commande</h1>
-      <p className="mt-3 text-body text-bark-700">
-        Entrez le numéro reçu par e-mail (ex. CC-123456) et l'adresse utilisée
-        à la commande.
-      </p>
-      <TrackingForm />
-    </div>
+    <>
+      <PageHero
+        kicker="Aide"
+        title="Suivi de commande"
+        intro="Entrez le numéro reçu par e-mail (ex. CC-123456) et l'adresse utilisée à la commande."
+        crumbs={[{ name: "Suivi de commande", path: "/suivi-commande" }]}
+      />
+      <div className="mx-auto max-w-xl px-4 py-12 lg:px-6">
+        <TrackingForm />
+      </div>
+    </>
   );
 }

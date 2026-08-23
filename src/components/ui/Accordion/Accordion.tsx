@@ -42,8 +42,8 @@ export function Accordion({ items, defaultOpen, className }: AccordionProps) {
                 aria-controls={panelId}
                 onClick={() => setOpenIndex(isOpen ? null : index)}
                 className={cn(
-                  "flex min-h-11 w-full items-center justify-between gap-4 py-4 text-left",
-                  "font-heading text-h3 font-semibold text-bark-900",
+                  "flex min-h-14 w-full items-center justify-between gap-4 py-5 text-left",
+                  "text-label text-bark-900",
                   "transition-colors duration-150 hover:text-action",
                 )}
               >

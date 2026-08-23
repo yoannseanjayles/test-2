@@ -61,14 +61,14 @@ export function CartDrawer() {
         className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col rounded-l-lg bg-cream-50 shadow-overlay"
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <h2 className="font-heading text-h3 font-semibold text-bark-900">
+          <h2 className="font-display text-h3 leading-tight text-bark-900">
             Votre panier
           </h2>
           <button
             type="button"
             aria-label="Fermer le panier"
             onClick={closeDrawer}
-            className="flex size-11 items-center justify-center rounded-sm text-bark-700 hover:bg-cream-300"
+            className="flex size-11 items-center justify-center text-bark-700 hover:bg-cream-300"
           >
             <X aria-hidden="true" className="size-5" />
           </button>
@@ -76,7 +76,9 @@ export function CartDrawer() {
 
         {lines.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
-            <Image src={illustrations.panier} alt="" sizes="192px" className="h-auto w-48 rounded-lg" />
+            {illustrations.panier && (
+              <Image src={illustrations.panier} alt="" sizes="192px" className="h-auto w-48" />
+            )}
             <p className="text-body text-bark-700">Votre panier est vide.</p>
             <Button variant="secondary" onClick={closeDrawer}>
               Continuer mes découvertes
@@ -108,14 +110,14 @@ export function CartDrawer() {
                 <Link
                   href="/checkout"
                   onClick={closeDrawer}
-                  className="text-label inline-flex min-h-11 items-center justify-center rounded-md bg-action px-6 py-3 text-white transition duration-150 hover:bg-action-hover"
+                  className="text-label inline-flex min-h-11 items-center justify-center bg-action px-6 py-3 text-white transition duration-150 hover:bg-action-hover"
                 >
                   Passer commande
                 </Link>
                 <Link
                   href="/panier"
                   onClick={closeDrawer}
-                  className="text-label inline-flex min-h-11 items-center justify-center rounded-md border-[1.5px] border-action px-6 py-3 text-action transition duration-150 hover:bg-pine-50"
+                  className="text-label inline-flex min-h-11 items-center justify-center border-[1.5px] border-action px-6 py-3 text-action transition duration-150 hover:bg-pine-50"
                 >
                   Voir le panier
                 </Link>
@@ -152,7 +154,7 @@ function CartDrawerLine({
           type="button"
           aria-label="Retirer l'article indisponible du panier"
           onClick={() => remove(line)}
-          className="flex size-9 shrink-0 items-center justify-center rounded-sm text-bark-500 hover:bg-cream-300 hover:text-error"
+          className="flex size-9 shrink-0 items-center justify-center text-bark-500 hover:bg-cream-300 hover:text-error"
         >
           <Trash2 aria-hidden="true" className="size-4" />
         </button>
@@ -166,7 +168,7 @@ function CartDrawerLine({
       <Link
         href={product.path}
         onClick={closeDrawer}
-        className="w-20 shrink-0 overflow-hidden rounded-md"
+        className="w-20 shrink-0 overflow-hidden"
       >
         {image ? (
           <Image src={image.src} alt="" sizes="80px" className="aspect-square h-auto w-full object-cover" />
@@ -188,7 +190,7 @@ function CartDrawerLine({
           {line.size} · {line.color}
         </p>
         <div className="mt-2 flex items-center justify-between">
-          <div className="flex items-center rounded-md border border-border">
+          <div className="flex items-center border border-border">
             <button
               type="button"
               aria-label="Diminuer la quantité"
@@ -218,7 +220,7 @@ function CartDrawerLine({
         type="button"
         aria-label={`Retirer ${product.name} du panier`}
         onClick={() => remove(line)}
-        className="flex size-9 shrink-0 items-center justify-center rounded-sm text-bark-500 hover:bg-cream-300 hover:text-error"
+        className="flex size-9 shrink-0 items-center justify-center text-bark-500 hover:bg-cream-300 hover:text-error"
       >
         <Trash2 aria-hidden="true" className="size-4" />
       </button>

@@ -23,10 +23,10 @@ export function MobileNav() {
           <li key={href} className="flex-1">
             <Link
               href={href}
-              className="flex min-h-14 flex-col items-center justify-center gap-0.5 text-bark-700 transition-colors duration-150 hover:text-action"
+              className="flex min-h-14 flex-col items-center justify-center gap-1 text-bark-900 transition-colors duration-250 hover:text-action"
             >
               <Icon aria-hidden="true" className="size-6" strokeWidth={1.75} />
-              <span className="text-caption">{label}</span>
+              <span className="text-caption uppercase tracking-[0.12em]">{label}</span>
             </Link>
           </li>
         ))}

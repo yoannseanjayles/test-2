@@ -7,7 +7,9 @@ import {
 } from "./cart";
 import { shippingPrice } from "./checkout";
 
-const ambre = { slug: "collier-cuir-ambre", size: "M", color: "Cuir caramel" };
+// Une ligne de panier référence une variante (D-054) : slug, pointure et
+// coloris. Le prix est relu depuis le catalogue, jamais envoyé par le client.
+const af1 = { slug: "air-force-1-07", size: "42", color: "Blanc / Swoosh noir" };
 
 describe("panier (D-029/D-030)", () => {
   beforeEach(() => {
@@ -15,23 +17,23 @@ describe("panier (D-029/D-030)", () => {
   });
 
   it("ajoute et fusionne les lignes identiques", () => {
-    useCart.getState().add(ambre);
-    useCart.getState().add(ambre);
-    useCart.getState().add({ ...ambre, size: "S" });
+    useCart.getState().add(af1);
+    useCart.getState().add(af1);
+    useCart.getState().add({ ...af1, size: "41" });
     const lines = useCart.getState().lines;
     expect(lines).toHaveLength(2);
     expect(cartCount(lines)).toBe(3);
   });
 
   it("calcule le sous-total TTC depuis le catalogue", () => {
-    useCart.getState().add(ambre); // 5900
-    useCart.getState().add(ambre); // 11800
-    expect(cartSubtotal(useCart.getState().lines)).toBe(11800);
+    useCart.getState().add(af1); // 4999
+    useCart.getState().add(af1); // 9998
+    expect(cartSubtotal(useCart.getState().lines)).toBe(9998);
   });
 
   it("supprime la ligne quand la quantité tombe à zéro", () => {
-    useCart.getState().add(ambre);
-    useCart.getState().setQuantity(ambre, 0);
+    useCart.getState().add(af1);
+    useCart.getState().setQuantity(af1, 0);
     expect(useCart.getState().lines).toHaveLength(0);
   });
 

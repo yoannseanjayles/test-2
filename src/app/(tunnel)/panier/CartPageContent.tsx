@@ -37,17 +37,19 @@ export function CartPageContent() {
   if (lines.length === 0) {
     return (
       <div className="mx-auto flex max-w-page flex-col items-center px-4 py-16 text-center lg:px-6">
-        <Image src={illustrations.panier} alt="" sizes="288px" className="h-auto w-72 rounded-lg" />
-        <h1 className="font-display mt-6 text-h1 font-[560] text-bark-900">
+        {illustrations.panier && (
+          <Image src={illustrations.panier} alt="" sizes="288px" className="h-auto w-72" />
+        )}
+        <h1 className="font-display mt-6 text-h1 text-bark-900">
           Votre panier est vide
         </h1>
         <p className="mt-3 max-w-md text-body text-bark-700">
-          Nos indispensables vous attendent — chaque pièce est testée et
-          approuvée par nos experts.
+          Treize modèles, cinq marques, et une grille de tailles claire sur
+          chaque fiche.
         </p>
         <Link
           href="/"
-          className="text-label mt-8 inline-flex min-h-11 items-center rounded-md bg-action px-6 py-3 text-white transition duration-150 hover:bg-action-hover"
+          className="text-label mt-8 inline-flex min-h-11 items-center bg-action px-6 py-3 text-white transition duration-150 hover:bg-action-hover"
         >
           Découvrir la sélection
         </Link>
@@ -57,7 +59,7 @@ export function CartPageContent() {
 
   return (
     <div className="mx-auto max-w-page px-4 py-10 lg:px-6">
-      <h1 className="font-display text-h1 font-[560] text-bark-900">Votre panier</h1>
+      <h1 className="font-display text-h1 leading-none text-bark-900">Votre panier</h1>
       <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_380px] lg:items-start">
         <div>
           <FreeShippingBar subtotal={subtotal} />
@@ -72,8 +74,8 @@ export function CartPageContent() {
           </ul>
         </div>
 
-        <aside className="rounded-lg bg-cream-50 p-6 shadow-card lg:sticky lg:top-8">
-          <h2 className="font-heading text-h3 font-semibold text-bark-900">Récapitulatif</h2>
+        <aside className="border border-border bg-cream-50 p-6 lg:sticky lg:top-8">
+          <h2 className="font-display text-h3 leading-tight text-bark-900">Récapitulatif</h2>
           <dl className="mt-4 space-y-2 text-body-sm text-bark-700">
             <div className="flex justify-between">
               <dt>Sous-total TTC</dt>
@@ -86,7 +88,7 @@ export function CartPageContent() {
           </dl>
           <Link
             href="/checkout"
-            className="text-label mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-md bg-action px-6 py-3 text-white transition duration-150 hover:bg-action-hover"
+            className="text-label mt-6 inline-flex min-h-12 w-full items-center justify-center bg-action px-6 py-3 text-white transition duration-150 hover:bg-action-hover"
           >
             Passer commande
           </Link>
@@ -129,14 +131,26 @@ function CartPageLine({
     );
   }
   const image = productImages[line.slug]?.[0];
-  const size = product.sizes.find((s) => s.name === line.size);
-  const lowStock = size !== undefined && size.stock > 0 && size.stock <= 3;
+  const colorPhoto = product.colors.find((c) => c.name === line.color)?.images?.[0];
+  const variant = product.variants.find(
+    (v) => v.color === line.color && v.size === line.size,
+  );
+  const lowStock = variant !== undefined && variant.stock > 0 && variant.stock <= 3;
 
   return (
     <li className="flex gap-4 py-5">
-      <Link href={product.path} className="w-24 shrink-0 overflow-hidden rounded-md sm:w-28">
+      <Link href={product.path} className="w-24 shrink-0 overflow-hidden sm:w-28">
         {image ? (
           <Image src={image.src} alt="" sizes="112px" className="aspect-square h-auto w-full object-cover" />
+        ) : colorPhoto ? (
+          <Image
+            src={colorPhoto}
+            alt=""
+            width={640}
+            height={640}
+            sizes="112px"
+            className="aspect-square h-auto w-full object-cover"
+          />
         ) : product.imageUrl ? (
           <Image src={product.imageUrl} alt="" width={224} height={224} sizes="112px" className="aspect-square h-auto w-full object-cover" />
         ) : (
@@ -159,11 +173,11 @@ function CartPageLine({
         {/* Changement de stock signalé explicitement (D-030). */}
         {lowStock && (
           <p className="text-caption mt-1 text-warning">
-            Plus que {size.stock} en stock dans cette taille.
+            Plus que {variant!.stock} en stock dans ce coloris et cette pointure.
           </p>
         )}
         <div className="mt-3 flex items-center gap-3">
-          <div className="flex items-center rounded-md border border-border">
+          <div className="flex items-center border border-border">
             <button
               type="button"
               aria-label="Diminuer la quantité"

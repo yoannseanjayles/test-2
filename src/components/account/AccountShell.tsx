@@ -6,11 +6,12 @@ import { useState, type ReactNode } from "react";
 import { authClient, signIn, signOut, signUp, useSession } from "@/lib/auth-client";
 import { Button, FormField } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { PageHero } from "@/components/layout/PageHero/PageHero";
 
 const navItems = [
   { label: "Tableau de bord", href: "/compte" },
   { label: "Mes commandes", href: "/compte/commandes" },
-  { label: "Mes animaux", href: "/compte/animaux" },
+  { label: "Mes pointures", href: "/compte/pointures" },
   { label: "Mes informations", href: "/compte/informations" },
 ];
 
@@ -29,10 +30,11 @@ export function AccountShell({ title, children }: { title: string; children: Rea
   if (!session) return <AuthForm />;
 
   return (
-    <div className="mx-auto max-w-page px-4 py-10 lg:px-6">
-      <h1 className="font-display text-h1 font-[560] text-bark-900">{title}</h1>
-      <div className="mt-8 grid gap-10 lg:grid-cols-[240px_1fr] lg:items-start">
-        <nav aria-label="Espace client" className="rounded-lg bg-cream-50 p-3 shadow-card">
+    <>
+      <PageHero kicker="Espace client" title={title} tone="light" />
+      <div className="mx-auto max-w-page px-4 py-10 lg:px-6">
+      <div className="grid gap-10 lg:grid-cols-[240px_1fr] lg:items-start">
+        <nav aria-label="Espace client" className="border border-border bg-cream-50 p-2">
           <ul>
             {navItems.map((item) => (
               <li key={item.href}>
@@ -40,9 +42,9 @@ export function AccountShell({ title, children }: { title: string; children: Rea
                   href={item.href}
                   aria-current={pathname === item.href ? "page" : undefined}
                   className={cn(
-                    "text-label flex min-h-11 items-center rounded-md px-4 transition-colors duration-150",
+                    "text-label flex min-h-12 items-center px-4 transition-colors duration-250",
                     pathname === item.href
-                      ? "bg-pine-700 text-white"
+                      ? "bg-bark-900 text-white"
                       : "text-bark-700 hover:bg-cream-300 hover:text-bark-900",
                   )}
                 >
@@ -54,7 +56,7 @@ export function AccountShell({ title, children }: { title: string; children: Rea
               <button
                 type="button"
                 onClick={() => signOut()}
-                className="text-label flex min-h-11 w-full items-center rounded-md px-4 text-bark-500 hover:bg-cream-300 hover:text-error"
+                className="text-label flex min-h-12 w-full items-center px-4 text-bark-500 transition-colors duration-250 hover:bg-cream-300 hover:text-error"
               >
                 Se déconnecter
               </button>
@@ -63,7 +65,8 @@ export function AccountShell({ title, children }: { title: string; children: Rea
         </nav>
         <div className="min-w-0">{children}</div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -125,20 +128,20 @@ function AuthForm() {
 
   return (
     <div className="mx-auto max-w-md px-4 py-12 lg:py-16">
-      <h1 className="font-display text-h1 font-[560] text-bark-900">
+      <h1 className="font-display text-h1 leading-none text-bark-900">
         {mode === "signin" ? "Connexion" : mode === "signup" ? "Créer un compte" : "Mot de passe oublié"}
       </h1>
       <p className="mt-3 text-body-sm text-bark-700">
         {mode === "forgot"
           ? "Indiquez votre adresse e-mail : nous vous envoyons un lien pour choisir un nouveau mot de passe."
-          : "Suivi de commande, retours en un clic et profil animal — le compte reste optionnel pour commander."}
+          : "Suivi de commande, retours en un clic et pointures enregistrées — le compte reste optionnel pour commander."}
       </p>
       <button
         type="button"
         hidden={mode === "forgot"}
         onClick={googleSignIn}
         disabled={googleLoading}
-        className="mt-6 flex min-h-12 w-full items-center justify-center gap-3 rounded-sm border border-border bg-cream-50 px-4 text-body font-medium text-bark-900 transition-colors duration-150 hover:border-bark-300 disabled:opacity-60"
+        className="text-label mt-6 flex min-h-12 w-full items-center justify-center gap-3 border border-bark-900 bg-cream-50 px-4 text-bark-900 transition-colors duration-250 hover:bg-bark-900 hover:text-white disabled:opacity-60"
       >
         <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M23.5 12.27c0-.85-.08-1.66-.22-2.45H12v4.64h6.45a5.52 5.52 0 0 1-2.4 3.62v3h3.88c2.27-2.1 3.57-5.17 3.57-8.8Z" />

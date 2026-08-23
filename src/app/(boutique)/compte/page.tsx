@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { PawPrint, Package, RotateCcw } from "lucide-react";
+import { Footprints, Package, RotateCcw } from "lucide-react";
 import { AccountShell } from "@/components/account/AccountShell";
 import { useOrder } from "@/lib/checkout";
 import { orderStatuses, statusIndex } from "@/lib/account";
 import { listMyOrders } from "@/lib/orders";
-import { listPets, type PetDto } from "./animaux/actions";
+import { listShoeProfiles, type ShoeProfileDto } from "./pointures/actions";
 import { useEffect, useState } from "react";
 import { useCart, useCartDrawer } from "@/lib/cart";
 import { formatPrice } from "@/lib/format";
@@ -23,10 +23,10 @@ export default function AccountDashboard() {
 
 function Dashboard() {
   const order = useOrder((state) => state.lastOrder);
-  const [pets, setPets] = useState<PetDto[]>([]);
+  const [profiles, setProfiles] = useState<ShoeProfileDto[]>([]);
   const [status, setStatus] = useState<string | null>(null);
   useEffect(() => {
-    listPets().then(setPets).catch(() => setPets([]));
+    listShoeProfiles().then(setProfiles).catch(() => setProfiles([]));
   }, []);
   // Statut réel de la commande (D-016) — lu en base, plus de badge de démo.
   useEffect(() => {
@@ -50,7 +50,7 @@ function Dashboard() {
   return (
     <div className="flex flex-col gap-6">
       {order ? (
-        <section className="rounded-lg bg-cream-50 p-6 shadow-card">
+        <section className="border border-border bg-cream-50 p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-heading flex items-center gap-2 text-h3 font-semibold text-bark-900">
               <Package aria-hidden="true" className="size-5 text-pine-700" strokeWidth={1.75} />
@@ -68,7 +68,7 @@ function Dashboard() {
           <div className="mt-4 flex flex-wrap gap-3">
             <Link
               href="/compte/commandes"
-              className="text-label inline-flex min-h-11 items-center rounded-md border-[1.5px] border-action px-5 text-action hover:bg-pine-50"
+              className="text-label inline-flex min-h-11 items-center border-[1.5px] border-action px-5 text-action hover:bg-pine-50"
             >
               Suivre la commande
             </Link>
@@ -78,8 +78,8 @@ function Dashboard() {
           </div>
         </section>
       ) : (
-        <section className="rounded-lg bg-cream-50 p-6 shadow-card">
-          <h2 className="font-heading text-h3 font-semibold text-bark-900">
+        <section className="border border-border bg-cream-50 p-6">
+          <h2 className="font-display text-h3 leading-tight text-bark-900">
             Aucune commande en cours
           </h2>
           <Link
@@ -91,21 +91,21 @@ function Dashboard() {
         </section>
       )}
 
-      <section className="rounded-lg bg-sage-50 p-6">
+      <section className="bg-sage-50 p-6">
         <h2 className="font-heading flex items-center gap-2 text-h3 font-semibold text-bark-900">
-          <PawPrint aria-hidden="true" className="size-5 text-pine-700" strokeWidth={1.75} />
-          Mes animaux
+          <Footprints aria-hidden="true" className="size-5 text-pine-700" strokeWidth={1.75} />
+          Mes pointures
         </h2>
         <p className="mt-2 text-body-sm text-bark-700">
-          {pets.length > 0
-            ? `${pets.map((p) => p.name).join(", ")} — le filtre « pour mon animal » s'active sur tous les listings.`
-            : "Ajoutez votre animal pour filtrer le catalogue à son gabarit en un clic."}
+          {profiles.length > 0
+            ? `${profiles.map((p) => p.name).join(", ")} — le filtre « ma pointure » s'active sur tous les listings.`
+            : "Enregistrez votre pointure pour filtrer le catalogue en un clic."}
         </p>
         <Link
-          href="/compte/animaux"
+          href="/compte/pointures"
           className="text-label mt-3 inline-flex min-h-11 items-center gap-2 text-action hover:text-action-hover"
         >
-          {pets.length > 0 ? "Gérer mes animaux" : "Ajouter un animal"}{" "}
+          {profiles.length > 0 ? "Gérer mes pointures" : "Ajouter ma pointure"}{" "}
           <span aria-hidden="true">→</span>
         </Link>
       </section>

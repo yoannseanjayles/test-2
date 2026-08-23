@@ -1,125 +1,164 @@
 @import "tailwindcss";
 
 /*
- * Tokens chien et chat — source unique, générée depuis les Design Guidelines 4.1 (D-045/D-047).
- * Trois couches : primitives (gammes) → sémantiques (color-*, usage) → composants (Tailwind).
+ * Tokens — refonte « Azeno » (thème sport Shopify OS 2.0 pris comme référence).
+ *
+ * Les *noms* de tokens de la Phase 4 sont conservés (cream / bark / pine /
+ * sage / caramel / terracotta) pour ne pas casser les ~600 usages du dépôt ;
+ * seules leurs *valeurs* changent. Chaque gamme joue désormais un rôle du
+ * design system Azeno :
+ *
+ *   cream      → blancs et gris de fond (page, tuiles produit, séparateurs)
+ *   bark       → encre : du noir #070707 aux gris de texte secondaire
+ *   pine       → bleu de marque #3650be (actions, liens, bandeau promo)
+ *   terracotta → rouge promo #e21b1b (badges SALE, compte à rebours, erreurs)
+ *   sage       → vert fonctionnel (avis vérifiés, confirmations)
+ *   caramel    → jaune fonctionnel (étoiles de notation, avertissements)
+ *
+ * Écarts assumés par rapport au thème d'origine, pour rester conforme au
+ * RGAA/WCAG AA : le gris de texte passe de #888888 (3,5:1) à #5c5c5c (6,4:1)
+ * et le rouge de #ff3535 (3,2:1) à #e21b1b (5,1:1 en blanc sur rouge).
  */
 @theme {
-  /* ——— Couleurs primitives (4.1 §2) ——— */
-  --color-cream-50: #fdfbf7;
-  --color-cream-100: #f5f1ea;
-  --color-cream-300: #ede8e0;
-  --color-cream-500: #e3dccf;
-  --color-cream-700: #c9bfac;
-  --color-cream-900: #8a8378;
+  /* ——— Blancs et gris de fond ——— */
+  --color-cream-50: #ffffff;
+  --color-cream-100: #ffffff;
+  --color-cream-300: #f6f6f6;
+  --color-cream-500: #ececec;
+  --color-cream-700: #d6d6d6;
+  --color-cream-900: #6f6f6f;
 
-  --color-bark-50: #f7f5f2;
-  --color-bark-100: #e8e4de;
-  --color-bark-300: #b5aea4;
-  --color-bark-500: #7a736a;
-  --color-bark-700: #4a443d;
-  --color-bark-900: #2b2620;
+  /* ——— Encre ——— */
+  --color-bark-50: #fafafa;
+  --color-bark-100: #f0f0f0;
+  --color-bark-300: #c4c4c4;
+  --color-bark-500: #6f6f6f;
+  --color-bark-700: #5c5c5c;
+  --color-bark-900: #070707;
 
-  --color-caramel-50: #fbf3e8;
-  --color-caramel-100: #f3e2cc;
-  --color-caramel-300: #ddb88a;
-  --color-caramel-500: #c08a4f;
-  --color-caramel-700: #9a6a38;
-  --color-caramel-900: #6b4926;
+  /* ——— Bleu de marque ——— */
+  --color-pine-50: #f2f4fc;
+  --color-pine-100: #e2e6f7;
+  --color-pine-300: #9ba6e2;
+  --color-pine-500: #5b68cf;
+  --color-pine-700: #3650be;
+  --color-pine-900: #070707;
 
-  --color-sage-50: #f2f5f1;
-  --color-sage-100: #e0e8dd;
-  --color-sage-300: #b3c4ac;
-  --color-sage-500: #7f9877;
-  --color-sage-700: #55704f;
-  --color-sage-900: #364933;
+  /* ——— Rouge promo ——— */
+  --color-terracotta-50: #fdf0f0;
+  --color-terracotta-100: #fbe0e0;
+  --color-terracotta-300: #f19b9b;
+  --color-terracotta-500: #ea3d3d;
+  --color-terracotta-700: #e21b1b;
+  --color-terracotta-900: #8f1010;
 
-  --color-terracotta-50: #fbf1ec;
-  --color-terracotta-100: #f4dcd0;
-  --color-terracotta-300: #dfa98d;
-  --color-terracotta-500: #c67b54;
-  --color-terracotta-700: #a05a38;
-  --color-terracotta-900: #6f3e27;
+  /* ——— Vert fonctionnel ——— */
+  --color-sage-50: #f5f7f5;
+  --color-sage-100: #e4efe6;
+  --color-sage-300: #a8ceb3;
+  --color-sage-500: #4f9e68;
+  --color-sage-700: #2f7a49;
+  --color-sage-900: #1d5232;
 
-  --color-pine-50: #eff4f2;
-  --color-pine-100: #d8e4df;
-  --color-pine-300: #9dbdb1;
-  --color-pine-500: #5c8a78;
-  --color-pine-700: #2f5d50;
-  --color-pine-900: #1f4038;
+  /* ——— Jaune fonctionnel ——— */
+  --color-caramel-50: #fdf8ec;
+  --color-caramel-100: #faedcd;
+  --color-caramel-300: #f0cd7c;
+  --color-caramel-500: #e9a900;
+  --color-caramel-700: #8a6400;
+  --color-caramel-900: #5c4300;
 
-  --color-success: #3e7a4e;
-  --color-error: #b3402e;
-  --color-warning: #b67a1f;
-  --color-info: #3e6b8a;
+  /* ——— Accent volt : la couleur de signature du rayon sneakers ———
+     Réservée aux fonds (badge « Nouveau », surtitres sur encre, séparateurs).
+     Jamais en texte sur blanc : 1,4:1, illisible. Sur encre : 17:1. */
+  --color-volt: #d8ff3d;
+  --color-volt-ink: #4a5c00;
 
-  /* ——— Couleurs sémantiques (4.1 §2) ——— */
-  --color-bg-page: var(--color-cream-100);
-  --color-bg-surface: var(--color-cream-50);
+  /* Cyan du hero Azeno, relevé sur la capture de la boutique de référence.
+     Sert aux aplats éditoriaux et aux voiles d'image, pas au texte. */
+  --color-sky: #00a4e1;
+  --color-sky-deep: #0077a8;
+
+  --color-success: #2f7a49;
+  --color-error: #e21b1b;
+  --color-warning: #8a6400;
+  --color-info: #3650be;
+
+  /* ——— Sémantiques ——— */
+  --color-bg-page: #ffffff;
+  --color-bg-surface: #ffffff;
   --color-bg-emphasis: var(--color-cream-300);
   --color-text-primary: var(--color-bark-900);
   --color-text-secondary: var(--color-bark-700);
   --color-action: var(--color-pine-700);
-  --color-action-hover: var(--color-pine-900);
-  --color-accent: var(--color-terracotta-500);
+  --color-action-hover: #070707;
+  --color-accent: var(--color-terracotta-700);
   --color-border: var(--color-cream-500);
-  --color-focus: var(--color-pine-500);
+  --color-focus: var(--color-pine-700);
+  /* Fond sombre du thème (bandeaux, footer, hero) */
+  --color-ink: #070707;
+  --color-ink-soft: #141414;
 
-  /* ——— Typographie (4.1 §3, D-046) ——— */
-  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
-  --font-heading: var(--font-work-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-body: var(--font-nunito-sans), ui-sans-serif, system-ui, sans-serif;
+  /* ——— Typographie ———
+     Bebas Neue en display (capitales condensées), Jost pour tout le reste. */
+  --font-display: var(--font-bebas), "Arial Narrow", ui-sans-serif, sans-serif;
+  --font-heading: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
 
-  --text-display: clamp(2.5rem, 1.8rem + 2.5vw, 4rem);
-  --text-display--line-height: 1.08;
-  --text-h1: clamp(2rem, 1.65rem + 1.3vw, 2.75rem);
-  --text-h1--line-height: 1.15;
-  --text-h2: clamp(1.5rem, 1.33rem + 0.65vw, 1.875rem);
-  --text-h2--line-height: 1.25;
-  --text-h3: 1.1875rem;
-  --text-h3--line-height: 1.35;
-  --text-body: 1rem;
-  --text-body--line-height: 1.6;
+  /* Bebas est condensé : les tailles display montent, l'interlignage descend. */
+  --text-display: clamp(3.5rem, 2rem + 7.5vw, 8rem);
+  --text-display--line-height: 0.86;
+  --text-display--letter-spacing: 0.01em;
+  --text-h1: clamp(2.5rem, 1.7rem + 3.4vw, 4.5rem);
+  --text-h1--line-height: 0.94;
+  --text-h1--letter-spacing: 0.01em;
+  --text-h2: clamp(1.875rem, 1.4rem + 1.9vw, 3rem);
+  --text-h2--line-height: 1;
+  --text-h2--letter-spacing: 0.01em;
+  --text-h3: 1.375rem;
+  --text-h3--line-height: 1.1;
+  --text-h3--letter-spacing: 0.01em;
+
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.7;
   --text-body-sm: 0.875rem;
-  --text-body-sm--line-height: 1.55;
-  --text-label: 0.8125rem;
-  --text-label--line-height: 1.3;
-  --text-label--letter-spacing: 0.02em;
-  --text-price: 1.125rem;
+  --text-body-sm--line-height: 1.65;
+  --text-label: 0.75rem;
+  --text-label--line-height: 1.2;
+  --text-label--letter-spacing: 0.12em;
+  --text-price: 1rem;
   --text-price--line-height: 1.3;
-  --text-caption: 0.75rem;
-  --text-caption--line-height: 1.45;
+  --text-caption: 0.6875rem;
+  --text-caption--line-height: 1.5;
+  --text-caption--letter-spacing: 0.06em;
 
-  /* ——— Rayons (4.1 §4) ——— */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
+  /* ——— Rayons : le thème est à angles vifs ——— */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
 
-  /* ——— Ombres — 2 niveaux seulement (4.1 §4) ——— */
-  --shadow-card: 0 1px 3px rgba(43, 38, 32, 0.08);
-  --shadow-overlay: 0 8px 30px rgba(43, 38, 32, 0.16);
+  /* ——— Ombres : quasi plates, l'élévation vient du fond gris ——— */
+  --shadow-card: none;
+  --shadow-overlay: 0 18px 50px rgba(7, 7, 7, 0.18);
 
-  /* ——— Breakpoints (4.1 §4) ——— */
+  /* ——— Breakpoints ——— */
   --breakpoint-sm: 640px;
   --breakpoint-md: 768px;
   --breakpoint-lg: 1024px;
   --breakpoint-xl: 1280px;
   --breakpoint-2xl: initial;
 
-  /* ——— Conteneur (4.1 §4 : max 1360px) ——— */
-  --container-page: 1360px;
+  /* Conteneur large du thème */
+  --container-page: 1400px;
 
-  /* ——— Motion (4.1 §8) ——— */
+  /* ——— Motion ——— */
   --duration-fast: 150ms;
   --duration-base: 250ms;
   --duration-slow: 400ms;
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 
-  /* ——— Voile d'overlay (4.1 §6) ——— */
-  --color-scrim: rgba(43, 38, 32, 0.4);
+  --color-scrim: rgba(7, 7, 7, 0.55);
 }
-
-/* Espacement base 4 : l'échelle Tailwind par défaut (unité 0.25rem = 4px) est conforme (4.1 §4). */
 
 @layer base {
   html {
@@ -135,18 +174,22 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Focus visible universel : pine-500, 2px, offset 2px (4.1 §2/§10) */
+  /* Bebas n'a que des capitales : on l'assume partout où il est appelé. */
+  .font-display {
+    text-transform: uppercase;
+  }
+
   :focus-visible {
     outline: 2px solid var(--color-focus);
     outline-offset: 2px;
-    border-radius: 2px;
+    border-radius: 0;
   }
 
   ::selection {
-    background-color: var(--color-pine-100);
+    background-color: var(--color-pine-700);
+    color: #ffffff;
   }
 
-  /* Reduced motion : règle système non négociable (4.1 §8) */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -160,16 +203,66 @@
 }
 
 @layer components {
-  /* Prix : toujours Work Sans, chiffres tabulaires (4.1 §3) */
+  /* Prix : Jost semi-gras, chiffres tabulaires. */
   .text-price {
     font-family: var(--font-heading);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
   }
 
-  /* Libellés UI (boutons, badges, inputs) */
+  /* Libellés d'interface : capitales espacées, signature du thème. */
   .text-label {
     font-family: var(--font-heading);
     font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--text-label--letter-spacing);
+  }
+
+  /* Titre de section centré, façon « TRENDING. » — le point est bleu. */
+  .section-title::after {
+    content: ".";
+    color: var(--color-pine-700);
+  }
+
+  /* Typo contourée des grands blocs hero (« MEN'S » / « WOMEN'S »). */
+  .text-outline {
+    color: transparent;
+    -webkit-text-stroke: 2px currentColor;
+  }
+  @supports not (-webkit-text-stroke: 1px currentColor) {
+    .text-outline {
+      color: inherit;
+    }
+  }
+
+  /* Soulignement animé des liens de navigation. */
+  .nav-underline {
+    position: relative;
+  }
+  .nav-underline::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0.35rem;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform var(--duration-base) var(--ease-out-soft);
+  }
+  .nav-underline:hover::after,
+  .nav-underline[aria-current="page"]::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
+  /* Défilement horizontal sans ascenseur visible (carrousels du thème). */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { ArrowLeft, Lock, RotateCcw, Truck } from "lucide-react";
 import { getShippingConfig } from "@/lib/admin-settings";
 import { formatPrice } from "@/lib/format";
+import { company } from "@/lib/company";
 
 /**
  * Layout tunnel épuré (D-032) : logo, retour boutique, réassurance —
@@ -17,10 +18,11 @@ export default async function TunnelLayout({ children }: { children: ReactNode }
   ];
   return (
     <>
-      <header className="border-b border-border bg-cream-100">
+      <header className="border-b border-border bg-cream-50">
         <div className="mx-auto flex max-w-page items-center justify-between px-4 py-3 lg:px-6">
-          <Link href="/" className="font-display text-2xl font-semibold text-bark-900">
-            chien et chat
+          <Link href="/" className="font-display text-3xl leading-none tracking-[0.04em] text-bark-900">
+            {company.tradeName}
+            <span className="text-action">.</span>
           </Link>
           <Link
             href="/"
@@ -34,11 +36,11 @@ export default async function TunnelLayout({ children }: { children: ReactNode }
       <main id="contenu" className="min-h-[70vh]">
         {children}
       </main>
-      <footer className="border-t border-border bg-cream-300">
+      <footer className="border-t border-border bg-bark-900">
         <div className="mx-auto flex max-w-page flex-wrap items-center justify-center gap-x-10 gap-y-2 px-4 py-6 lg:px-6">
           {reassurance.map(({ Icon, text }) => (
-            <p key={text} className="flex items-center gap-2 text-body-sm text-bark-700">
-              <Icon aria-hidden="true" className="size-4 text-pine-700" strokeWidth={1.75} />
+            <p key={text} className="text-label flex items-center gap-2 text-white/70">
+              <Icon aria-hidden="true" className="size-4 text-pine-300" strokeWidth={1.75} />
               {text}
             </p>
           ))}

@@ -4,17 +4,20 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SlidersHorizontal, X } from "lucide-react";
 import {
-  animalLabels,
-  gabaritLabels,
-  type Animal,
-  type Gabarit,
+  brandLabels,
+  formatSize,
+  genreLabels,
+  type Brand,
+  type Genre,
   type Product,
+  uniqueSortedSizes,
 } from "@/lib/catalog";
 import {
   applyFilters,
   countActiveFilters,
   emptyFilters,
   facetCounts,
+  facetMatchers,
   filtersFromSearchParams,
   filtersToSearchParams,
   sortLabels,
@@ -29,15 +32,23 @@ import { EditorialCard } from "../EditorialCard/EditorialCard";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 24;
-const GABARIT_ORDER: Gabarit[] = ["XS", "S", "M", "L", "XL"];
-const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "Taille unique"];
+const GENRE_ORDER: Genre[] = ["homme", "femme", "mixte", "enfant"];
+
+/*
+ * Correctif BL-1 : il n'y a plus ici de liste blanche de valeurs filtrables.
+ * Les constantes GABARIT_ORDER et SIZE_ORDER figeaient XS vers XL, si bien
+ * qu'aucune pointure n'apparaissait jamais dans la facette -- sans erreur,
+ * sans test rouge et sans page cassee. Les valeurs sont desormais deduites du
+ * perimetre du listing, et l'ordre des pointures vient du referentiel
+ * (uniqueSortedSizes, tri numerique : 9 ne passe plus apres 41).
+ */
 
 type ListingExplorerProps = {
   products: Product[];
   /** Best-sellers affichés en secours quand un filtrage ne renvoie rien. */
   fallback: Product[];
-  /** Facette Univers (variante `/nouveautes`). */
-  withUniverseFacet?: boolean;
+  /** Facette Marque -- listings transverses ou l'axe n'est pas deja fixe. */
+  withBrandFacet?: boolean;
   /** Carte guide insérée en position 6–8 (1 max, spec Listing S4). */
   editorialGuide?: Guide;
   defaultSort?: SortKey;
@@ -51,7 +62,7 @@ type ListingExplorerProps = {
 export function ListingExplorer({
   products,
   fallback,
-  withUniverseFacet = false,
+  withBrandFacet = false,
   editorialGuide,
   defaultSort = "selection",
 }: ListingExplorerProps) {
@@ -101,39 +112,33 @@ export function ListingExplorer({
 
   // Valeurs de facettes présentes dans le périmètre du listing.
   const facetValues = useMemo(() => {
-    const gabarits = GABARIT_ORDER.filter((g) =>
-      products.some((p) => p.gabarits.includes(g)),
-    );
-    const sizes = SIZE_ORDER.filter((s) =>
-      products.some((p) => p.sizes.some((ps) => ps.name === s)),
+    const genres = GENRE_ORDER.filter((g) => products.some((p) => p.genres.includes(g)));
+    // Seules les pointures reellement disponibles quelque part : la facette
+    // filtre sur la disponibilite, pas sur l'existence de la variante.
+    const sizes = uniqueSortedSizes(
+      products.flatMap((p) => p.variants.filter((v) => v.stock > 0).map((v) => v.size)),
     );
     const materials = [...new Set(products.map((p) => p.material))].sort();
     const colors = [
       ...new Map(
         products.flatMap((p) => p.colors).map((c) => [c.name, c]),
       ).values(),
-    ];
-    const animals = (["chien", "chat", "nac"] as Animal[]).filter((a) =>
-      products.some((p) => p.animal === a),
+    ].sort((a, b) => a.name.localeCompare(b.name, "fr"));
+    const brands = [...new Set(products.map((p) => p.brand))].sort((a, b) =>
+      brandLabels[a].localeCompare(brandLabels[b], "fr"),
     );
-    return { gabarits, sizes, materials, colors, animals };
+    return { genres, sizes, materials, colors, brands };
   }, [products]);
 
   const counts = {
-    gabarits: facetCounts(products, filters, "gabarits", facetValues.gabarits, (p, v) =>
-      p.gabarits.includes(v as Gabarit),
-    ),
-    sizes: facetCounts(products, filters, "sizes", facetValues.sizes, (p, v) =>
-      p.sizes.some((s) => s.name === v),
-    ),
-    materials: facetCounts(products, filters, "materials", facetValues.materials, (p, v) => p.material === v),
-    colors: facetCounts(products, filters, "colors", facetValues.colors.map((c) => c.name), (p, v) =>
-      p.colors.some((c) => c.name === v),
-    ),
-    animals: facetCounts(products, filters, "animals", facetValues.animals, (p, v) => p.animal === v),
+    genres: facetCounts(products, filters, "genres", facetValues.genres, facetMatchers.genres),
+    sizes: facetCounts(products, filters, "sizes", facetValues.sizes, facetMatchers.sizes),
+    materials: facetCounts(products, filters, "materials", facetValues.materials, facetMatchers.materials),
+    colors: facetCounts(products, filters, "colors", facetValues.colors.map((c) => c.name), facetMatchers.colors),
+    brands: facetCounts(products, filters, "brands", facetValues.brands, facetMatchers.brands),
   };
 
-  const toggle = (key: "gabarits" | "sizes" | "materials" | "colors" | "animals", value: string) => {
+  const toggle = (key: "genres" | "sizes" | "materials" | "colors" | "brands", value: string) => {
     setFilters((prev) => {
       const list = prev[key] as string[];
       return {
@@ -144,16 +149,19 @@ export function ListingExplorer({
   };
 
   const chips: { label: string; onRemove: () => void }[] = [
-    ...filters.gabarits.map((g) => ({
-      label: `Gabarit ${g}`,
-      onRemove: () => toggle("gabarits", g),
+    ...filters.genres.map((g) => ({
+      label: genreLabels[g],
+      onRemove: () => toggle("genres", g),
     })),
-    ...filters.sizes.map((s) => ({ label: `Taille ${s}`, onRemove: () => toggle("sizes", s) })),
+    ...filters.sizes.map((s) => ({
+      label: `Pointure ${formatSize(s)}`,
+      onRemove: () => toggle("sizes", s),
+    })),
     ...filters.materials.map((m) => ({ label: m, onRemove: () => toggle("materials", m) })),
     ...filters.colors.map((c) => ({ label: c, onRemove: () => toggle("colors", c) })),
-    ...filters.animals.map((a) => ({
-      label: animalLabels[a],
-      onRemove: () => toggle("animals", a),
+    ...filters.brands.map((b) => ({
+      label: brandLabels[b],
+      onRemove: () => toggle("brands", b),
     })),
     ...(filters.priceMin !== undefined
       ? [{ label: `Dès ${filters.priceMin} €`, onRemove: () => setFilters((p) => ({ ...p, priceMin: undefined })) }]
@@ -165,29 +173,38 @@ export function ListingExplorer({
 
   const facetPanel = (
     <div className="flex flex-col gap-6">
-      {withUniverseFacet && facetValues.animals.length > 1 && (
+      {withBrandFacet && facetValues.brands.length > 1 && (
         <FacetGroup
-          title="Univers"
-          values={facetValues.animals}
-          selected={filters.animals}
-          counts={counts.animals}
-          labelFor={(v) => animalLabels[v as Animal]}
-          onToggle={(v) => toggle("animals", v)}
+          title="Marque"
+          values={facetValues.brands}
+          selected={filters.brands}
+          counts={counts.brands}
+          labelFor={(v) => brandLabels[v as Brand]}
+          onToggle={(v) => toggle("brands", v)}
+        />
+      )}
+      {/*
+        Une facette a valeur unique n'offre aucun choix : elle occupe de la
+        place et laisse croire a un filtre. Sur le catalogue de lancement tous
+        les modeles sont mixtes -- la facette Genre reste donc masquee jusqu'a
+        l'entree d'un modele femme ou enfant.
+      */}
+      {facetValues.genres.length > 1 && (
+        <FacetGroup
+          title="Genre"
+          values={facetValues.genres}
+          selected={filters.genres}
+          counts={counts.genres}
+          labelFor={(v) => genreLabels[v as Genre]}
+          onToggle={(v) => toggle("genres", v)}
         />
       )}
       <FacetGroup
-        title="Gabarit animal"
-        values={facetValues.gabarits}
-        selected={filters.gabarits}
-        counts={counts.gabarits}
-        labelFor={(v) => gabaritLabels[v as Gabarit]}
-        onToggle={(v) => toggle("gabarits", v)}
-      />
-      <FacetGroup
-        title="Taille produit"
+        title="Pointure"
         values={facetValues.sizes}
         selected={filters.sizes}
         counts={counts.sizes}
+        labelFor={(v) => formatSize(v)}
         onToggle={(v) => toggle("sizes", v)}
       />
       <PriceFacet
@@ -205,7 +222,7 @@ export function ListingExplorer({
         onToggle={(v) => toggle("materials", v)}
       />
       <fieldset>
-        <legend className="text-label mb-3 text-bark-900">Couleur</legend>
+        <legend className="text-label mb-3 w-full border-b border-border pb-2 text-bark-900">Couleur</legend>
         <ul className="flex flex-wrap gap-2">
           {facetValues.colors.map((color) => {
             const selected = filters.colors.includes(color.name);
@@ -219,9 +236,9 @@ export function ListingExplorer({
                   onClick={() => toggle("colors", color.name)}
                   title={color.name}
                   className={cn(
-                    "flex min-h-11 items-center gap-2 rounded-full border px-3 py-1.5 text-body-sm transition-colors duration-150",
+                    "flex min-h-11 items-center gap-2 border px-3 py-1.5 text-body-sm transition-colors duration-250",
                     selected
-                      ? "border-pine-700 bg-pine-700 text-white"
+                      ? "border-bark-900 bg-bark-900 text-white"
                       : "border-border bg-cream-50 text-bark-700 hover:border-bark-300",
                     disabled && "opacity-40",
                   )}
@@ -262,7 +279,7 @@ export function ListingExplorer({
             <button
               type="button"
               onClick={() => setSheetOpen(true)}
-              className="text-label flex min-h-11 items-center gap-2 rounded-md border border-border bg-cream-50 px-4 lg:hidden"
+              className="text-label flex min-h-11 items-center gap-2 border border-bark-900 bg-cream-50 px-4 text-bark-900 lg:hidden"
             >
               <SlidersHorizontal aria-hidden="true" className="size-4" />
               Filtrer{activeCount > 0 && ` (${activeCount})`}
@@ -272,7 +289,7 @@ export function ListingExplorer({
                 key={chip.label}
                 type="button"
                 onClick={chip.onRemove}
-                className="text-label hidden min-h-9 items-center gap-1.5 rounded-full bg-pine-700 px-3 text-white transition-colors duration-150 hover:bg-pine-900 lg:inline-flex"
+                className="text-label hidden min-h-9 items-center gap-1.5 bg-bark-900 px-3 text-white transition-colors duration-250 hover:bg-action lg:inline-flex"
               >
                 {chip.label}
                 <X aria-hidden="true" className="size-3.5" />
@@ -294,7 +311,7 @@ export function ListingExplorer({
             <select
               value={sort}
               onChange={(event) => setSort(event.target.value as SortKey)}
-              className="text-label min-h-11 rounded-sm border border-border bg-cream-50 px-3 text-bark-900"
+              className="text-label min-h-11 border border-border bg-cream-50 px-3 text-bark-900"
             >
               {Object.entries(sortLabels).map(([key, label]) => (
                 <option key={key} value={key}>
@@ -312,7 +329,7 @@ export function ListingExplorer({
         {/* Grille ou état vide */}
         {filtered.length > 0 ? (
           <>
-            <ul className="mt-4 grid grid-cols-2 gap-4 xl:grid-cols-3 xl:gap-6">
+            <ul className="mt-6 grid grid-cols-2 gap-x-4 gap-y-10 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-6">
               {gridItems.map((item) =>
                 item === "guide" ? (
                   <li key="guide" className="col-span-2 xl:col-span-1">
@@ -355,10 +372,10 @@ export function ListingExplorer({
             )}
             {fallback.length > 0 && (
               <>
-                <h2 className="font-heading mt-10 text-h3 font-semibold text-bark-900">
+                <h2 className="font-display mt-10 text-h3 leading-tight text-bark-900">
                   Nos best-sellers
                 </h2>
-                <ul className="mt-4 grid grid-cols-2 gap-4 xl:grid-cols-3 xl:gap-6">
+                <ul className="mt-6 grid grid-cols-2 gap-x-4 gap-y-10 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-6">
                   {fallback.slice(0, 3).map((product) => (
                     <li key={product.slug}>
                       <ProductCard product={product} className="h-full" />
@@ -384,14 +401,14 @@ export function ListingExplorer({
             }}
           >
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
-              <h2 className="font-heading text-h3 font-semibold text-bark-900">
+              <h2 className="font-display text-h3 leading-tight text-bark-900">
                 Filtrer{activeCount > 0 && ` (${activeCount})`}
               </h2>
               <button
                 type="button"
                 aria-label="Fermer les filtres"
                 onClick={() => setSheetOpen(false)}
-                className="flex size-11 items-center justify-center rounded-sm text-bark-700 hover:bg-cream-300"
+                className="flex size-11 items-center justify-center text-bark-700 hover:text-bark-900"
               >
                 <X aria-hidden="true" className="size-5" />
               </button>
@@ -434,7 +451,7 @@ function FacetGroup({
   if (values.length === 0) return null;
   return (
     <fieldset>
-      <legend className="text-label mb-3 text-bark-900">{title}</legend>
+      <legend className="text-label mb-3 w-full border-b border-border pb-2 text-bark-900">{title}</legend>
       <ul className="flex flex-col gap-1">
         {values.map((value) => {
           const isSelected = selected.includes(value);
@@ -453,7 +470,7 @@ function FacetGroup({
                   checked={isSelected}
                   disabled={disabled}
                   onChange={() => onToggle(value)}
-                  className="size-4 accent-pine-700"
+                  className="size-4 accent-bark-900"
                 />
                 <span className="flex-1">{labelFor ? labelFor(value) : value}</span>
                 <span className="text-caption text-bark-500">{count}</span>
@@ -482,7 +499,7 @@ function PriceFacet({
   };
   return (
     <fieldset>
-      <legend className="text-label mb-3 text-bark-900">Prix</legend>
+      <legend className="text-label mb-3 w-full border-b border-border pb-2 text-bark-900">Prix</legend>
       <div className="flex items-center gap-2">
         <label className="flex-1">
           <span className="sr-only">Prix minimum en euros</span>
@@ -493,7 +510,7 @@ function PriceFacet({
             placeholder="Min"
             value={min ?? ""}
             onChange={(event) => onChange(parse(event.target.value), max)}
-            className="h-11 w-full rounded-sm border border-border bg-cream-50 px-3 text-body-sm text-bark-900"
+            className="h-11 w-full border border-border bg-cream-50 px-3 text-body-sm text-bark-900"
           />
         </label>
         <span aria-hidden="true" className="text-bark-500">
@@ -508,7 +525,7 @@ function PriceFacet({
             placeholder="Max"
             value={max ?? ""}
             onChange={(event) => onChange(min, parse(event.target.value))}
-            className="h-11 w-full rounded-sm border border-border bg-cream-50 px-3 text-body-sm text-bark-900"
+            className="h-11 w-full border border-border bg-cream-50 px-3 text-body-sm text-bark-900"
           />
         </label>
         <span className="text-body-sm text-bark-700">€</span>

@@ -41,7 +41,7 @@ export function ContactForm() {
           name="message"
           required
           rows={6}
-          className="rounded-sm border border-border bg-cream-50 p-4 text-body text-bark-900 focus:border-pine-500"
+          className="border border-border bg-cream-50 p-4 text-body text-bark-900 focus:border-pine-500"
         />
       </label>
       <Button type="submit" className="self-start" loading={status === "sending"}>

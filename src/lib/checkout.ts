@@ -21,6 +21,7 @@ import type { AddressValues } from "@/lib/checkout-schemas";
 
 export { shippingMethods, shippingPrice, type ShippingMethodId } from "@/lib/shipping";
 import type { ShippingMethodId } from "@/lib/shipping";
+import { STORAGE_PREFIX } from "@/lib/company";
 
 export type Order = {
   number: string;
@@ -42,6 +43,6 @@ type OrderState = {
 /** Dernière commande (démo) — lue par la page de confirmation. */
 export const useOrder = create<OrderState>()(
   persist((set) => ({ lastOrder: null, setOrder: (order) => set({ lastOrder: order }) }), {
-    name: "chien-et-chat-order",
+    name: `${STORAGE_PREFIX}-order`,
   }),
 );

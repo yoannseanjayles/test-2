@@ -46,12 +46,12 @@ export function ConfirmationContent() {
   if (!order) {
     return (
       <div className="mx-auto max-w-page px-4 py-16 text-center lg:px-6">
-        <h1 className="font-display text-h1 font-[560] text-bark-900">
+        <h1 className="font-display text-h1 leading-none text-bark-900">
           Aucune commande récente
         </h1>
         <Link
           href="/"
-          className="text-label mt-6 inline-flex min-h-11 items-center rounded-md bg-action px-6 py-3 text-white"
+          className="text-label mt-6 inline-flex min-h-11 items-center bg-action px-6 py-3 text-white"
         >
           Retour à la boutique
         </Link>
@@ -62,7 +62,7 @@ export function ConfirmationContent() {
   if (paymentFailed) {
     return (
       <div className="mx-auto max-w-page px-4 py-16 text-center lg:px-6">
-        <h1 className="font-display text-h1 font-[560] text-bark-900">
+        <h1 className="font-display text-h1 leading-none text-bark-900">
           Le paiement n'a pas abouti
         </h1>
         <p className="mt-3 text-body text-bark-700">
@@ -71,7 +71,7 @@ export function ConfirmationContent() {
         </p>
         <Link
           href="/checkout"
-          className="text-label mt-8 inline-flex min-h-11 items-center rounded-md bg-action px-6 py-3 text-white"
+          className="text-label mt-8 inline-flex min-h-11 items-center bg-action px-6 py-3 text-white"
         >
           Réessayer le paiement
         </Link>
@@ -84,13 +84,15 @@ export function ConfirmationContent() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 lg:px-6">
       <div className="text-center">
-        <Image
-          src={illustrations.confirmation}
-          alt=""
-          sizes="224px"
-          className="mx-auto h-auto w-56 rounded-lg"
-        />
-        <h1 className="font-display mt-6 text-h1 font-[560] text-bark-900">
+        {illustrations.confirmation && (
+          <Image
+            src={illustrations.confirmation}
+            alt=""
+            sizes="224px"
+            className="mx-auto h-auto w-56"
+          />
+        )}
+        <h1 className="font-display mt-6 text-h1 text-bark-900">
           {paymentProcessing
             ? "Merci ! Votre paiement est en cours de validation."
             : "Merci ! Votre commande est confirmée."}
@@ -105,8 +107,8 @@ export function ConfirmationContent() {
         </p>
       </div>
 
-      <section className="mt-10 rounded-lg bg-cream-50 p-6 shadow-card">
-        <h2 className="font-heading text-h3 font-semibold text-bark-900">Récapitulatif</h2>
+      <section className="mt-10 border border-border bg-cream-50 p-6">
+        <h2 className="font-display text-h3 leading-tight text-bark-900">Récapitulatif</h2>
         <ul className="mt-4 divide-y divide-border">
           {order.lines.map((line) => {
             const product = get(line.slug);
@@ -197,8 +199,8 @@ function PostPurchaseAccount({
   };
 
   return (
-    <section className="mt-8 rounded-lg bg-sage-50 p-6">
-      <h2 className="font-heading text-h3 font-semibold text-bark-900">
+    <section className="mt-8 bg-sage-50 p-6">
+      <h2 className="font-display text-h3 leading-tight text-bark-900">
         Suivez votre commande en un clic
       </h2>
       <p className="mt-2 text-body-sm text-bark-700">

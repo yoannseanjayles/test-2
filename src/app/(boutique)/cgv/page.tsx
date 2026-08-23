@@ -19,7 +19,7 @@ export default async function CgvPage() {
       title="Conditions générales de vente"
       updated={CGV_UPDATED}
       sections={[
-        { heading: "Objet et champ d'application", body: "Les présentes conditions régissent les ventes conclues sur le site chien et chat entre la société éditrice et tout client consommateur, pour la livraison en France, Belgique, Suisse et Luxembourg." },
+        { heading: "Objet et champ d'application", body: `Les présentes conditions régissent les ventes conclues sur le site ${company.tradeName} entre la société éditrice et tout client consommateur, pour la livraison en France, Belgique, Suisse et Luxembourg.` },
         { heading: "Prix", body: "Les prix sont indiqués en euros, toutes taxes comprises, hors frais de livraison. Le total exact, frais compris, est affiché avant la validation du paiement et recalculé côté serveur." },
         { heading: "Commande et paiement", body: "La commande peut être passée sans création de compte et vaut acceptation des présentes CGV (case à cocher au moment du paiement). Le paiement est exigible immédiatement, par carte bancaire via notre prestataire de paiement sécurisé Stripe (conformité PCI-DSS)." },
         { heading: "Livraison", body: `Expédition sous 24 h ouvrées. Délais indicatifs : 2–3 jours ouvrés à domicile, 3–4 jours en point relais, 24 h en express. Livraison offerte dès ${seuil} (domicile et relais).` },
@@ -29,8 +29,8 @@ export default async function CgvPage() {
         { heading: "Médiation de la consommation", body: `Après démarche préalable écrite auprès de notre service client restée sans réponse satisfaisante sous 60 jours, le client consommateur peut saisir gratuitement le médiateur de la consommation : ${company.mediator.name}, ${company.mediator.address} — ${company.mediator.website} (art. L.612-1 c. conso.). Plateforme européenne de règlement en ligne des litiges : https://ec.europa.eu/consumers/odr.` },
       ]}
       appendix={
-        <section className="mt-10 rounded-md border border-border p-5">
-          <h2 className="font-heading text-h3 font-semibold text-bark-900">
+        <section className="mt-10 border border-border p-5">
+          <h2 className="font-display text-h3 leading-tight text-bark-900">
             Annexe — {withdrawalFormTitle}
           </h2>
           <p className="mt-2 text-body-sm leading-relaxed text-bark-700">

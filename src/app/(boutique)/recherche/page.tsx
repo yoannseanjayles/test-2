@@ -43,7 +43,7 @@ export default async function SearchPage({
 
   return (
     <div className="mx-auto max-w-page px-4 py-12 lg:px-6">
-      <h1 className="font-display text-h1 font-[560] text-bark-900">
+      <h1 className="font-display text-h1 leading-none text-bark-900">
         {query ? `Résultats pour « ${query} »` : "Recherche"}
       </h1>
       <Suspense>
@@ -53,7 +53,7 @@ export default async function SearchPage({
       {query.length >= 2 && (
         <>
           <section aria-labelledby="res-produits" className="mt-10">
-            <h2 id="res-produits" className="font-heading text-h2 font-semibold text-bark-900">
+            <h2 id="res-produits" className="font-display text-h2 leading-none text-bark-900">
               Produits ({foundProducts.length})
             </h2>
             {foundProducts.length > 0 ? (
@@ -65,7 +65,7 @@ export default async function SearchPage({
             ) : (
               <div className="mt-4">
                 <p className="text-body text-bark-700">
-                  Aucun produit ne correspond — essayez « collier », « couchage », « jouet »…
+                  Aucun produit ne correspond — essayez « air max », « gel-kayano », « running »…
                 </p>
                 {fallback.length > 0 && (
                   <ul className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
@@ -79,7 +79,7 @@ export default async function SearchPage({
           </section>
           {foundGuides.length > 0 && (
             <section aria-labelledby="res-guides" className="mt-12">
-              <h2 id="res-guides" className="font-heading text-h2 font-semibold text-bark-900">
+              <h2 id="res-guides" className="font-display text-h2 leading-none text-bark-900">
                 Guides ({foundGuides.length})
               </h2>
               <ul className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

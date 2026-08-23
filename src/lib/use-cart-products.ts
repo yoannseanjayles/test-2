@@ -26,7 +26,8 @@ function fromStaticCatalog(slug: string): CartProduct | undefined {
     tone: p.tone,
     path: productPath(p),
     imageUrl: null,
-    sizes: p.sizes,
+    variants: p.variants,
+    colors: p.colors,
   };
 }
 

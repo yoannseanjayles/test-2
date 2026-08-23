@@ -25,12 +25,12 @@ export function UnderConstruction({
           src={illustration}
           alt=""
           sizes="288px"
-          className="h-auto w-72 rounded-lg"
+          className="h-auto w-72"
         />
       ) : (
         <Hammer aria-hidden="true" className="size-8 text-caramel-700 opacity-60" strokeWidth={1.75} />
       )}
-      <h1 className="font-display mt-6 text-h1 font-[560] text-bark-900">{title}</h1>
+      <h1 className="font-display mt-6 text-h1 text-bark-900">{title}</h1>
       <p className="mt-4 max-w-xl text-body text-bark-700">
         {description ??
           "Cette page est en cours de construction : elle arrive au " +
@@ -39,7 +39,7 @@ export function UnderConstruction({
       </p>
       <Link
         href="/"
-        className="text-label mt-8 inline-flex min-h-11 items-center gap-2 text-action transition-colors duration-150 hover:text-action-hover"
+        className="text-label mt-8 inline-flex min-h-11 items-center gap-2 border-b border-bark-900 pb-1 text-bark-900 transition-colors duration-250 hover:border-action hover:text-action"
       >
         Retour à l'accueil <span aria-hidden="true">→</span>
       </Link>

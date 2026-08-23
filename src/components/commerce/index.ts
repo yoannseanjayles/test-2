@@ -10,4 +10,5 @@ export { ListingExplorer } from "./ListingExplorer/ListingExplorer";
 export { ProductView } from "./ProductView/ProductView";
 export { FreeShippingBar } from "./FreeShippingBar/FreeShippingBar";
 export { CartDrawer } from "./CartDrawer/CartDrawer";
+export { HeroWord } from "./HeroWord/HeroWord";
 export { SeoTextBlock } from "./SeoTextBlock/SeoTextBlock";

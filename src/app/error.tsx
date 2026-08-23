@@ -28,7 +28,7 @@ export default function ErrorBoundary({
     <main id="contenu" className="mx-auto max-w-page px-4 py-20 lg:px-6">
       <div className="mx-auto max-w-lg">
         <p className="text-label text-bark-700">Erreur inattendue</p>
-        <h1 className="font-display mt-2 text-h1 font-[560] text-bark-900">
+        <h1 className="font-display mt-2 text-h1 text-bark-900">
           Quelque chose n'a pas fonctionné.
         </h1>
         <p className="mt-4 text-body text-bark-700">
@@ -39,19 +39,19 @@ export default function ErrorBoundary({
           <button
             type="button"
             onClick={reset}
-            className="text-label inline-flex min-h-11 items-center rounded-md bg-action px-6 py-3 text-white transition duration-150 hover:bg-action-hover"
+            className="text-label inline-flex min-h-11 items-center bg-action px-6 py-3 text-white transition duration-150 hover:bg-action-hover"
           >
             Réessayer
           </button>
           <Link
             href="/"
-            className="text-label inline-flex min-h-11 items-center rounded-md border-[1.5px] border-action px-5 py-3 text-action transition duration-150 hover:bg-pine-50"
+            className="text-label inline-flex min-h-11 items-center border-[1.5px] border-action px-5 py-3 text-action transition duration-150 hover:bg-pine-50"
           >
             Revenir à l'accueil
           </Link>
           <Link
             href="/contact"
-            className="text-label inline-flex min-h-11 items-center rounded-md border-[1.5px] border-action px-5 py-3 text-action transition duration-150 hover:bg-pine-50"
+            className="text-label inline-flex min-h-11 items-center border-[1.5px] border-action px-5 py-3 text-action transition duration-150 hover:bg-pine-50"
           >
             Contacter le support
           </Link>

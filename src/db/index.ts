@@ -23,14 +23,14 @@ import { isServingProduction } from "@/lib/runtime-env";
  */
 const DDL = [
   `CREATE TABLE IF NOT EXISTS categories (
-    animal text NOT NULL, slug text NOT NULL, label text NOT NULL,
-    description text NOT NULL, PRIMARY KEY (animal, slug))`,
+    brand text NOT NULL, slug text NOT NULL, label text NOT NULL,
+    description text NOT NULL, PRIMARY KEY (brand, slug))`,
   `CREATE TABLE IF NOT EXISTS products (
     slug text PRIMARY KEY, name text NOT NULL, brand text NOT NULL,
-    animal text NOT NULL, subcategory text NOT NULL, price integer NOT NULL,
+    subcategory text NOT NULL, price integer NOT NULL,
     short_description text NOT NULL, curator_note text NOT NULL,
     material text NOT NULL, details jsonb NOT NULL, colors jsonb NOT NULL,
-    gabarits jsonb NOT NULL, is_new boolean NOT NULL DEFAULT false,
+    genres jsonb NOT NULL, size_advice text, is_new boolean NOT NULL DEFAULT false,
     curated_rank integer NOT NULL, pairs_with jsonb NOT NULL, tone text NOT NULL,
     image_urls jsonb NOT NULL DEFAULT '[]'::jsonb,
     supplier_ref text, source_url text,
@@ -40,15 +40,17 @@ const DDL = [
     archived boolean NOT NULL DEFAULT false)`,
   `CREATE TABLE IF NOT EXISTS guides (
     slug text PRIMARY KEY, title text NOT NULL, excerpt text NOT NULL,
-    animal text NOT NULL, pillar boolean NOT NULL DEFAULT false,
+    brand text NOT NULL, pillar boolean NOT NULL DEFAULT false,
     reading_minutes integer NOT NULL DEFAULT 5,
     related_subcategories jsonb NOT NULL DEFAULT '[]'::jsonb,
     author jsonb, content jsonb)`,
   `CREATE TABLE IF NOT EXISTS settings (
     key text PRIMARY KEY, value jsonb NOT NULL)`,
-  `CREATE TABLE IF NOT EXISTS product_sizes (
-    product_slug text NOT NULL REFERENCES products(slug), name text NOT NULL,
-    stock integer NOT NULL DEFAULT 0, PRIMARY KEY (product_slug, name))`,
+  `CREATE TABLE IF NOT EXISTS product_variants (
+    product_slug text NOT NULL REFERENCES products(slug),
+    color text NOT NULL, size text NOT NULL,
+    stock integer NOT NULL DEFAULT 0,
+    PRIMARY KEY (product_slug, color, size))`,
   `CREATE TABLE IF NOT EXISTS reviews (
     id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     product_slug text NOT NULL REFERENCES products(slug), author text NOT NULL,
@@ -76,10 +78,10 @@ const DDL = [
     id text PRIMARY KEY, identifier text NOT NULL, value text NOT NULL,
     expires_at timestamp NOT NULL,
     created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now())`,
-  `CREATE TABLE IF NOT EXISTS pets (
+  `CREATE TABLE IF NOT EXISTS shoe_profiles (
     id text PRIMARY KEY,
     user_id text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
-    name text NOT NULL, species text NOT NULL, gabarit text NOT NULL,
+    name text NOT NULL, genre text NOT NULL, size text NOT NULL,
     created_at timestamp NOT NULL DEFAULT now())`,
   `CREATE TABLE IF NOT EXISTS orders (
     id text PRIMARY KEY, number text NOT NULL UNIQUE,
@@ -97,7 +99,8 @@ const DDL = [
     size text NOT NULL, color text NOT NULL,
     quantity integer NOT NULL, unit_price integer NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS restock_alerts (
-    id text PRIMARY KEY, product_slug text NOT NULL, size text NOT NULL,
+    id text PRIMARY KEY, product_slug text NOT NULL,
+    color text NOT NULL DEFAULT '', size text NOT NULL,
     email text NOT NULL, created_at timestamp NOT NULL DEFAULT now())`,
   `CREATE TABLE IF NOT EXISTS rate_limit_hits (
     id text PRIMARY KEY, bucket text NOT NULL,
@@ -114,8 +117,8 @@ const DDL = [
     variant_names jsonb NOT NULL DEFAULT '[]'::jsonb,
     supplier_rating text,
     status text NOT NULL DEFAULT 'draft', created_at timestamp NOT NULL DEFAULT now())`,
-  `CREATE INDEX IF NOT EXISTS idx_products_animal_subcategory
-    ON products (animal, subcategory)`,
+  `CREATE INDEX IF NOT EXISTS idx_products_brand_subcategory
+    ON products (brand, subcategory)`,
   // Migrations additives (bases créées avant la Phase 7) :
   `ALTER TABLE products ADD COLUMN IF NOT EXISTS image_urls jsonb NOT NULL DEFAULT '[]'::jsonb`,
   `ALTER TABLE products ADD COLUMN IF NOT EXISTS supplier_ref text`,
@@ -135,13 +138,48 @@ const DDL = [
   // Preuve d'acceptation des CGV (audit 2026-08, EL-7).
   `ALTER TABLE orders ADD COLUMN IF NOT EXISTS cgv_accepted_at timestamp`,
   `ALTER TABLE orders ADD COLUMN IF NOT EXISTS cgv_version text`,
+  // Pivot baskets (D-054) : l'alerte de restock porte sur la variante.
+  `ALTER TABLE restock_alerts ADD COLUMN IF NOT EXISTS color text NOT NULL DEFAULT ''`,
 ];
 
 type Database = Awaited<ReturnType<typeof createDb>>;
 
 async function applySchema(db: { execute: (query: ReturnType<typeof rawSql.raw>) => Promise<unknown> }) {
+  await assertNotLegacySchema(db);
   for (const statement of DDL) {
     await db.execute(rawSql.raw(statement));
+  }
+}
+
+/**
+ * Garde de pivot (audit pivot, OU-2). `CREATE TABLE IF NOT EXISTS` ne modifie
+ * jamais une table existante : branchée sur la base animalière, l'application
+ * démarrerait sans erreur, garderait `products.animal` et son catalogue de
+ * colliers, et échouerait plus tard à l'écriture — en production, sur une
+ * base que rien ne purge entre deux déploiements.
+ *
+ * On échoue donc au démarrage, en nommant le remède. Le remède n'est **pas**
+ * de purger la base de production à la main : c'est de créer une branche Neon
+ * neuve et d'y pointer `DATABASE_URL`.
+ */
+async function assertNotLegacySchema(
+  db: { execute: (query: ReturnType<typeof rawSql.raw>) => Promise<unknown> },
+) {
+  const result = (await db.execute(
+    rawSql.raw(
+      `SELECT 1 AS legacy FROM information_schema.columns
+       WHERE table_name = 'products' AND column_name = 'animal' LIMIT 1`,
+    ),
+  )) as { rows?: unknown[] } | unknown[];
+  const rows = Array.isArray(result) ? result : (result.rows ?? []);
+  if (rows.length > 0) {
+    throw new Error(
+      "[db] Schéma animalier détecté (products.animal existe encore). " +
+        "Le pivot baskets (D-053) change la forme du catalogue : l'axe est la " +
+        "marque et le stock est porté par product_variants. Créez une branche " +
+        "Neon neuve et pointez-y DATABASE_URL — ne purgez pas la base " +
+        "existante à la main.",
+    );
   }
 }
 

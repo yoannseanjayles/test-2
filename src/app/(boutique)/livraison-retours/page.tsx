@@ -4,6 +4,7 @@ import { Accordion } from "@/components/ui";
 import { shippingMethods } from "@/lib/shipping";
 import { getShippingConfig } from "@/lib/admin-settings";
 import { formatPrice } from "@/lib/format";
+import { PageHero } from "@/components/layout/PageHero/PageHero";
 
 /** Seuil lu en base (audit M-9) — mêmes montants que le checkout. */
 export async function generateMetadata(): Promise<Metadata> {
@@ -22,11 +23,16 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function ShippingReturnsPage() {
   const config = await getShippingConfig();
   return (
-    <div className="mx-auto max-w-page px-4 py-12 lg:px-6">
-      <h1 className="font-display text-h1 font-[560] text-bark-900">Livraison & retours</h1>
-
-      <div className="mt-10 grid gap-8 lg:grid-cols-2">
-        <section aria-labelledby="livraison" className="rounded-lg bg-cream-50 p-6 shadow-card lg:p-8">
+    <>
+      <PageHero
+        kicker="Aide"
+        title="Livraison & retours"
+        intro={`Livraison France, Belgique, Suisse et Luxembourg — offerte dès ${formatPrice(config.freeShippingCents)}. Premier retour offert, 30 jours pour changer d'avis.`}
+        crumbs={[{ name: "Livraison & retours", path: "/livraison-retours" }]}
+      />
+      <div className="mx-auto max-w-page px-4 py-12 lg:px-6">
+      <div className="grid gap-8 lg:grid-cols-2">
+        <section aria-labelledby="livraison" className="border border-border bg-cream-50 p-6 lg:p-8">
           <h2 id="livraison" className="font-heading flex items-center gap-2 text-h2 font-semibold text-bark-900">
             <Truck aria-hidden="true" className="size-6 text-pine-700" strokeWidth={1.75} />
             Livraison
@@ -66,7 +72,7 @@ export default async function ShippingReturnsPage() {
           </div>
         </section>
 
-        <section aria-labelledby="retours" className="rounded-lg bg-cream-50 p-6 shadow-card lg:p-8">
+        <section aria-labelledby="retours" className="border border-border bg-cream-50 p-6 lg:p-8">
           <h2 id="retours" className="font-heading flex items-center gap-2 text-h2 font-semibold text-bark-900">
             <RotateCcw aria-hidden="true" className="size-6 text-pine-700" strokeWidth={1.75} />
             Retours
@@ -87,14 +93,14 @@ export default async function ShippingReturnsPage() {
             </li>
             <li>
               Les articles doivent être non utilisés, dans leur emballage
-              d'origine — l'hygiène de nos compagnons avant tout.
+              d'origine, semelle non marquée.
             </li>
           </ul>
         </section>
       </div>
 
       <section aria-labelledby="questions-livraison" className="mx-auto mt-12 max-w-3xl">
-        <h2 id="questions-livraison" className="font-heading text-h2 font-semibold text-bark-900">
+        <h2 id="questions-livraison" className="font-display text-h2 leading-none text-bark-900">
           Questions fréquentes
         </h2>
         <Accordion
@@ -106,6 +112,7 @@ export default async function ShippingReturnsPage() {
           ]}
         />
       </section>
-    </div>
+      </div>
+    </>
   );
 }

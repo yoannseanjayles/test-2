@@ -11,10 +11,28 @@
 
 export const TO_COMPLETE = "À COMPLÉTER" as const;
 
+/**
+ * Préfixe des clés de persistance navigateur (panier, dernière commande,
+ * consentement cookies).
+ *
+ * ⚠️ Il est **volontairement dissocié du nom commercial** et écrit en dur.
+ * Ces clés ne sont pas un habillage : les renommer orpheline l'état des
+ * visiteurs qui les portent déjà — panier vidé, consentement redemandé.
+ * Sans conséquence avant le lancement ; à ne plus toucher après. Le
+ * changement de nom commercial (D-059) ne doit donc PAS entraîner celui-ci.
+ */
+export const STORAGE_PREFIX = "chien-et-chat";
+
 export const company = {
-  /** Nom commercial affiché sur le site. */
-  tradeName: "chien et chat",
-  /** Raison sociale (ex. « Chien et Chat SAS »). */
+  /**
+   * Nom commercial affiché sur le site — **source unique** (D-059).
+   * Il était écrit en dur en huit endroits (JSON-LD, layout, e-mails,
+   * en-tête, pied de page, admin, page d'erreur…). Le pivot les fait tous
+   * pointer ici : trancher le nom devient une édition d'une ligne, faite en
+   * une fois, au lieu d'une chasse dans huit fichiers.
+   */
+  tradeName: "snikerz",
+  /** Raison sociale (ex. « Snikerz SAS »). */
   legalName: `${TO_COMPLETE} — raison sociale`,
   /** Forme juridique et capital (ex. « SAS au capital de 10 000 € »). */
   legalForm: `${TO_COMPLETE} — forme juridique et capital`,

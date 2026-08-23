@@ -12,6 +12,7 @@ import { getProductBySlug } from "@/lib/catalog";
 
 export { FREE_SHIPPING_CENTS } from "@/lib/shipping";
 import { FREE_SHIPPING_CENTS } from "@/lib/shipping";
+import { STORAGE_PREFIX } from "@/lib/company";
 
 export type CartLine = {
   slug: string;
@@ -58,7 +59,7 @@ export const useCart = create<CartState>()(
         set((state) => ({ lines: state.lines.filter((l) => !sameLine(l, line)) })),
       clear: () => set({ lines: [] }),
     }),
-    { name: "chien-et-chat-cart" },
+    { name: `${STORAGE_PREFIX}-cart` },
   ),
 );
 

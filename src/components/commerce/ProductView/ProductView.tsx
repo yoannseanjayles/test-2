@@ -6,11 +6,16 @@ import { useEffect, useRef, useState } from "react";
 import { Check, RotateCcw, ShieldCheck, Truck, X } from "lucide-react";
 import {
   averageRating,
-  type Product,
+  formatSize,
+  getBrand,
+  isColorOutOfStock,
   isFieldVisible,
+  type Product,
   type ProductColor,
-  type ProductSize,
+  sizesForColor,
+  stockFor,
 } from "@/lib/catalog";
+import { brandLabels } from "@/lib/catalog";
 import { formatPrice } from "@/lib/format";
 import { useCart, useCartDrawer } from "@/lib/cart";
 import { productImages } from "@/lib/media";
@@ -41,9 +46,9 @@ const reassurance = [
  */
 export function ProductView({ product }: { product: Product }) {
   const [color, setColor] = useState<ProductColor>(product.colors[0]!);
-  const [size, setSize] = useState<ProductSize | null>(
-    product.sizes.length === 1 ? product.sizes[0]! : null,
-  );
+  // La pointure est une chaîne, pas un objet : le stock dépend du couple
+  // (coloris, pointure) depuis D-054, et se lit donc à la demande.
+  const [size, setSize] = useState<string | null>(null);
   const [view, setView] = useState(0);
   const [added, setAdded] = useState(false);
   const [sizeError, setSizeError] = useState(false);
@@ -56,16 +61,22 @@ export function ProductView({ product }: { product: Product }) {
   // distantes des produits importés (7.1), si le champ est visible ;
   // sinon placeholders DA.
   const staticImages = productImages[product.slug];
+  // Photos du coloris sélectionné (jalon 3) : ce sont les vraies images du
+  // catalogue, une série par coloris — la galerie suit donc la pastille.
+  const colorImages =
+    color.images?.length && isFieldVisible(product, "images")
+      ? color.images.map((src, i) => ({ src, label: `${color.name} — vue ${i + 1}` }))
+      : undefined;
   const remoteImages =
     product.imageUrls?.length && isFieldVisible(product, "images")
       ? product.imageUrls.map((src, i) => ({ src, label: `Photo ${i + 1}` }))
       : undefined;
-  const realImages = staticImages ?? remoteImages;
+  const realImages = colorImages ?? staticImages ?? remoteImages;
   const rating = averageRating(product);
-  const singleSize = product.sizes.length === 1;
-  const isUniqueSize = singleSize && product.sizes[0]!.name === "Taille unique";
-  const outOfStock = product.sizes.every((s) => s.stock === 0);
-  const selectedOutOfStock = size !== null && size.stock === 0;
+  const colorSizes = sizesForColor(product, color.name);
+  const colorOutOfStock = isColorOutOfStock(product, color.name);
+  const selectedOutOfStock = size !== null && stockFor(product, color.name, size) === 0;
+  const sizeChart = getBrand(product.brand);
 
   useEffect(() => {
     if (!guideOpen) return;
@@ -87,14 +98,14 @@ export function ProductView({ product }: { product: Product }) {
       setSizeError(true);
       return;
     }
-    if (size.stock === 0) return;
-    addCartLine({ slug: product.slug, size: size.name, color: color.name });
+    if (stockFor(product, color.name, size) === 0) return;
+    addCartLine({ slug: product.slug, size, color: color.name });
     setAdded(true);
     // Ouverture du mini-panier à chaque ajout (D-029), après la micro-confirmation.
     setTimeout(openDrawer, 600);
   };
 
-  const buyButton = outOfStock ? (
+  const buyButton = colorOutOfStock ? (
     <Button variant="secondary" className="w-full" disabled>
       Bientôt de retour
     </Button>
@@ -118,7 +129,7 @@ export function ProductView({ product }: { product: Product }) {
           {(realImages ?? GALLERY_VIEWS).map((item, index) => {
             const label = typeof item === "string" ? item : item.label;
             return (
-              <li key={label}>
+              <li key={label} role="presentation">
                 <button
                   type="button"
                   role="tab"
@@ -126,8 +137,8 @@ export function ProductView({ product }: { product: Product }) {
                   aria-label={label}
                   onClick={() => setView(index)}
                   className={cn(
-                    "block w-14 overflow-hidden rounded-md border transition-colors duration-150",
-                    view === index ? "border-pine-700" : "border-border hover:border-bark-300",
+                    "block w-14 overflow-hidden border transition-colors duration-150",
+                    view === index ? "border-bark-900" : "border-border hover:border-bark-900",
                   )}
                 >
                   {typeof item === "string" ? (
@@ -147,7 +158,7 @@ export function ProductView({ product }: { product: Product }) {
             );
           })}
         </ul>
-        <figure className="relative flex-1 overflow-hidden rounded-lg">
+        <figure className="relative flex-1 overflow-hidden bg-cream-300">
           {realImages ? (
             <Image
               src={realImages[Math.min(view, realImages.length - 1)]!.src}
@@ -175,8 +186,8 @@ export function ProductView({ product }: { product: Product }) {
 
       {/* S3 — Bloc achat */}
       <div>
-        <p className="text-caption text-bark-700">{product.brand}</p>
-        <h1 className="font-display mt-1 text-h1 font-[560] text-bark-900">
+        <p className="text-label text-bark-500">{brandLabels[product.brand]}</p>
+        <h1 className="font-display mt-1 text-h1 text-bark-900">
           {product.name}
         </h1>
         {rating !== null ? (
@@ -187,7 +198,7 @@ export function ProductView({ product }: { product: Product }) {
           <p className="text-caption mt-2 text-bark-700">Aucun avis pour l'instant</p>
         )}
 
-        <p className="text-price mt-4 text-2xl text-bark-900">
+        <p className="text-price mt-5 text-2xl text-bark-900">
           {formatPrice(product.price)}
         </p>
         <p className="mt-4 text-body text-bark-700">{product.shortDescription}</p>
@@ -207,7 +218,7 @@ export function ProductView({ product }: { product: Product }) {
             <legend className="text-label text-bark-900">
               Coloris : <span className="font-normal text-bark-700">{color.name}</span>
             </legend>
-            <div className="mt-2 flex gap-2">
+            <div className="mt-2 flex flex-wrap gap-2">
               {product.colors.map((c) => (
                 <label key={c.name} className="cursor-pointer">
                   <input
@@ -215,12 +226,23 @@ export function ProductView({ product }: { product: Product }) {
                     name="couleur"
                     value={c.name}
                     checked={color.name === c.name}
-                    onChange={() => setColor(c)}
+                    onChange={() => {
+                      setColor(c);
+                      setView(0);
+                      // Une pointure indisponible dans le nouveau coloris ne
+                      // peut pas rester sélectionnée : elle serait ajoutée au
+                      // panier sans stock correspondant.
+                      setSize((current) =>
+                        current !== null && sizesForColor(product, c.name).includes(current)
+                          ? current
+                          : null,
+                      );
+                    }}
                     className="peer sr-only"
                   />
                   <span
                     style={{ backgroundColor: c.hex }}
-                    className="block size-9 rounded-full border-2 border-border transition-shadow duration-150 peer-checked:border-pine-700 peer-checked:ring-2 peer-checked:ring-pine-300 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-pine-500"
+                    className="block size-10 border border-border transition-all duration-250 peer-checked:border-bark-900 peer-checked:ring-1 peer-checked:ring-bark-900 peer-checked:ring-offset-2 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-pine-700"
                   />
                   <span className="sr-only">{c.name}</span>
                 </label>
@@ -229,74 +251,81 @@ export function ProductView({ product }: { product: Product }) {
           </fieldset>
         )}
 
-        {/* Sélecteur taille (D-024 : boutons avec stock visible) */}
-        {!singleSize && (
+        {/* Sélecteur pointure (D-024 : boutons avec stock visible) */}
+        {colorSizes.length > 0 && (
           <fieldset className="mt-6">
             <legend className="text-label flex w-full items-baseline justify-between gap-4 text-bark-900">
-              Taille
+              Pointure
               <button
                 type="button"
                 onClick={() => setGuideOpen(true)}
-                className="font-normal text-action underline-offset-4 hover:underline"
+                className="text-label border-b border-bark-900 pb-0.5 text-bark-900 transition-colors duration-250 hover:border-action hover:text-action"
               >
                 Guide des tailles
               </button>
             </legend>
             <div className="mt-2 flex flex-wrap gap-2">
-              {product.sizes.map((s) => (
-                <label key={s.name} className="cursor-pointer">
+              {colorSizes.map((value) => {
+                const stock = stockFor(product, color.name, value);
+                return (
+                <label key={value} className="cursor-pointer">
                   <input
                     type="radio"
-                    name="taille"
-                    value={s.name}
-                    checked={size?.name === s.name}
+                    name="pointure"
+                    value={value}
+                    checked={size === value}
                     onChange={() => {
-                      setSize(s);
+                      setSize(value);
                       setSizeError(false);
                     }}
                     className="peer sr-only"
                   />
                   <span
                     className={cn(
-                      "text-label flex min-h-11 min-w-14 items-center justify-center rounded-md border px-4 transition-colors duration-150",
-                      "peer-checked:border-pine-700 peer-checked:bg-pine-700 peer-checked:text-white",
-                      "peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-pine-500",
-                      s.stock === 0
+                      "text-label flex min-h-12 min-w-14 items-center justify-center border px-4 transition-colors duration-250",
+                      "peer-checked:border-bark-900 peer-checked:bg-bark-900 peer-checked:text-white",
+                      "peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-pine-700",
+                      stock === 0
                         ? "border-border bg-cream-300 text-bark-500 line-through"
-                        : "border-border bg-cream-50 text-bark-900 hover:border-bark-300",
+                        : "border-border bg-cream-50 text-bark-900 hover:border-bark-900",
                     )}
                   >
-                    {s.name}
+                    {formatSize(value)}
                   </span>
                   <span className="sr-only">
-                    {s.stock === 0 ? " — bientôt de retour" : ""}
+                    {stock === 0 ? " — bientôt de retour" : ""}
                   </span>
                 </label>
-              ))}
+                );
+              })}
             </div>
+            {product.sizeAdvice && (
+              <p className="mt-3 text-body-sm text-bark-700">{product.sizeAdvice}</p>
+            )}
             {sizeError && (
               <p role="alert" className="mt-2 text-body-sm text-error">
-                Choisissez une taille pour ajouter au panier.
+                Choisissez une pointure pour ajouter au panier.
               </p>
             )}
           </fieldset>
         )}
-        {isUniqueSize && (
-          <p className="mt-6 text-body-sm text-bark-700">
-            Taille unique — convient à tous les gabarits.
-          </p>
-        )}
 
         {/* Rupture de la taille sélectionnée : alerte restock (H15) */}
-        {selectedOutOfStock && !outOfStock && (
-          <RestockAlert sizeName={size.name} productSlug={product.slug} />
+        {selectedOutOfStock && !colorOutOfStock && (
+          <RestockAlert
+            sizeName={formatSize(size)}
+            colorName={color.name}
+            productSlug={product.slug}
+          />
         )}
 
         <div className="mt-6">{buyButton}</div>
         <p aria-live="polite" className="sr-only">
           {added ? `${product.name} ajouté au panier` : ""}
         </p>
-        {outOfStock && <RestockAlert sizeName="ce produit" productSlug={product.slug} />}
+        {colorOutOfStock && (
+          <RestockAlert sizeName="ce produit" colorName={color.name} productSlug={product.slug} />
+        )}
 
         {/* Réassurance adjacente */}
         <ul className="mt-6 flex flex-col gap-2 border-t border-border pt-5">
@@ -315,7 +344,7 @@ export function ProductView({ product }: { product: Product }) {
           <div className="min-w-0 flex-1">
             <p className="text-price truncate text-bark-900">{formatPrice(product.price)}</p>
             <p className="text-caption truncate text-bark-700">
-              {size ? `Taille ${size.name}` : singleSize ? product.sizes[0]!.name : "Choisir une taille"}
+              {size ? `Pointure ${formatSize(size)}` : "Choisir une pointure"}
               {" · "}
               {color.name}
             </p>
@@ -345,57 +374,79 @@ export function ProductView({ product }: { product: Product }) {
             className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col overflow-y-auto rounded-l-lg bg-cream-50 shadow-overlay"
           >
             <div className="flex items-center justify-between border-b border-border px-6 py-4">
-              <h2 className="font-heading text-h3 font-semibold text-bark-900">
+              <h2 className="font-display text-h3 leading-tight text-bark-900">
                 Guide des tailles
               </h2>
               <button
                 type="button"
                 aria-label="Fermer"
                 onClick={() => setGuideOpen(false)}
-                className="flex size-11 items-center justify-center rounded-sm text-bark-700 hover:bg-cream-300"
+                className="flex size-11 items-center justify-center text-bark-700 hover:bg-cream-300"
               >
                 <X aria-hidden="true" className="size-5" />
               </button>
             </div>
             <div className="px-6 py-6">
               <p className="text-body-sm text-bark-700">
-                Mesurez votre animal au repos, sans serrer, et ajoutez deux
-                doigts d'aisance. Entre deux tailles, prenez la plus grande.
+                Mesurez la longueur de votre pied en centimètres, debout, en
+                fin de journée, et comparez-la à la colonne « {sizeChart.lengthLabel} ».
+                C'est plus fiable que de reporter votre pointure habituelle :
+                les marques ne découpent pas les pointures de la même façon.
+              </p>
+              {/*
+                ST-3 : la grille affichée est celle de la marque du produit.
+                Sa provenance est dite, pas masquée — une seule des cinq
+                grilles du catalogue vient directement du fabricant, et une
+                correspondance inventée se paie en retours.
+              */}
+              <p className="mt-3 bg-cream-300 p-3 text-body-sm text-bark-700">
+                {sizeChart.sizeChartVerified
+                  ? `Grille officielle ${sizeChart.label}. `
+                  : `Grille ${sizeChart.label} redistribuée par revendeur, non confirmée par la marque. `}
+                {sizeChart.sizeChartNote}
               </p>
               <table className="mt-5 w-full border-collapse text-body-sm">
                 <caption className="sr-only">
-                  Correspondance des tailles selon le gabarit
+                  Correspondance des pointures {sizeChart.label} — EU, UK, US et longueur
                 </caption>
                 <thead>
                   <tr className="border-b border-border text-left">
-                    <th scope="col" className="py-2 pr-4 font-heading font-semibold text-bark-900">Taille</th>
-                    <th scope="col" className="py-2 pr-4 font-heading font-semibold text-bark-900">Gabarit</th>
-                    <th scope="col" className="py-2 font-heading font-semibold text-bark-900">Poids</th>
+                    <th scope="col" className="py-2 pr-4 font-heading font-semibold text-bark-900">EU</th>
+                    <th scope="col" className="py-2 pr-4 font-heading font-semibold text-bark-900">UK</th>
+                    <th scope="col" className="py-2 pr-4 font-heading font-semibold text-bark-900">US H</th>
+                    <th scope="col" className="py-2 pr-4 font-heading font-semibold text-bark-900">US F</th>
+                    <th scope="col" className="py-2 font-heading font-semibold text-bark-900">
+                      {sizeChart.lengthLabel}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="text-bark-700">
-                  {[
-                    ["XS", "Très petit", "moins de 5 kg"],
-                    ["S", "Petit", "5 à 10 kg"],
-                    ["M", "Moyen", "10 à 20 kg"],
-                    ["L", "Grand", "20 à 40 kg"],
-                    ["XL", "Très grand", "plus de 40 kg"],
-                  ].map(([taille, gabarit, poids]) => (
-                    <tr key={taille} className="border-b border-border">
-                      <td className="py-2 pr-4 font-semibold text-bark-900">{taille}</td>
-                      <td className="py-2 pr-4">{gabarit}</td>
-                      <td className="py-2">{poids}</td>
+                  {sizeChart.sizeChart.map((row) => (
+                    <tr key={row.eu} className="border-b border-border">
+                      <td className="py-2 pr-4 font-semibold text-bark-900">{formatSize(row.eu)}</td>
+                      <td className="py-2 pr-4">{row.uk ?? "—"}</td>
+                      <td className="py-2 pr-4">{row.usMen ?? "—"}</td>
+                      <td className="py-2 pr-4">{row.usWomen ?? "—"}</td>
+                      <td className="py-2">{row.length ?? "—"}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              {product.sizeAdvice && (
+                <>
+                  <h3 className="mt-6 font-heading text-body font-semibold text-bark-900">
+                    Chaussant de ce modèle
+                  </h3>
+                  <p className="mt-2 text-body-sm text-bark-700">{product.sizeAdvice}</p>
+                </>
+              )}
               <p className="mt-5 text-body-sm text-bark-700">
-                Besoin d'aide pour mesurer ?{" "}
+                Un doute sur une pointure limite ?{" "}
                 <Link
-                  href="/guides/comment-mesurer-votre-animal"
+                  href="/guides/bien-choisir-sa-pointure"
                   className="text-action underline-offset-4 hover:underline"
                 >
-                  Lire « Comment mesurer votre animal »
+                  Lire « Bien choisir sa pointure »
                 </Link>
               </p>
             </div>
@@ -406,17 +457,26 @@ export function ProductView({ product }: { product: Product }) {
   );
 }
 
-/** Capture e-mail de restock (H15) — persistée en base (6.1 jalon 4). */
-function RestockAlert({ sizeName, productSlug }: { sizeName: string; productSlug?: string }) {
+/** Capture e-mail de restock (H15) — persistée en base, par variante (D-054). */
+function RestockAlert({
+  sizeName,
+  colorName,
+  productSlug,
+}: {
+  sizeName: string;
+  colorName: string;
+  productSlug?: string;
+}) {
   const [subscribed, setSubscribed] = useState(false);
   return (
     <form
-      className="mt-4 rounded-md bg-cream-300 p-4"
+      className="mt-4 bg-cream-300 p-4"
       onSubmit={async (event) => {
         event.preventDefault();
         const email = String(new FormData(event.currentTarget).get("email") ?? "");
         const result = await subscribeRestock({
           productSlug: productSlug ?? "",
+          color: colorName,
           size: sizeName,
           email,
         });
@@ -425,8 +485,8 @@ function RestockAlert({ sizeName, productSlug }: { sizeName: string; productSlug
     >
       <p className="text-body-sm text-bark-900">
         {sizeName === "ce produit"
-          ? "Ce produit revient bientôt."
-          : `La taille ${sizeName} revient bientôt.`}{" "}
+          ? `Ce coloris (${colorName}) revient bientôt.`
+          : `La pointure ${sizeName} en ${colorName} revient bientôt.`}{" "}
         Recevez un e-mail dès son retour en stock.
       </p>
       <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end">

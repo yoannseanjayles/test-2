@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "shoes-dev",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["pnpm@10", "exec", "next", "dev", "--turbopack", "--port", "3210"],
+      "port": 3210
+    }
+  ]
+}

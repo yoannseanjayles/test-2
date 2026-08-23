@@ -1,132 +1,218 @@
 import type { StaticImageData } from "next/image";
-import type { Animal } from "@/lib/catalog";
-import coverHarnais from "@/media/M-EDI-03.jpeg";
-import coverCoinRepos from "@/media/M-EDI-04.jpeg";
-import coverMesurer from "@/media/M-EDI-11.jpeg";
-import coverLapin from "@/media/M-HOME-05.jpeg";
+import type { Brand } from "@/lib/catalog/types";
+
+import couvPointure from "@/media/guide-bien-choisir-sa-pointure.webp";
+import couvEntretien from "@/media/guide-entretenir-ses-baskets.webp";
+import couvAmorti from "@/media/guide-technologies-amorti-expliquees.webp";
+import couvUsage from "@/media/guide-running-ou-lifestyle.webp";
 
 /**
- * Guides mock (topic clusters D-037 : 2 piliers + satellites au lancement).
- * Le contenu complet des articles arrive au jalon 4 ; ces métadonnées
- * alimentent les cartes éditoriales de l'Accueil et des pages animal.
+ * Guides éditoriaux (topic clusters D-037 : 2 piliers + satellites au
+ * lancement). Réécrits pour le pivot baskets (D-053, constat CO-4).
+ *
+ * ⚠️ Aucun `author` n'est renseigné, et c'est délibéré. Le champ porte un
+ * appareil E-E-A-T — nom de rédacteur, mention « relu par … » — qui n'a de
+ * valeur que s'il est vrai. Y inscrire un expert fictif pour remplir
+ * l'interface, c'est exactement ce qui a valu le retrait de 14 avis en
+ * août 2026 (MO-7, art. L.121-4 : pratique commerciale trompeuse). Le champ
+ * reste vide jusqu'à ce qu'un rédacteur et un relecteur réels soient
+ * identifiés ; la mise en page le supporte déjà.
+ *
+ * Tout le contenu ci-dessous provient des consignes officielles des marques
+ * telles que reprises dans le dossier catalogue du 21/08/2026.
  */
 
 export type Guide = {
   slug: string;
   title: string;
   excerpt: string;
-  animal: Animal | "tous";
+  /** Marque concernée, ou « tous » pour un guide transverse. */
+  brand: Brand | "tous";
   pillar: boolean;
   readingMinutes: number;
+  /** Slugs d'usage liés (running, lifestyle, sportstyle). */
   relatedSubcategories: string[];
-  /** Couverture (M-EDI-*) — placeholder DA si absente (H32). */
+  /** Couverture — placeholder DA si absente (H32). */
   cover?: StaticImageData;
-  /** E-E-A-T (D-037) : auteur, relecture pro (H27), dates. */
+  /** E-E-A-T (D-037) : auteur, relecture, dates. Vide tant qu'il n'est pas réel. */
   author?: { name: string; role: string; reviewedBy: string; updated: string };
   /** Corps de l'article — sections ancrées (sommaire). */
   content?: { heading: string; paragraphs: string[] }[];
 };
 
 /**
- * Contenu de lancement — seed de la table `guides` (7.1 jalon 4) ; les
- * couvertures (imports statiques) sont ré-attachées par slug à l'hydratation.
- * L'édition passe par le back-office, plus par ce fichier.
+ * Contenu de lancement — seed de la table `guides` ; l'édition passe ensuite
+ * par le back-office, plus par ce fichier.
  */
 export const guideSeed: Guide[] = [
   {
-    slug: "bien-choisir-un-harnais",
-    title: "Bien choisir un harnais : le guide complet",
+    slug: "bien-choisir-sa-pointure",
+    cover: couvPointure,
+    title: "Bien choisir sa pointure : ce que les grilles ne disent pas",
     excerpt:
-      "Coupe en Y ou en H, réglages, matières : ce qu'il faut vérifier pour un harnais qui ne frotte pas et n'entrave pas l'épaule.",
-    animal: "chien",
+      "Une 42 n'est pas une 42 partout. Correspondances EU/US/UK, chaussant par modèle, et les pièges de conversion qui causent l'essentiel des retours.",
+    brand: "tous",
     pillar: true,
-    readingMinutes: 12,
-    relatedSubcategories: ["colliers-harnais"],
-    cover: coverHarnais,
-    author: {
-      name: "Camille Aubert",
-      role: "Rédactrice — comportement canin",
-      reviewedBy: "Relu par Marc Delorme, éducateur canin diplômé",
-      updated: "2026-07-01",
-    },
+    readingMinutes: 8,
+    relatedSubcategories: ["running", "lifestyle", "sportstyle"],
     content: [
       {
-        heading: "Coupe en Y ou coupe en H : la vraie différence",
+        heading: "Les marques ne découpent pas les pointures de la même façon",
         paragraphs: [
-          "La coupe en Y libère entièrement l'épaule : la sangle passe sur le sternum puis entre les pattes avant, sans barrer l'articulation. C'est la coupe que nous recommandons pour la marche quotidienne, la randonnée et les chiens qui tirent — l'amplitude du mouvement est préservée et les frottements disparaissent.",
-          "La coupe en H, elle, entoure le poitrail de deux sangles parallèles. Bien réglée, elle convient aux trajets urbains calmes et aux chiens fins qui « sortent » des harnais en Y. Mal réglée, elle appuie sur l'épaule à chaque foulée : si vous voyez la sangle bouger sur l'omoplate en mouvement, changez de coupe.",
+          "On s'en tient aux pointures entières, avec une seule demi-pointure dans la plage courante (42,5). Nike saute les 37 et 38 pour proposer des 37,5 et 38,5. ASICS ajoute des 39,5, 41,5 et 43,5 là où les autres n'en ont pas. Salomon, enfin, travaille en tiers de pointure : 37 ⅓, 38 ⅔, 41 ⅓, 43 ⅓, 44 ⅔.",
+          "Conséquence pratique : si vous chaussez du 41 chez On, votre équivalent Nike n'est pas « 41 » mais se situe entre le 40 et le 41 selon la longueur de votre pied. Fiez-vous à la colonne de longueur, pas au nombre.",
         ],
       },
       {
-        heading: "Les trois mesures qui comptent",
+        heading: "Chez Nike, la mesure en centimètres n'est pas votre pied",
         paragraphs: [
-          "Tour de poitrail (le plus large, juste derrière les pattes avant), tour de cou bas (là où repose un collier), et longueur de sternum. Mesurez au repos, sans serrer, et ajoutez deux doigts d'aisance. Entre deux tailles, prenez toujours la plus grande : un harnais se règle vers le bas, jamais vers le haut.",
-          "Un harnais est à la bonne taille quand vous passez deux doigts à plat sous chaque sangle, ni plus ni moins, et qu'aucune sangle ne touche l'aisselle.",
+          "Nike l'indique explicitement : le chiffre en centimètres imprimé sur la boîte est une taille de conversion, pas une mesure de longueur de pied. Le confondre avec la mesure d'un pied fait systématiquement descendre d'une pointure.",
+          "Nike précise également qu'entre deux tailles, il faut choisir la taille au-dessus — et qu'aucune largeur alternative n'existe sur l'Air Force 1, l'Air Max 90, l'Air Max Plus et la P-6000.",
         ],
       },
       {
-        heading: "Matières : ce qui dure et ce qui frotte",
+        heading: "Le chaussant compte autant que la pointure",
         paragraphs: [
-          "Le textile technique (ripstop, maille rembourrée) sèche vite et se lave en machine — idéal pour les chiens actifs. Le cuir doublé de lainage est superbe en ville mais craint la pluie prolongée. Évitez les néoprènes bas de gamme : ils gardent l'humidité contre la peau et échauffent.",
-          "Vérifiez les coutures aux points de traction (anneau dorsal, boucles) : des coutures en X ou en W tiennent des années, une simple ligne droite non.",
+          "La Cloudmonster 3 taille juste selon On, mais son chaussant est plus étroit que celui de la génération précédente : l'avant-pied mesure 71,0 mm contre 74,5 mm, et le volume de cou-de-pied est bas. Pied large ou cambrure marquée : une demi-pointure au-dessus, ou la déclinaison Wide.",
+          "L'Air Force 1 pose un problème différent : environ 465 g, cuir rigide, temps de rodage long. Elle n'est pas inconfortable, elle demande simplement des semaines avant de se faire au pied.",
+          "Chez Saucony, les pointures affichées sur les deux modèles Originals sont des pointures homme. Un revendeur agréé indique qu'une femme doit commander environ 1,5 pointure en dessous de sa pointure running habituelle.",
         ],
       },
       {
-        heading: "Anti-traction : anneau avant ou éducation ?",
+        heading: "Toutes nos grilles n'ont pas la même valeur",
         paragraphs: [
-          "L'anneau ventral réoriente le chien qui tire — utile en transition, mais ce n'est pas une solution seule. Combinez-le avec un travail de marche en laisse : c'est l'avis de tous les éducateurs que nous consultons. Un harnais ne remplace jamais l'éducation, il la facilite.",
-        ],
-      },
-      {
-        heading: "Les erreurs qui coûtent un retour",
-        paragraphs: [
-          "Choisir la taille sur le poids seul (deux chiens de 20 kg peuvent avoir 15 cm d'écart de poitrail), serrer pour compenser une taille trop grande, ou garder le harnais d'un chiot en croissance plus de quelques mois. En cas de doute, mesurez — notre guide « Comment mesurer votre animal » prend cinq minutes.",
+          "Nous préférons le dire clairement : sur les cinq grilles publiées sur ce site, une seule provient directement de la marque, celle de Nike. Les quatre autres sont des redistributions de revendeurs, concordantes entre elles mais non confirmées par le fabricant.",
+          "Chaque grille porte donc sa mention d'origine. En cas de doute sur une pointure limite, mesurez votre pied en centimètres et comparez à la colonne de longueur plutôt qu'au numéro.",
         ],
       },
     ],
   },
   {
-    slug: "comment-mesurer-votre-animal",
-    title: "Comment mesurer votre animal (sans vous tromper)",
+    slug: "entretenir-ses-baskets",
+    cover: couvEntretien,
+    title: "Entretenir ses baskets : les protocoles officiels des cinq marques",
     excerpt:
-      "Tour de cou, poitrail, longueur de dos : les trois mesures qui évitent 90 % des erreurs de taille, schémas à l'appui.",
-    animal: "tous",
-    pillar: false,
-    readingMinutes: 5,
-    relatedSubcategories: ["colliers-harnais", "manteaux-textile"],
-    cover: coverMesurer,
-  },
-  {
-    slug: "amenager-un-coin-repos",
-    title: "Aménager un vrai coin repos pour votre chien",
-    excerpt:
-      "Emplacement, matière, taille du couchage : les règles simples pour un panier réellement adopté.",
-    animal: "chien",
-    pillar: false,
-    readingMinutes: 7,
-    relatedSubcategories: ["couchages-paniers"],
-    cover: coverCoinRepos,
-  },
-  {
-    slug: "griffades-comprendre-et-canaliser",
-    title: "Griffades : comprendre et canaliser sans conflit",
-    excerpt:
-      "Pourquoi votre chat griffe le canapé, et comment un griffoir bien choisi et bien placé change tout.",
-    animal: "chat",
+      "Ce que On, Nike, Saucony, ASICS et Salomon interdisent toutes, la méthode commune en six étapes, et les exceptions par matière.",
+    brand: "tous",
     pillar: true,
     readingMinutes: 9,
-    relatedSubcategories: ["arbres-a-chat-griffoirs"],
+    relatedSubcategories: ["running", "lifestyle", "sportstyle"],
+    content: [
+      {
+        heading: "Ce que les cinq marques interdisent, sans exception",
+        paragraphs: [
+          "La machine à laver et le sèche-linge. Les cinq marques l'écrivent chacune dans leurs consignes officielles. On est la plus explicite sur le pourquoi : la chaleur prolongée combinée aux détergents endommage les coutures, les collages et l'intégrité de la chaussure.",
+          "Toute source de chaleur directe, également : radiateur, sèche-cheveux, plein soleil. Salomon ajoute un interdit qui lui est propre — pas de savon ni de lessive, qui attaquent les colles et les membranes.",
+        ],
+      },
+      {
+        heading: "La méthode commune",
+        paragraphs: [
+          "Brosser à sec d'abord. Sur de la boue, mouiller avant de brosser étale la salissure au lieu de la retirer. Taper les semelles l'une contre l'autre, puis brosse souple ou vieille brosse à dents.",
+          "Retirer les lacets et les semelles de propreté, et les traiter séparément. Les semelles ne se trempent jamais : ASICS précise que cela endommage la mousse.",
+          "Laver l'extérieur à l'eau tiède avec un détergent doux, au chiffon ou à l'éponge. Rincer abondamment — un résidu de savon laisse une auréole en séchant.",
+          "Sécher à l'air libre, à température ambiante, en bourrant l'intérieur de papier froissé. Nike recommande huit heures au minimum. Ne remettre lacets et semelles qu'une fois les chaussures complètement sèches.",
+        ],
+      },
+      {
+        heading: "Les exceptions par matière",
+        paragraphs: [
+          "Mesh blanc : Nike recommande une pâte de deux doses de bicarbonate pour une dose d'eau, laissée agir trente minutes avant d'essuyer au chiffon humide. Sur le mesh, brosser dans le sens du maillage et n'utiliser que de l'eau froide ou tiède — l'eau chaude altère la teinture.",
+          "Daim et nubuck (empiècements de la ProGrid Omni 9) : brosse à poils souples à sec, puis spray imperméabilisant si besoin. Jamais d'eau de Javel. Quand une tige mêle plusieurs matières, appliquez la consigne la plus prudente, celle du daim.",
+          "Cuir (Air Force 1, empiècements de l'Air Max 90 et de la GEL-KAYANO 14) : nettoyage doux, puis produit nourrissant après séchage.",
+          "GORE-TEX (deux des cinq coloris de la XT-6) : un produit ré-imperméabilisant adapté aux membranes entretient la déperlance. Ni savon, ni lessive.",
+        ],
+      },
+      {
+        heading: "À quelle fréquence",
+        paragraphs: [
+          "Moins souvent qu'on ne le croit. On déconseille explicitement les lavages fréquents : un brossage léger régulier après chaque sortie prolonge la durée de vie de la chaussure bien mieux qu'un lavage complet occasionnel.",
+          "Salomon ajoute deux réflexes simples et gratuits : aérer les chaussures après chaque utilisation, et ne jamais les stocker en sac plastique ou en boîte hermétique.",
+        ],
+      },
+    ],
   },
   {
-    slug: "enrichir-lhabitat-dun-lapin",
-    title: "Enrichir l'habitat d'un lapin d'intérieur",
+    slug: "technologies-amorti-expliquees",
+    cover: couvAmorti,
+    title: "Les technologies d'amorti, expliquées",
     excerpt:
-      "Cachettes, matières à ronger, zones de fraîcheur : l'essentiel pour un lapin serein en appartement.",
-    animal: "nac",
+      "CloudTec, Air, GEL, ProGrid, EnergyCell : ce que chaque système fait réellement sous le pied, sans le vocabulaire marketing.",
+    brand: "tous",
+    pillar: false,
+    readingMinutes: 7,
+    relatedSubcategories: ["running", "sportstyle"],
+    content: [
+      {
+        heading: "On — sculpter la mousse plutôt que l'empiler",
+        paragraphs: [
+          "Le CloudTec sculpte la semelle en géométries qui se compriment à la fois verticalement et horizontalement : amorti à l'impact, maintien multidirectionnel. Le CloudTec Phase va plus loin — les Clouds sont inclinés et se compriment en séquence, comme une rangée de dominos, ce qui donne un déroulé talon-pointe roulé.",
+          "La mousse Helion en règle la densité modèle par modèle, et le Speedboard, plaque souple insérée dans la semelle intermédiaire, fléchit à l'avant-pied puis relance le pied. Sur ce catalogue, il n'équipe que la Cloudmonster 3.",
+        ],
+      },
+      {
+        heading: "Nike — de l'air sous pression, réglé par zones",
+        paragraphs: [
+          "L'unité Air est un gaz pressurisé scellé dans une membrane souple. Elle se comprime à l'impact puis reprend sa forme, sans se tasser dans le temps comme le fait une mousse. Sur l'Air Force 1, elle est encapsulée et invisible.",
+          "Le Max Air en est la version à grand volume, rendue visible par une fenêtre dans la semelle — c'est la technologie de l'Air Max 90. Le Tuned Air, lui, insère dans l'unité des hémisphères de polymère prémoulés qui règlent la pression zone par zone : plus souple sous le talon, plus ferme là où le pied a besoin de maintien. C'est ce qui donne à l'Air Max Plus sa sensation ferme caractéristique.",
+          "Un point à ne pas confondre : la P-6000 n'a pas d'unité Air. C'est la seule des quatre Nike de ce catalogue dans ce cas.",
+        ],
+      },
+      {
+        heading: "ASICS — silicone et contrôle de torsion",
+        paragraphs: [
+          "Le GEL est un silicone inséré dans la semelle intermédiaire pour absorber les chocs. Au talon seulement sur la GEL-KAYANO 14 ; à l'avant-pied et au talon sur la 20 — c'est la principale différence de sensation entre les deux.",
+          "Le Trusstic System est une pièce moulée sous le médio-pied qui allège la semelle tout en contrôlant la torsion. Le FluidFit, croisillons de TPU posés en zigzag sur la tige, est la signature visuelle immédiate de la KAYANO 20.",
+        ],
+      },
+      {
+        heading: "Saucony et Salomon",
+        paragraphs: [
+          "Chez Saucony, le ProGrid est un système d'amorti au talon construit au plus près du pied ; le GRID en est la génération antérieure, et les deux coexistent sur l'Omni 9. Le SRC, placé dans le crash pad du talon, absorbe les chocs et facilite la transition vers le médio-pied.",
+          "Chez Salomon, l'EnergyCell est une EVA double densité, complétée par l'agileCHASSIS — un châssis logé entre semelle intermédiaire et semelle d'usure qui combine stabilité latérale et amorti. La gomme Mud Contagrip, conçue pour les sols meubles, se révèle très adhérente sur pavés mouillés.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "running-ou-lifestyle",
+    cover: couvUsage,
+    title: "Running ou lifestyle : ne pas se tromper d'usage",
+    excerpt:
+      "Une réédition d'archive n'est pas une chaussure de running. Ce que chaque modèle du catalogue est réellement fait pour supporter.",
+    brand: "tous",
     pillar: false,
     readingMinutes: 6,
-    relatedSubcategories: ["habitat-couchage", "jeux-activite"],
-    cover: coverLapin,
+    relatedSubcategories: ["running", "lifestyle", "sportstyle"],
+    content: [
+      {
+        heading: "Une réédition d'archive n'est pas une chaussure correctrice",
+        paragraphs: [
+          "La ProGrid Omni 9 était, en 2010, une chaussure de stabilité pour pronateurs légers à modérés. La GEL-KAYANO 14 et la 20 étaient également des chaussures de stabilité, en 2008 et 2013. Ces trois modèles sont aujourd'hui vendus en gamme lifestyle.",
+          "Ces mentions appartiennent à leur passé running et n'ont plus de valeur prescriptive. Nous ne les présentons pas comme des chaussures correctrices, et personne ne devrait les acheter pour cette raison. Une correction de foulée se prescrit, elle ne s'achète pas sur une fiche produit.",
+        ],
+      },
+      {
+        heading: "Les deux seules chaussures de running du catalogue",
+        paragraphs: [
+          "La Cloudmonster 3 et la Cloudsurfer Max. Toutes deux pour foulée neutre, sur route et bitume, du 10 km au marathon. Toutes deux orientées confort et endurance : On déconseille explicitement la Cloudsurfer Max pour le travail rapide, et situe la Cloudmonster 3 du côté des sorties longues et de la récupération plutôt que des séances au seuil.",
+        ],
+      },
+      {
+        heading: "Marche urbaine : une catégorie à part entière",
+        paragraphs: [
+          "La Cloudtilt et la Cloudtilt Remix appartiennent à la gamme Active Life d'On, pensée pour la marche urbaine, le voyage et la station debout prolongée. Ce ne sont pas des chaussures de running, et On ne les présente pas comme telles.",
+          "Nike présente de son côté la P-6000 comme conçue pour la marche.",
+        ],
+      },
+      {
+        heading: "Le poids, critère sous-estimé",
+        paragraphs: [
+          "L'Air Force 1 pèse environ 465 g, l'Air Max Plus environ 398 g, l'Air Max 90 environ 380 g. Ce sont des mesures de laboratoires indépendants — Nike ne publie pas cette donnée.",
+          "Pour une journée entière debout, l'écart avec une Cloudtilt (environ 266 g mesurés) ou une P-6000 (environ 292 g) se ressent nettement en fin de journée. Ce n'est pas un défaut de l'Air Force 1 : c'est le prix de sa construction en cuir.",
+        ],
+      },
+    ],
   },
 ];
 

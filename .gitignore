@@ -25,3 +25,7 @@ npm-debug.log*
 
 # typescript
 *.tsbuildinfo
+
+# dossiers de travail locaux (extraction de transfert, scratch de l'agent)
+_transfert-azeno/
+.claude/tmp/

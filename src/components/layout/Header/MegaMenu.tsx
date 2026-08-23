@@ -2,21 +2,24 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
-import type { AnimalCategory } from "@/lib/navigation";
+import { ArrowRight, ChevronDown } from "lucide-react";
+import type { NavSection } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 type MegaMenuProps = {
-  categories: AnimalCategory[];
+  sections: NavSection[];
 };
 
 /**
- * Méga-menu desktop (≥ lg) — sitemap 1.2 : sous-catégories en colonnes,
- * mise en avant, lien « Tout voir ». L'intitulé est un lien vers la page
- * animal (catégorie parente cliquable, D-002) ; le panneau s'ouvre au survol,
- * et au clavier via le bouton chevron (disclosure). Fermeture Échap (4.1 §10).
+ * Méga-menu desktop (≥ lg) — refonte streetwear : chaque rayon ouvre un
+ * panneau en colonnes (Chaussures / Ensembles / Accessoires, ou Usage /
+ * Marque / À découvrir) avec une mise en avant à droite.
+ *
+ * L'intitulé reste un lien vers la page du rayon (catégorie parente
+ * cliquable, D-002) ; le panneau s'ouvre au survol et, au clavier, par le
+ * bouton chevron (disclosure). Fermeture par Échap (4.1 §10).
  */
-export function MegaMenu({ categories }: MegaMenuProps) {
+export function MegaMenu({ sections }: MegaMenuProps) {
   const [openLabel, setOpenLabel] = useState<string | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -37,79 +40,119 @@ export function MegaMenu({ categories }: MegaMenuProps) {
         if (event.key === "Escape") setOpenLabel(null);
       }}
     >
-      {categories.map((category) => {
-        const isOpen = openLabel === category.label;
+      {sections.map((section) => {
+        const isOpen = openLabel === section.label;
+        const hasPanel = Boolean(section.columns?.length);
+
         return (
           <li
-            key={category.label}
-            onMouseEnter={() => open(category.label)}
-            onMouseLeave={scheduleClose}
+            key={section.label}
+            onMouseEnter={() => hasPanel && open(section.label)}
+            onMouseLeave={hasPanel ? scheduleClose : undefined}
           >
             <span
               className={cn(
-                "flex min-h-11 items-center rounded-sm transition-colors duration-150 hover:bg-cream-300",
-                isOpen && "bg-cream-300",
+                "flex min-h-11 items-center transition-colors duration-250",
+                isOpen ? "text-action" : "text-bark-900 hover:text-action",
               )}
             >
               <Link
-                href={category.href}
-                className="text-label flex min-h-11 items-center pl-3 pr-1 text-bark-900"
+                href={section.href}
+                className={cn(
+                  "nav-underline text-label flex min-h-11 items-center text-current",
+                  hasPanel ? "pl-3 pr-1" : "px-3",
+                )}
               >
-                {category.label}
+                {section.label}
+                {section.soon && (
+                  <span className="text-caption ml-2 bg-volt px-1.5 py-0.5 leading-none text-bark-900">
+                    Bientôt
+                  </span>
+                )}
               </Link>
-              <button
-                type="button"
-                aria-expanded={isOpen}
-                aria-label={`Afficher les sous-catégories ${category.label}`}
-                onClick={() => setOpenLabel(isOpen ? null : category.label)}
-                className="flex min-h-11 items-center pr-3 pl-1 text-bark-700"
-              >
-                <ChevronDown
-                  aria-hidden="true"
-                  className={cn(
-                    "size-4 transition-transform duration-150",
-                    isOpen && "rotate-180",
-                  )}
-                />
-              </button>
+              {hasPanel && (
+                <button
+                  type="button"
+                  aria-expanded={isOpen}
+                  aria-label={`Afficher le menu ${section.label}`}
+                  onClick={() => setOpenLabel(isOpen ? null : section.label)}
+                  className="flex min-h-11 items-center pl-1 pr-3 text-current"
+                >
+                  <ChevronDown
+                    aria-hidden="true"
+                    className={cn(
+                      "size-4 transition-transform duration-250",
+                      isOpen && "rotate-180",
+                    )}
+                  />
+                </button>
+              )}
             </span>
 
-            {isOpen && (
+            {isOpen && section.columns && (
               <div
                 className="absolute inset-x-0 top-full border-t border-border bg-cream-50 shadow-overlay"
-                onMouseEnter={() => open(category.label)}
+                onMouseEnter={() => open(section.label)}
                 onMouseLeave={scheduleClose}
               >
-                <div className="mx-auto grid max-w-page grid-cols-[1fr_minmax(280px,360px)] gap-12 px-6 py-8">
-                  <div>
-                    <ul className="grid grid-cols-2 gap-x-12 gap-y-1 xl:grid-cols-3">
-                      {category.children.map((child) => (
-                        <li key={child.href}>
-                          <Link
-                            href={child.href}
-                            onClick={() => setOpenLabel(null)}
-                            className="flex min-h-11 items-center rounded-sm px-2 text-body text-bark-700 transition-colors duration-150 hover:bg-cream-100 hover:text-bark-900"
-                          >
-                            {child.label}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
+                <div className="mx-auto grid max-w-page grid-cols-[1fr_minmax(280px,340px)] gap-12 px-6 py-10">
+                  <div className="grid grid-cols-3 gap-8">
+                    {section.columns.map((column) => (
+                      <div key={column.title}>
+                        <p className="text-label border-b border-border pb-3 text-bark-900">
+                          {column.title}
+                        </p>
+                        <ul className="mt-2">
+                          {column.links.map((link) => (
+                            <li key={`${column.title}-${link.label}`}>
+                              <Link
+                                href={link.href}
+                                onClick={() => setOpenLabel(null)}
+                                className={cn(
+                                  "flex min-h-10 items-center gap-2 border-l border-transparent px-3 text-body-sm transition-all duration-250",
+                                  link.soon
+                                    ? "text-bark-500 hover:border-bark-300 hover:text-bark-700"
+                                    : "text-bark-700 hover:border-action hover:pl-4 hover:text-bark-900",
+                                )}
+                              >
+                                {link.label}
+                                {link.soon && (
+                                  <span className="text-caption uppercase tracking-[0.14em] text-bark-500">
+                                    · bientôt
+                                  </span>
+                                )}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+
+                  {section.highlight && (
                     <Link
-                      href={category.href}
+                      href={section.highlight.href}
                       onClick={() => setOpenLabel(null)}
-                      className="text-label mt-4 inline-flex min-h-11 items-center gap-2 px-2 text-action transition-colors duration-150 hover:text-action-hover"
+                      className="group relative flex flex-col justify-end overflow-hidden bg-bark-900 p-7"
                     >
-                      Tout voir {category.label}
-                      <span aria-hidden="true">→</span>
+                      <span
+                        aria-hidden="true"
+                        className="font-display pointer-events-none absolute -right-3 -top-5 text-[6rem] leading-none text-volt/15"
+                      >
+                        {section.label}
+                      </span>
+                      <p className="font-display relative text-h3 leading-none text-white">
+                        {section.highlight.title}
+                      </p>
+                      <p className="relative mt-3 text-body-sm text-white/70">
+                        {section.highlight.text}
+                      </p>
+                      <span className="text-label relative mt-5 inline-flex w-fit items-center gap-2 border-b border-volt pb-1 text-volt">
+                        {section.highlight.cta}
+                        <ArrowRight aria-hidden="true" className="size-4" />
+                      </span>
                     </Link>
-                  </div>
-                  {/* Visuel de mise en avant (M-NAV) : placeholder DA en attendant les médias Phase 3 (H32). */}
-                  <div className="flex flex-col justify-end rounded-lg bg-cream-300 p-6">
-                    <p className="font-display text-h3 text-bark-900">
-                      {category.highlight}
-                    </p>
-                  </div>
+                  )}
                 </div>
               </div>
             )}

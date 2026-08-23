@@ -2,29 +2,59 @@
  * Types du catalogue — contrat de la couche `lib/api` (H37) :
  * le front consomme ces types ; le mock (H33) sera remplacé par l'API
  * réelle en Phase 6 sans toucher aux composants.
+ *
+ * Pivot baskets (D-053) : l'axe primaire est la **marque** (D-055), la
+ * sous-catégorie est l'**usage**, le **genre** est une facette (D-056) et
+ * le stock est porté par la variante `(coloris, pointure)` (D-054).
  */
 
-export type Animal = "chien" | "chat" | "nac";
+/** Axe de navigation primaire — référentiel fermé (D-055, D-058). */
+export type Brand = "on" | "nike" | "saucony" | "asics" | "salomon";
 
-/** Gabarit animal — facette signature, présente sur toutes les sous-catégories (D-027). */
-export type Gabarit = "XS" | "S" | "M" | "L" | "XL";
+/** Niveau sous-catégorie — usage du modèle (D-055). */
+export type Usage = "running" | "lifestyle" | "sportstyle";
 
-export const gabaritLabels: Record<Gabarit, string> = {
-  XS: "XS — moins de 5 kg",
-  S: "S — 5 à 10 kg",
-  M: "M — 10 à 20 kg",
-  L: "L — 20 à 40 kg",
-  XL: "XL — plus de 40 kg",
+export const usageLabels: Record<Usage, string> = {
+  running: "Running",
+  lifestyle: "Lifestyle",
+  sportstyle: "Sportstyle",
+};
+
+export function isUsage(value: string): value is Usage {
+  return value === "running" || value === "lifestyle" || value === "sportstyle";
+}
+
+/**
+ * Facette signature, présente sur toutes les sous-catégories (D-027, D-056).
+ * Remplace le gabarit animal. `mixte` est la valeur par défaut d'un catalogue
+ * de sneakers : elle n'est pas un fourre-tout, elle est l'état normal.
+ */
+export type Genre = "homme" | "femme" | "mixte" | "enfant";
+
+export const genreLabels: Record<Genre, string> = {
+  homme: "Homme",
+  femme: "Femme",
+  mixte: "Mixte",
+  enfant: "Enfant",
 };
 
 export type ProductColor = {
+  /** Dénomination du coloris — c'est la clé de la variante (D-054). */
   name: string;
-  /** Pastille de la couleur (DA D-044). */
+  /** Pastille de la couleur. */
   hex: string;
+  /** Photos du coloris, la première servant de visuel principal. */
+  images?: string[];
 };
 
-export type ProductSize = {
-  name: string;
+/**
+ * Unité de stock (D-054) : un coloris en 42 et le même modèle en 42 dans un
+ * autre coloris sont deux articles distincts. `color` référence
+ * `ProductColor.name`, `size` une valeur du référentiel de pointures.
+ */
+export type ProductVariant = {
+  color: string;
+  size: string;
   /** Unités en stock — 0 = rupture, affichée « Bientôt de retour » (spec PDP S3). */
   stock: number;
 };
@@ -34,7 +64,7 @@ export type Review = {
   rating: 1 | 2 | 3 | 4 | 5;
   title: string;
   text: string;
-  /** Contexte animal affiché avec l'avis (D-025). */
+  /** Contexte d'usage affiché avec l'avis (D-025) — pointure portée, usage. */
   context: string;
   date: string;
   verified: boolean;
@@ -43,9 +73,12 @@ export type Review = {
 export type Product = {
   slug: string;
   name: string;
-  brand: string;
-  animal: Animal;
-  subcategory: string;
+  /** Marque — axe de route et facette transverse (D-055, D-056). */
+  brand: Brand;
+  /** Usage — slug de sous-catégorie, unique par marque. */
+  subcategory: Usage;
+  /** Genres auxquels le modèle s'adresse — facette (D-056). */
+  genres: Genre[];
   /** Prix TTC en centimes d'euro (H18). */
   price: number;
   shortDescription: string;
@@ -55,16 +88,18 @@ export type Product = {
   /** Sections d'accordéon de la fiche (spec PDP S5). */
   details: { title: string; content: string }[];
   colors: ProductColor[];
-  sizes: ProductSize[];
-  gabarits: Gabarit[];
+  /** Stock ventilé par coloris et pointure (D-054). */
+  variants: ProductVariant[];
+  /** Conseil de chaussant affiché près du sélecteur de pointure (D-024, ST-3). */
+  sizeAdvice?: string;
   isNew: boolean;
   /** Rang du tri « Notre sélection » (H17) — plus petit = plus haut. */
   curatedRank: number;
   reviews: Review[];
-  /** Slugs des compléments curés (spec PDP S6). */
+  /** Slugs des compléments curés (spec PDP S6) — dont les autres modèles de la marque. */
   pairsWith: string[];
   /** Teinte de fond du placeholder visuel (H32 : remplacé par les vraies photos). */
-  tone: "cream" | "sage" | "caramel" | "terracotta";
+  tone: "chalk" | "graphite" | "sand" | "signal";
   /** Photos fournisseur distantes (produits importés 7.1) — prioritaires sur le placeholder. */
   imageUrls?: string[];
   /** Traçabilité import (7.1) — référence article et page fournisseur, usage interne. */
@@ -84,8 +119,8 @@ export function isFieldVisible(product: Pick<Product, "fieldVisibility">, field:
 }
 
 export type Subcategory = {
-  slug: string;
+  slug: Usage;
   label: string;
-  animal: Animal;
+  brand: Brand;
   description: string;
 };

@@ -49,13 +49,19 @@ export const verification = pgTable("verification", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-/** Profil animal persisté (max 5, H24). */
-export const pets = pgTable("pets", {
+/**
+ * Profil de pointure persisté (max 5, H24) — « Mes pointures » (D-060).
+ * Reconversion de l'ancien profil animal : même table, même CRUD, même
+ * décision D-015 (optionnel, différé, jamais bloquant). `name` désigne la
+ * personne (« Moi », « Léa »), pas un modèle.
+ */
+export const shoeProfiles = pgTable("shoe_profiles", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
-  species: text("species").$type<"chien" | "chat" | "nac">().notNull(),
-  gabarit: text("gabarit").$type<"XS" | "S" | "M" | "L" | "XL">().notNull(),
+  genre: text("genre").$type<"homme" | "femme" | "mixte" | "enfant">().notNull(),
+  /** Pointure EU canonique — même forme qu'en variante (« 42 », « 42.5 »). */
+  size: text("size").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -100,6 +106,8 @@ export const orderLines = pgTable("order_lines", {
 export const restockAlerts = pgTable("restock_alerts", {
   id: text("id").primaryKey(),
   productSlug: text("product_slug").notNull(),
+  /** L'alerte porte sur la variante, pas sur la pointure seule (D-054). */
+  color: text("color").notNull().default(""),
   size: text("size").notNull(),
   email: text("email").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),

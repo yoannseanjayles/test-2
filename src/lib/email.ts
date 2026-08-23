@@ -2,6 +2,7 @@ import "server-only";
 import type { OrderDto } from "@/lib/orders";
 import { formatPrice } from "@/lib/format";
 import { reportError } from "@/lib/observability";
+import { company } from "@/lib/company";
 
 /**
  * E-mails transactionnels (6.0) via l'API Resend quand RESEND_API_KEY est
@@ -24,7 +25,7 @@ async function sendEmail(to: string, subject: string, html: string, replyTo?: st
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      from: process.env.EMAIL_FROM ?? "chien et chat <commandes@resend.dev>",
+      from: process.env.EMAIL_FROM ?? `${company.tradeName} <commandes@resend.dev>`,
       to,
       subject,
       html,
@@ -41,7 +42,7 @@ export async function sendOrderConfirmation(order: Pick<OrderDto, "number" | "em
     .join("<br>");
   await sendEmail(
     order.email,
-    `Commande ${order.number} confirmée — chien et chat`,
+    `Commande ${order.number} confirmée — ${company.tradeName}`,
     `<p>Merci ! Votre commande <strong>${escapeHtml(order.number)}</strong> est confirmée.</p><p>${lines}</p><p>Total TTC : <strong>${formatPrice(order.total)}</strong></p><p>Nous vous préviendrons à chaque étape.</p>`,
   );
 }
@@ -50,7 +51,7 @@ export async function sendOrderConfirmation(order: Pick<OrderDto, "number" | "em
 export async function sendVerificationEmail(to: string, url: string) {
   await sendEmail(
     to,
-    "Confirmez votre adresse e-mail — chien et chat",
+    `Confirmez votre adresse e-mail — ${company.tradeName}`,
     `<p>Bienvenue ! Confirmez votre adresse pour activer votre compte :</p><p><a href="${escapeHtml(url)}">Confirmer mon adresse e-mail</a></p><p>Si vous n'êtes pas à l'origine de cette inscription, ignorez ce message.</p>`,
   );
 }
@@ -59,7 +60,7 @@ export async function sendVerificationEmail(to: string, url: string) {
 export async function sendPasswordResetEmail(to: string, url: string) {
   await sendEmail(
     to,
-    "Réinitialisez votre mot de passe — chien et chat",
+    `Réinitialisez votre mot de passe — ${company.tradeName}`,
     `<p>Vous avez demandé à réinitialiser votre mot de passe :</p><p><a href="${escapeHtml(url)}">Choisir un nouveau mot de passe</a></p><p>Ce lien expire rapidement. Si vous n'êtes pas à l'origine de cette demande, ignorez ce message — votre mot de passe reste inchangé.</p>`,
   );
 }
@@ -87,7 +88,7 @@ export async function sendContactMessage(input: {
 export async function sendRestockAlert(to: string, productName: string, size: string, url: string) {
   await sendEmail(
     to,
-    `De retour en stock : ${productName} — chien et chat`,
+    `De retour en stock : ${productName} — ${company.tradeName}`,
     `<p>Bonne nouvelle ! <strong>${escapeHtml(productName)}</strong>${size !== "ce produit" ? ` (taille ${escapeHtml(size)})` : ""} est de nouveau disponible.</p><p><a href="${escapeHtml(url)}">Voir le produit</a> — les quantités restent limitées.</p><p>Vous recevez ce message car vous aviez demandé à être prévenu·e du retour en stock.</p>`,
   );
 }
@@ -108,7 +109,7 @@ const statusEmails: Record<string, { subject: string; body: string }> = {
   },
   "Clôturée": {
     subject: "est clôturée",
-    body: "Merci pour votre confiance — à bientôt sur chien et chat.",
+    body: `Merci pour votre confiance — à bientôt sur ${company.tradeName}.`,
   },
   "Retour en cours": {
     subject: "— retour enregistré",
@@ -133,7 +134,7 @@ export async function sendOrderStatusUpdate(order: { number: string; email: stri
   if (!template) return;
   await sendEmail(
     order.email,
-    `Votre commande ${order.number} ${template.subject} — chien et chat`,
+    `Votre commande ${order.number} ${template.subject} — ${company.tradeName}`,
     `<p>${template.body}</p><p>Suivi : <a href="${process.env.BETTER_AUTH_URL ?? "https://comptoir-store.vercel.app"}/suivi-commande">suivi de commande</a> (numéro ${escapeHtml(order.number)}).</p>`,
   );
 }

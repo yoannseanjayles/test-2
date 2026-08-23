@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { BadgeCheck } from "lucide-react";
 import { Breadcrumb, ProductCard, SectionHeading } from "@/components/commerce";
 import { fetchGuide, fetchGuides, fetchProducts } from "@/lib/api";
+import { isUsage } from "@/lib/catalog";
 import { breadcrumbJsonLd, jsonLdScript } from "@/lib/jsonld";
 import { formatMonth } from "@/lib/format";
 
@@ -35,7 +36,11 @@ export default async function GuidePage({ params }: { params: Promise<Params> })
     { name: guide.title, path: `/guides/${guide.slug}` },
   ];
   const relatedProducts = (
-    await Promise.all(guide.relatedSubcategories.map((sub) => fetchProducts(undefined, sub)))
+    await Promise.all(
+      guide.relatedSubcategories
+        .filter(isUsage)
+        .map((usage) => fetchProducts(undefined, usage)),
+    )
   )
     .flat()
     .sort((a, b) => a.curatedRank - b.curatedRank)
@@ -55,7 +60,7 @@ export default async function GuidePage({ params }: { params: Promise<Params> })
         <p className="text-caption text-bark-700">
           Guide {guide.pillar ? "complet" : "pratique"} · {guide.readingMinutes} min de lecture
         </p>
-        <h1 className="font-display mt-2 text-h1 font-[560] text-bark-900">{guide.title}</h1>
+        <h1 className="font-display mt-2 text-h1 text-bark-900">{guide.title}</h1>
         <p className="mt-4 text-lg leading-relaxed text-bark-700">{guide.excerpt}</p>
 
         {/* E-E-A-T : auteur, relecture pro (H27), date (D-037) */}
@@ -76,14 +81,14 @@ export default async function GuidePage({ params }: { params: Promise<Params> })
             src={guide.cover}
             alt=""
             sizes="(min-width: 768px) 768px, 100vw"
-            className="mt-6 h-auto w-full rounded-lg object-cover"
+            className="mt-6 h-auto w-full object-cover"
             priority
           />
         )}
 
         {guide.content ? (
           <>
-            <nav aria-label="Sommaire" className="mt-8 rounded-lg bg-cream-50 p-5 shadow-card">
+            <nav aria-label="Sommaire" className="mt-8 border border-border bg-cream-50 p-5">
               <p className="text-label text-bark-900">Au sommaire</p>
               <ol className="mt-2 list-decimal space-y-1 pl-5 text-body-sm">
                 {guide.content.map((section) => (
@@ -112,7 +117,7 @@ export default async function GuidePage({ params }: { params: Promise<Params> })
             ))}
           </>
         ) : (
-          <p className="mt-8 rounded-lg bg-cream-300 p-5 text-body-sm text-bark-700">
+          <p className="mt-8 bg-cream-300 p-5 text-body-sm text-bark-700">
             Le contenu complet de ce guide est en cours de rédaction — il suivra
             le même gabarit que nos guides publiés.
           </p>
@@ -124,7 +129,7 @@ export default async function GuidePage({ params }: { params: Promise<Params> })
         <section aria-labelledby="selection-guide" className="mx-auto mt-14 max-w-4xl">
           <SectionHeading id="selection-guide" title="Notre sélection sur le sujet" />
           <p className="mt-1 text-caption text-bark-700">
-            Sélection éditoriale chien et chat — produits testés par l'équipe, sans lien sponsorisé.
+            Modèles du catalogue en rapport avec ce guide — aucun lien sponsorisé.
           </p>
           <ul className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-3 lg:gap-6">
             {relatedProducts.map((product) => (

@@ -86,12 +86,12 @@ export function CheckoutFlow() {
   if (lines.length === 0 && !placing && !payment) {
     return (
       <div className="mx-auto max-w-page px-4 py-16 text-center lg:px-6">
-        <h1 className="font-display text-h1 font-[560] text-bark-900">
+        <h1 className="font-display text-h1 leading-none text-bark-900">
           Votre panier est vide
         </h1>
         <Link
           href="/"
-          className="text-label mt-6 inline-flex min-h-11 items-center rounded-md bg-action px-6 py-3 text-white"
+          className="text-label mt-6 inline-flex min-h-11 items-center bg-action px-6 py-3 text-white"
         >
           Retour à la boutique
         </Link>
@@ -152,7 +152,7 @@ export function CheckoutFlow() {
 
   return (
     <div className="mx-auto max-w-page px-4 py-10 lg:px-6">
-      <h1 className="font-display text-h1 font-[560] text-bark-900">Commande</h1>
+      <h1 className="font-display text-h1 leading-none text-bark-900">Commande</h1>
 
       {/* Stepper : champs perçus < champs réels (D-032) */}
       <ol className="mt-6 flex flex-wrap gap-2" aria-label="Étapes de la commande">
@@ -161,7 +161,7 @@ export function CheckoutFlow() {
             key={label}
             aria-current={step === index ? "step" : undefined}
             className={cn(
-              "text-label flex min-h-9 items-center gap-2 rounded-full px-4",
+              "text-label flex min-h-10 items-center gap-2 px-4",
               step === index && "bg-pine-700 text-white",
               step > index && "bg-pine-100 text-pine-900",
               step < index && "bg-cream-300 text-bark-700",
@@ -176,9 +176,9 @@ export function CheckoutFlow() {
       <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_380px] lg:items-start">
         <div className="flex flex-col gap-6">
           {/* Étape 1 — Coordonnées (invité par défaut, D-014) */}
-          <section className="rounded-lg border border-border bg-cream-50 p-5 lg:p-6">
+          <section className="border border-border bg-cream-50 p-5 lg:p-6">
             <header className="flex items-center justify-between">
-              <h2 className="font-heading text-h3 font-semibold text-bark-900">
+              <h2 className="font-display text-h3 leading-tight text-bark-900">
                 1. Coordonnées
               </h2>
               {step > 0 && !payment && (
@@ -221,12 +221,12 @@ export function CheckoutFlow() {
           {/* Étape 2 — Livraison */}
           <section
             className={cn(
-              "rounded-lg border border-border bg-cream-50 p-5 lg:p-6",
+              "border border-border bg-cream-50 p-5 lg:p-6",
               step < 1 && "opacity-50",
             )}
           >
             <header className="flex items-center justify-between">
-              <h2 className="font-heading text-h3 font-semibold text-bark-900">
+              <h2 className="font-display text-h3 leading-tight text-bark-900">
                 2. Livraison
               </h2>
               {step > 1 && !payment && (
@@ -296,7 +296,7 @@ export function CheckoutFlow() {
                   <span className="text-label text-bark-900">Pays</span>
                   <select
                     {...addressForm.register("country")}
-                    className="h-12 rounded-sm border border-border bg-cream-50 px-4 text-body text-bark-900 focus:border-pine-500"
+                    className="h-12 border border-border bg-cream-50 px-4 text-body text-bark-900 focus:border-pine-500"
                   >
                     {countries.map((country) => (
                       <option key={country}>{country}</option>
@@ -313,7 +313,7 @@ export function CheckoutFlow() {
                         <label
                           key={method.id}
                           className={cn(
-                            "flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-md border px-4 py-2.5",
+                            "flex min-h-12 cursor-pointer items-center justify-between gap-3 border px-4 py-2.5",
                             shippingMethod === method.id
                               ? "border-pine-700 bg-pine-50"
                               : "border-border bg-cream-50 hover:border-bark-300",
@@ -357,11 +357,11 @@ export function CheckoutFlow() {
           {/* Étape 3 — Paiement (Payment Element Stripe, D-033/H20) */}
           <section
             className={cn(
-              "rounded-lg border border-border bg-cream-50 p-5 lg:p-6",
+              "border border-border bg-cream-50 p-5 lg:p-6",
               step < 2 && "opacity-50",
             )}
           >
-            <h2 className="font-heading text-h3 font-semibold text-bark-900">3. Paiement</h2>
+            <h2 className="font-display text-h3 leading-tight text-bark-900">3. Paiement</h2>
             {step === 2 && (
               <div className="mt-4">
                 {payment && stripePromise ? (
@@ -371,7 +371,7 @@ export function CheckoutFlow() {
                 ) : (
                   <>
                     {!publishableKey && (
-                      <div className="rounded-md border border-dashed border-bark-300 bg-cream-100 p-5 text-center">
+                      <div className="border border-dashed border-bark-300 bg-cream-100 p-5 text-center">
                         <Lock aria-hidden="true" className="mx-auto size-5 text-bark-500" strokeWidth={1.75} />
                         <p className="mt-2 text-body-sm text-bark-700">
                           Mode démonstration : aucun paiement réel n'est encaissé.
@@ -425,8 +425,8 @@ export function CheckoutFlow() {
         </div>
 
         {/* Récapitulatif — coûts transparents dès l'entrée (D-004) */}
-        <aside className="rounded-lg bg-cream-50 p-6 shadow-card lg:sticky lg:top-8">
-          <h2 className="font-heading text-h3 font-semibold text-bark-900">Votre commande</h2>
+        <aside className="border border-border bg-cream-50 p-6 lg:sticky lg:top-8">
+          <h2 className="font-display text-h3 leading-tight text-bark-900">Votre commande</h2>
           <ul className="mt-4 divide-y divide-border">
             {lines.map((line) => {
               const product = get(line.slug);

@@ -1,77 +1,127 @@
 import type { StaticImageData } from "next/image";
-import type { Animal } from "@/lib/catalog";
+import type { Brand } from "@/lib/catalog";
 
-import heroHome from "@/media/M-HOME-01.jpeg";
-import heroChat from "@/media/M-HOME-02.jpeg";
-import carteChien from "@/media/M-HOME-03.jpeg";
-import carteChat from "@/media/M-HOME-04.jpeg";
-import carteNac from "@/media/M-HOME-05.jpeg";
-import blocMarque from "@/media/M-HOME-06.jpeg";
-import catColliersHarnaisChien from "@/media/M-CAT-01.jpeg";
-import catCouchagesCoconsChat from "@/media/M-CAT-10.jpeg";
-import bandeauNouveautes from "@/media/M-CAT-19.jpeg";
-import brdAtelier from "@/media/M-BRD-01.jpeg";
-import brdTest from "@/media/M-BRD-03.jpeg";
-import brdConfort from "@/media/M-BRD-04.jpeg";
-import pdpCollierAmbrePackshot from "@/media/M-PDP-collier-cuir-ambre-1.jpeg";
-import pdpCollierAmbrePorte from "@/media/M-PDP-collier-cuir-ambre-5.jpeg";
-import illPanier from "@/media/M-ILL-01.jpeg";
-import ill404 from "@/media/M-ILL-02.jpeg";
-import illRecherche from "@/media/M-ILL-03.jpeg";
-import illConfirmation from "@/media/M-ILL-04.jpeg";
-import illAnimaux from "@/media/M-ILL-05.jpeg";
+import heroHomme from "@/media/hero-homme.webp";
+import heroFemme from "@/media/hero-femme.webp";
+import promoNouveautes from "@/media/promo-nouveautes.webp";
+import promoChaussures from "@/media/promo-chaussures.webp";
+import promoEnsembles from "@/media/promo-ensembles.webp";
+import blocMarque from "@/media/bloc-marque.webp";
+import bandeauNouveautes from "@/media/bandeau-nouveautes.webp";
+
+import marqueOn from "@/media/marque-on.webp";
+import marqueNike from "@/media/marque-nike.webp";
+import marqueSaucony from "@/media/marque-saucony.webp";
+import marqueAsics from "@/media/marque-asics.webp";
+import marqueSalomon from "@/media/marque-salomon.webp";
+
+import banniereOn from "@/media/banniere-on.webp";
+import banniereNike from "@/media/banniere-nike.webp";
+import banniereSaucony from "@/media/banniere-saucony.webp";
+import banniereAsics from "@/media/banniere-asics.webp";
+import banniereSalomon from "@/media/banniere-salomon.webp";
+
+import usageOnRunning from "@/media/usage-on-running.webp";
+
+import etatPanier from "@/media/etat-panier.webp";
+import etatNotFound from "@/media/etat-not-found.webp";
+import etatRecherche from "@/media/etat-recherche.webp";
+import etatConfirmation from "@/media/etat-confirmation.webp";
 
 /**
- * Registre des médias intégrés (inventaire 3.1, lot 1/2 — H32).
- * Les emplacements sans entrée gardent leur placeholder DA jusqu'au lot 2.
- * Les icônes M-ICO reçues en JPEG attendent leur vectorisation (H35) —
- * Lucide reste la source des icônes UI en attendant.
+ * Registre des médias éditoriaux (H32).
+ *
+ * Rempli le 23/08/2026 avec la série couleur (v2) produite d'après les
+ * prompts de `docs/phase-3-medias/3.3-prompts-visuels-azeno.md` : 21 des 26
+ * emplacements, convertis en WebP au gabarit de la série (≈ 1,7 Mo au total,
+ * 174 ko pour le plus lourd) et importés statiquement — `next/image` connaît
+ * donc leurs dimensions, et aucun emplacement ne décale la mise en page.
+ *
+ * Restent sur la série v1, faute de rendu dans le lot : `banniere-salomon`
+ * et les quatre `etat-*`.
+ *
+ * Un emplacement laissé vide continue de rendre un `Placeholder` au bon
+ * ratio : la structure du registre reste la garantie du zéro-CLS.
+ *
+ * ⚠️ Les photos **produit** ne passent pas par ici : elles sont portées par
+ * `Product.colors[].images` (une série par coloris, servie depuis
+ * `public/produits/`), parce que la galerie suit la pastille de coloris.
  */
 
-export const media = {
-  heroHome,
+/** Visuels éditoriaux nommés (hero d'accueil, bandes promo, bloc marque). */
+export const media: Partial<Record<
+  | "heroHomme"
+  | "heroFemme"
+  | "promoNouveautes"
+  | "promoChaussures"
+  | "promoEnsembles"
+  | "blocMarque"
+  | "bandeauNouveautes"
+  | "brdAtelier"
+  | "brdTest"
+  | "brdConfort",
+  StaticImageData
+>> = {
+  heroHomme,
+  heroFemme,
+  promoNouveautes,
+  promoChaussures,
+  promoEnsembles,
   blocMarque,
   bandeauNouveautes,
-  brdAtelier,
-  brdTest,
-  brdConfort,
-} as const;
-
-/** Cartes univers de l'accueil (M-HOME-03/04/05) — série complète. */
-export const universeCards: Partial<Record<Animal, StaticImageData>> = {
-  chien: carteChien,
-  chat: carteChat,
-  nac: carteNac,
 };
 
-/** Bandeaux discrets d'en-tête des pages animal (gabarit A). */
-export const universeBanners: Partial<Record<Animal, StaticImageData>> = {
-  chien: heroHome,
-  chat: heroChat,
+/** Cartes marque de l'accueil, indexées par marque (4:3, mise en situation). */
+export const universeCards: Partial<Record<Brand, StaticImageData>> = {
+  on: marqueOn,
+  nike: marqueNike,
+  saucony: marqueSaucony,
+  asics: marqueAsics,
+  salomon: marqueSalomon,
 };
 
-/** Visuels réels de fiches produit (M-PDP-{slug}-n), par slug. */
+/** Bandeaux d'en-tête des pages marque (21:9, silhouette studio sur fond encre). */
+export const universeBanners: Partial<Record<Brand, StaticImageData>> = {
+  on: banniereOn,
+  nike: banniereNike,
+  saucony: banniereSaucony,
+  asics: banniereAsics,
+  salomon: banniereSalomon,
+};
+
+/**
+ * Visuels de fiche produit hors catalogue (lifestyle, détail matière).
+ * Le catalogue courant n'en a pas : ses photos viennent des coloris.
+ */
 export const productImages: Record<
   string,
   { src: StaticImageData; label: string }[]
-> = {
-  "collier-cuir-ambre": [
-    { src: pdpCollierAmbrePackshot, label: "Packshot — collier et harnais assortis" },
-    { src: pdpCollierAmbrePorte, label: "Porté par un cocker — taille M" },
-  ],
-};
+> = {};
 
-/** Vignettes de sous-catégories (M-CAT-*), indexées `{animal}/{sousCategorie}`. */
+/**
+ * Vignettes de sous-catégories, indexées `{marque}/{usage}`.
+ *
+ * Le running a son visuel propre ; les usages lifestyle et sportstyle
+ * reprennent la mise en situation de leur marque — le catalogue compte six
+ * couples marque/usage pour cinq marques, produire six visuels de plus
+ * n'apporterait rien de neuf à l'écran.
+ */
 export const categoryImages: Record<string, StaticImageData> = {
-  "chien/colliers-harnais": catColliersHarnaisChien,
-  "chat/couchages-cocons": catCouchagesCoconsChat,
+  "on/running": usageOnRunning,
+  "on/lifestyle": marqueOn,
+  "nike/lifestyle": marqueNike,
+  "saucony/lifestyle": marqueSaucony,
+  "asics/sportstyle": marqueAsics,
+  "salomon/sportstyle": marqueSalomon,
 };
 
-/** Illustrations d'états (M-ILL-01…05) — série complète. */
-export const illustrations = {
-  panier: illPanier,
-  notFound: ill404,
-  recherche: illRecherche,
-  confirmation: illConfirmation,
-  animaux: illAnimaux,
-} as const;
+/** Illustrations d'états (panier vide, 404, recherche vide, confirmation). */
+export const illustrations: Partial<Record<
+  "panier" | "notFound" | "recherche" | "confirmation" | "profils",
+  StaticImageData
+>> = {
+  panier: etatPanier,
+  notFound: etatNotFound,
+  recherche: etatRecherche,
+  confirmation: etatConfirmation,
+};

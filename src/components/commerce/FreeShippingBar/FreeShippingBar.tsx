@@ -15,7 +15,7 @@ export function FreeShippingBar({ subtotal }: { subtotal: number }) {
   const progress = Math.min(100, (subtotal / freeShippingCents) * 100);
 
   return (
-    <div className="rounded-md bg-cream-100 p-4">
+    <div className="bg-cream-100 p-4">
       <p aria-live="polite" className="flex items-center gap-2 text-body-sm text-bark-900">
         <Truck aria-hidden="true" className="size-4 shrink-0 text-pine-700" strokeWidth={1.75} />
         {remaining === 0 ? (

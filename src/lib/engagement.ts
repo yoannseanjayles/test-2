@@ -9,6 +9,8 @@ import { RATE_LIMITED_ERROR, rateLimit } from "@/lib/rate-limit";
 /** Alerte restock (H15) — l'e-mail de retour en stock partira via l'admin (Phase 7). */
 export async function subscribeRestock(input: {
   productSlug: string;
+  /** L'alerte porte sur la variante, pas sur la pointure seule (D-054). */
+  color: string;
   size: string;
   email: string;
 }): Promise<{ ok: boolean; error?: string }> {
@@ -21,6 +23,7 @@ export async function subscribeRestock(input: {
   await db.insert(restockAlerts).values({
     id: crypto.randomUUID(),
     productSlug: input.productSlug.slice(0, 80),
+    color: input.color.slice(0, 80),
     size: input.size.slice(0, 40),
     email: parsed.data.email,
   });

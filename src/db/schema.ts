@@ -7,38 +7,50 @@ import {
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
-import type { Gabarit, ProductColor } from "@/lib/catalog/types";
+import type { Brand, Genre, ProductColor, Usage } from "@/lib/catalog/types";
 
 /**
- * Schéma catalogue — 6.1 jalon 1 (modèle 6.0 §2). Les tailles (axe porteur
- * de stock) sont normalisées ; couleurs/détails restent en JSONB tant que
- * l'admin (Phase 7) n'en a pas besoin en colonnes.
+ * Schéma catalogue — 6.1 jalon 1 (modèle 6.0 §2), révisé par le pivot
+ * baskets (D-053).
+ *
+ * L'axe de navigation est la **marque** (D-055) : `products.animal` a
+ * disparu, `products.brand` porte l'axe et n'accepte que les valeurs du
+ * référentiel `lib/catalog/brands`. `subcategory` porte l'usage.
+ *
+ * L'unité de stock est la **variante `(produit, coloris, pointure)`**
+ * (D-054) : `product_sizes` — qui agrégeait deux coloris sur un même stock —
+ * est remplacée par `product_variants`. Couleurs et détails restent en JSONB
+ * tant que l'admin n'en a pas besoin en colonnes.
  */
 
 export const categories = pgTable("categories", {
-  animal: text("animal").$type<"chien" | "chat" | "nac">().notNull(),
-  slug: text("slug").notNull(),
+  brand: text("brand").$type<Brand>().notNull(),
+  slug: text("slug").$type<Usage>().notNull(),
   label: text("label").notNull(),
   description: text("description").notNull(),
-}, (t) => [primaryKey({ columns: [t.animal, t.slug] })]);
+}, (t) => [primaryKey({ columns: [t.brand, t.slug] })]);
 
 export const products = pgTable("products", {
   slug: text("slug").primaryKey(),
   name: text("name").notNull(),
-  brand: text("brand").notNull(),
-  animal: text("animal").$type<"chien" | "chat" | "nac">().notNull(),
-  subcategory: text("subcategory").notNull(),
+  /** Axe de route et facette (D-055) — contraint au référentiel de marques. */
+  brand: text("brand").$type<Brand>().notNull(),
+  /** Usage — niveau sous-catégorie, unique par marque. */
+  subcategory: text("subcategory").$type<Usage>().notNull(),
   price: integer("price").notNull(), // centimes TTC (H18)
   shortDescription: text("short_description").notNull(),
   curatorNote: text("curator_note").notNull(),
   material: text("material").notNull(),
   details: jsonb("details").$type<{ title: string; content: string }[]>().notNull(),
   colors: jsonb("colors").$type<ProductColor[]>().notNull(),
-  gabarits: jsonb("gabarits").$type<Gabarit[]>().notNull(),
+  /** Facette signature (D-056) — remplace le gabarit animal. */
+  genres: jsonb("genres").$type<Genre[]>().notNull(),
+  /** Conseil de chaussant affiché près du sélecteur de pointure (ST-3). */
+  sizeAdvice: text("size_advice"),
   isNew: boolean("is_new").notNull().default(false),
   curatedRank: integer("curated_rank").notNull(),
   pairsWith: jsonb("pairs_with").$type<string[]>().notNull(),
-  tone: text("tone").$type<"cream" | "sage" | "caramel" | "terracotta">().notNull(),
+  tone: text("tone").$type<"chalk" | "graphite" | "sand" | "signal">().notNull(),
   /** Photos fournisseur (import 7.1) — vides pour le catalogue curé (photos statiques). */
   imageUrls: jsonb("image_urls").$type<string[]>().notNull().default([]),
   /** Traçabilité import (7.1) : référence article et page fournisseur d'origine. */
@@ -65,7 +77,7 @@ export const guides = pgTable("guides", {
   slug: text("slug").primaryKey(),
   title: text("title").notNull(),
   excerpt: text("excerpt").notNull(),
-  animal: text("animal").$type<"chien" | "chat" | "nac" | "tous">().notNull(),
+  brand: text("brand").$type<Brand | "tous">().notNull(),
   pillar: boolean("pillar").notNull().default(false),
   readingMinutes: integer("reading_minutes").notNull().default(5),
   relatedSubcategories: jsonb("related_subcategories").$type<string[]>().notNull().default([]),
@@ -73,11 +85,17 @@ export const guides = pgTable("guides", {
   content: jsonb("content").$type<{ heading: string; paragraphs: string[] }[] | null>(),
 });
 
-export const productSizes = pgTable("product_sizes", {
+/**
+ * Unité de stock (D-054) — un coloris en 42 et le même modèle en 42 dans un
+ * autre coloris sont deux lignes distinctes. C'est la clé sur laquelle porte
+ * le décrément conditionnel de `lib/stock.ts` (correctif C-2).
+ */
+export const productVariants = pgTable("product_variants", {
   productSlug: text("product_slug").notNull().references(() => products.slug),
-  name: text("name").notNull(),
+  color: text("color").notNull(),
+  size: text("size").notNull(),
   stock: integer("stock").notNull().default(0),
-}, (t) => [primaryKey({ columns: [t.productSlug, t.name] })]);
+}, (t) => [primaryKey({ columns: [t.productSlug, t.color, t.size] })]);
 
 export const reviews = pgTable("reviews", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),

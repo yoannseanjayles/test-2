@@ -1,5 +1,7 @@
 "use client";
 
+import { company } from "@/lib/company";
+
 /**
  * Dernier filet (audit 2026-08, EL-6) : erreur survenue dans le layout
  * racine lui-même, avant que `error.tsx` ne puisse s'appliquer. Ce composant
@@ -31,7 +33,7 @@ export default function GlobalError({
       >
         <div style={{ maxWidth: "34rem" }}>
           <p style={{ margin: 0, fontSize: ".8rem", letterSpacing: ".08em", textTransform: "uppercase", color: "#6B615A" }}>
-            chien et chat
+            {company.tradeName}
           </p>
           <h1 style={{ margin: ".5rem 0 0", fontSize: "1.9rem", lineHeight: 1.15 }}>
             Le site est momentanément indisponible.

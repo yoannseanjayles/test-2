@@ -20,16 +20,16 @@ export function CartLink() {
     <Link
       href="/panier"
       aria-label={count > 0 ? `Panier, ${count} article${count > 1 ? "s" : ""}` : "Panier"}
-      className="relative flex size-11 items-center justify-center rounded-sm text-bark-900 transition-colors duration-150 hover:bg-cream-300"
+      className="relative flex size-11 items-center justify-center text-bark-900 transition-colors duration-250 hover:text-action"
     >
-      <ShoppingBag aria-hidden="true" className="size-5" />
+      <ShoppingBag aria-hidden="true" className="size-5" strokeWidth={1.75} />
       <span aria-live="polite" className="sr-only">
         {count > 0 ? `${count} article${count > 1 ? "s" : ""} dans le panier` : ""}
       </span>
       {count > 0 && (
         <span
           aria-hidden="true"
-          className="text-caption absolute right-0.5 top-0.5 flex size-5 items-center justify-center rounded-full bg-pine-700 font-semibold text-white"
+          className="text-caption absolute right-0 top-1 flex size-4.5 items-center justify-center rounded-full bg-terracotta-700 font-semibold leading-none text-white"
         >
           {count > 9 ? "9+" : count}
         </span>

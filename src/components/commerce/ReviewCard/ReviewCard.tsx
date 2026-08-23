@@ -6,9 +6,9 @@ import { RatingStars } from "../RatingStars/RatingStars";
 /** Carte avis avec contexte animal (D-025) — partagée Accueil S8 / PDP S8. */
 export function ReviewCard({ review }: { review: Review }) {
   return (
-    <article className="flex flex-col gap-3 rounded-lg bg-cream-50 p-6 shadow-card">
+    <article className="flex h-full flex-col gap-3 border border-border bg-cream-50 p-6">
       <RatingStars rating={review.rating} />
-      <h3 className="font-heading text-body font-semibold text-bark-900">
+      <h3 className="font-display text-h3 leading-tight text-bark-900">
         {review.title}
       </h3>
       <p className="text-body-sm text-bark-700">{review.text}</p>

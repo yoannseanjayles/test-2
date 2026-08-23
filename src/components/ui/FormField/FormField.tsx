@@ -9,18 +9,20 @@ export type FormFieldProps = Omit<
   "id" | "aria-describedby" | "aria-invalid"
 > & {
   label: string;
-  /** Texte d'aide affiché sous le champ (body-small, bark-700). */
+  /** Texte d'aide affiché sous le champ. */
   help?: string;
   /** Message d'erreur : icône + couleur error + liaison aria-describedby (4.1 §6, D-033). */
   error?: string;
+  /** Champ posé sur fond sombre (pied de page, bandeaux encre). */
+  tone?: "light" | "dark";
 };
 
 /**
- * Champ de formulaire du socle — label au-dessus, aide en dessous,
- * erreur annoncée aux lecteurs d'écran. Hauteur 48px, focus pine (4.1 §6).
+ * Champ de formulaire du socle — refonte Azeno : bordure fine à angles vifs,
+ * libellé en capitales espacées, hauteur 48px, focus bleu de marque.
  */
 export const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
-  function FormField({ label, help, error, className, ...props }, ref) {
+  function FormField({ label, help, error, tone = "light", className, ...props }, ref) {
     const id = useId();
     const helpId = `${id}-help`;
     const errorId = `${id}-error`;
@@ -28,10 +30,14 @@ export const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
       [error ? errorId : null, help ? helpId : null]
         .filter(Boolean)
         .join(" ") || undefined;
+    const dark = tone === "dark";
 
     return (
-      <div className={cn("flex flex-col gap-1.5", className)}>
-        <label htmlFor={id} className="text-label text-bark-900">
+      <div className={cn("flex flex-col gap-2", className)}>
+        <label
+          htmlFor={id}
+          className={cn("text-label", dark ? "text-white/80" : "text-bark-900")}
+        >
           {label}
         </label>
         <input
@@ -40,10 +46,12 @@ export const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
           className={cn(
-            "h-12 rounded-sm border bg-cream-50 px-4 text-body text-bark-900",
-            "placeholder:text-bark-500 transition-colors duration-150",
-            "focus:border-pine-500 focus:outline-none focus-visible:outline-2",
-            error ? "border-error" : "border-border",
+            "h-12 border px-4 text-body transition-colors duration-250",
+            "focus:outline-none focus-visible:outline-2",
+            dark
+              ? "border-white/25 bg-transparent text-white placeholder:text-white/45 focus:border-white"
+              : "border-border bg-cream-50 text-bark-900 placeholder:text-bark-500 focus:border-bark-900",
+            error && (dark ? "border-terracotta-300" : "border-error"),
           )}
           {...props}
         />
@@ -51,14 +59,20 @@ export const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
           <p
             id={errorId}
             role="alert"
-            className="flex items-center gap-1.5 text-body-sm text-error"
+            className={cn(
+              "flex items-center gap-1.5 text-body-sm",
+              dark ? "text-terracotta-300" : "text-error",
+            )}
           >
             <CircleAlert aria-hidden="true" className="size-4 shrink-0" />
             {error}
           </p>
         )}
         {help && (
-          <p id={helpId} className="text-body-sm text-bark-700">
+          <p
+            id={helpId}
+            className={cn("text-body-sm", dark ? "text-white/60" : "text-bark-700")}
+          >
             {help}
           </p>
         )}

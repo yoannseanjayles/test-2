@@ -1,11 +1,18 @@
 import { count } from "drizzle-orm";
-import { categories, guides, products, productSizes, reviews } from "./schema";
+import { categories, guides, products, productVariants, reviews } from "./schema";
 import { products as demoProducts, subcategories } from "@/lib/catalog/data";
 import { guideSeed } from "@/lib/guides";
 
 /**
- * Seed du catalogue démo (H33) — source unique : les données de la Phase 5.
+ * Seed du catalogue (H33) — source unique : `lib/catalog/data`.
  * Idempotent : ne fait rien si la base contient déjà des produits.
+ *
+ * ⚠️ Cette idempotence est un piège sur une base persistante (audit pivot,
+ * OU-2) : remplacer `data.ts` ne produit aucun effet sur une base déjà
+ * peuplée. En PGlite (dev, CI, build) la base est reconstruite à chaque
+ * démarrage et l'écart ne se voit pas. La bascule d'un catalogue à l'autre
+ * passe par une branche Neon neuve, pas par une purge manuelle — et la garde
+ * de schéma de `db/index.ts` refuse désormais de démarrer sur l'ancien.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function seedIfEmpty(db: any): Promise<void> {
@@ -17,7 +24,7 @@ export async function seedIfEmpty(db: any): Promise<void> {
       slug: g.slug,
       title: g.title,
       excerpt: g.excerpt,
-      animal: g.animal,
+      brand: g.brand,
       pillar: g.pillar,
       readingMinutes: g.readingMinutes,
       relatedSubcategories: g.relatedSubcategories,
@@ -30,7 +37,7 @@ export async function seedIfEmpty(db: any): Promise<void> {
   if (existing && existing.n > 0) return;
 
   await db.insert(categories).values(subcategories.map((s) => ({
-    animal: s.animal,
+    brand: s.brand,
     slug: s.slug,
     label: s.label,
     description: s.description,
@@ -40,7 +47,6 @@ export async function seedIfEmpty(db: any): Promise<void> {
     slug: p.slug,
     name: p.name,
     brand: p.brand,
-    animal: p.animal,
     subcategory: p.subcategory,
     price: p.price,
     shortDescription: p.shortDescription,
@@ -48,18 +54,28 @@ export async function seedIfEmpty(db: any): Promise<void> {
     material: p.material,
     details: p.details,
     colors: p.colors,
-    gabarits: p.gabarits,
+    genres: p.genres,
+    sizeAdvice: p.sizeAdvice ?? null,
     isNew: p.isNew,
     curatedRank: p.curatedRank,
     pairsWith: p.pairsWith,
     tone: p.tone,
   })));
 
-  await db.insert(productSizes).values(
-    demoProducts.flatMap((p) =>
-      p.sizes.map((s) => ({ productSlug: p.slug, name: s.name, stock: s.stock })),
-    ),
+  // Variantes (D-054) : une ligne de stock par (produit, coloris, pointure).
+  // Le catalogue en compte plus d'un millier — insérées par lots, le driver
+  // HTTP Neon plafonnant la taille d'une requête.
+  const allVariants = demoProducts.flatMap((p) =>
+    p.variants.map((v) => ({
+      productSlug: p.slug,
+      color: v.color,
+      size: v.size,
+      stock: v.stock,
+    })),
   );
+  for (let i = 0; i < allVariants.length; i += 200) {
+    await db.insert(productVariants).values(allVariants.slice(i, i + 200));
+  }
 
   const allReviews = demoProducts.flatMap((p) =>
     p.reviews.map((r) => ({

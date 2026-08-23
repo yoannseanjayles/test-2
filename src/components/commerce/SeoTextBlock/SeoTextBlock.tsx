@@ -12,7 +12,7 @@ type SeoTextBlockProps = {
 export function SeoTextBlock({ title, paragraphs, related }: SeoTextBlockProps) {
   return (
     <details className="group mt-16 border-t border-border pt-8">
-      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 font-heading text-h3 font-semibold text-bark-900 [&::-webkit-details-marker]:hidden">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 font-display text-h3 leading-tight text-bark-900 [&::-webkit-details-marker]:hidden">
         {title}
         <ChevronDown
           aria-hidden="true"
@@ -20,8 +20,10 @@ export function SeoTextBlock({ title, paragraphs, related }: SeoTextBlockProps) 
         />
       </summary>
       <div className="max-w-3xl pb-4 pt-4">
-        {paragraphs.map((paragraph) => (
-          <p key={paragraph.slice(0, 32)} className="mt-3 text-body-sm text-bark-700 first:mt-0">
+        {paragraphs.map((paragraph, index) => (
+          // Clé par position : deux paragraphes peuvent partager leurs premiers
+          // caractères (même accroche de marque), et la liste est statique.
+          <p key={index} className="mt-3 text-body-sm text-bark-700 first:mt-0">
             {paragraph}
           </p>
         ))}
@@ -31,7 +33,7 @@ export function SeoTextBlock({ title, paragraphs, related }: SeoTextBlockProps) 
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className="text-label text-action transition-colors duration-150 hover:text-action-hover"
+                  className="text-label border-b border-bark-900 pb-1 text-bark-900 transition-colors duration-250 hover:border-action hover:text-action"
                 >
                   {link.label}
                 </Link>

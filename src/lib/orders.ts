@@ -89,9 +89,16 @@ export async function placeOrder(input: {
   const shipping = shippingPrice(input.shippingMethod, subtotal, await getShippingConfig());
   const total = subtotal + shipping;
 
-  // Réservation de stock (audit C-2) : échoue si une taille n'existe pas ou
-  // n'a plus assez d'unités — restituée si la suite échoue.
-  const stockLines = input.lines.map((l) => ({ slug: l.slug, size: l.size, quantity: l.quantity }));
+  // Réservation de stock (audit C-2) : échoue si la variante n'existe pas ou
+  // n'a plus assez d'unités — restituée si la suite échoue. Depuis D-054 la
+  // clé inclut le coloris : sans lui, deux coloris puisaient dans le même
+  // stock et la commande enregistrait une couleur jamais réservée.
+  const stockLines = input.lines.map((l) => ({
+    slug: l.slug,
+    color: l.color,
+    size: l.size,
+    quantity: l.quantity,
+  }));
   const reservation = await reserveStock(stockLines);
   if (!reservation.ok) {
     const name = bySlug.get(/« ([^»]+) »/.exec(reservation.error)?.[1] ?? "")?.name;

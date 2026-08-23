@@ -4,7 +4,7 @@ import { AnnouncementBar } from "@/components/layout/AnnouncementBar/Announcemen
 import { Header } from "@/components/layout/Header/Header";
 import { MobileNav } from "@/components/layout/MobileNav/MobileNav";
 import { Footer } from "@/components/layout/Footer/Footer";
-import { animalCategories } from "@/lib/navigation";
+import { brandCategories } from "@/lib/navigation";
 import { illustrations } from "@/lib/media";
 
 /** 404 enrichie (sitemap 1.2 §2.7) : illustration M-ILL-02, recherche et catégories populaires. */
@@ -17,7 +17,7 @@ export default function NotFound() {
         <div className="mx-auto grid max-w-page gap-10 px-4 py-12 lg:grid-cols-2 lg:items-center lg:px-6 lg:py-20">
           <div>
             <p className="text-label text-bark-700">Erreur 404</p>
-            <h1 className="font-display mt-2 text-h1 font-[560] text-bark-900">
+            <h1 className="font-display mt-2 text-h1 text-bark-900">
               Quelqu'un a caché cette page.
             </h1>
             <p className="mt-4 max-w-lg text-body text-bark-700">
@@ -27,27 +27,29 @@ export default function NotFound() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="/recherche"
-                className="text-label inline-flex min-h-11 items-center rounded-md bg-action px-6 py-3 text-white transition duration-150 hover:bg-action-hover"
+                className="text-label inline-flex min-h-12 items-center bg-action px-8 py-3 text-white transition-colors duration-250 hover:bg-bark-900"
               >
                 Rechercher un produit
               </Link>
-              {animalCategories.map((category) => (
+              {brandCategories.map((category) => (
                 <Link
                   key={category.href}
                   href={category.href}
-                  className="text-label inline-flex min-h-11 items-center rounded-md border-[1.5px] border-action px-5 py-3 text-action transition duration-150 hover:bg-pine-50"
+                  className="text-label inline-flex min-h-12 items-center border border-bark-900 px-6 py-3 text-bark-900 transition-colors duration-250 hover:bg-bark-900 hover:text-white"
                 >
                   {category.label}
                 </Link>
               ))}
             </div>
           </div>
-          <Image
-            src={illustrations.notFound}
-            alt=""
-            sizes="(min-width: 1024px) 50vw, 100vw"
-            className="mx-auto h-auto w-full max-w-md rounded-lg"
-          />
+          {illustrations.notFound && (
+            <Image
+              src={illustrations.notFound}
+              alt=""
+              sizes="(min-width: 1024px) 50vw, 100vw"
+              className="mx-auto h-auto w-full max-w-md"
+            />
+          )}
         </div>
       </main>
       <Footer />

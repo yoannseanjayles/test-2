@@ -17,14 +17,14 @@ export function ResetPasswordForm() {
   if (!token || searchParams.get("error")) {
     return (
       <div className="mx-auto max-w-md px-4 py-12 text-center lg:py-16">
-        <h1 className="font-display text-h1 font-[560] text-bark-900">Lien invalide ou expiré</h1>
+        <h1 className="font-display text-h1 leading-none text-bark-900">Lien invalide ou expiré</h1>
         <p className="mt-3 text-body-sm text-bark-700">
           Ce lien de réinitialisation n'est plus valable. Refaites une demande
           depuis l'écran de connexion.
         </p>
         <Link
           href="/compte"
-          className="text-label mt-6 inline-flex min-h-11 items-center rounded-md bg-action px-6 py-3 text-white"
+          className="text-label mt-6 inline-flex min-h-11 items-center bg-action px-6 py-3 text-white"
         >
           Retour à la connexion
         </Link>
@@ -34,7 +34,7 @@ export function ResetPasswordForm() {
 
   return (
     <div className="mx-auto max-w-md px-4 py-12 lg:py-16">
-      <h1 className="font-display text-h1 font-[560] text-bark-900">Nouveau mot de passe</h1>
+      <h1 className="font-display text-h1 leading-none text-bark-900">Nouveau mot de passe</h1>
       <form
         className="mt-6 flex flex-col gap-4"
         onSubmit={async (event) => {

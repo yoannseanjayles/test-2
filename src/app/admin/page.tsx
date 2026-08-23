@@ -45,6 +45,8 @@ import { parseLines, parseSpecs, serializeSpecs } from "@/lib/import-fields";
 import { shippingMethods, type ShippingConfig } from "@/lib/shipping";
 import { orderTransitions } from "@/lib/account";
 import { subcategories } from "@/lib/catalog/data";
+import { brandLabels, brands, formatSize, sizesForBrand, type Brand, type Usage } from "@/lib/catalog";
+import { company, STORAGE_PREFIX } from "@/lib/company";
 import { formatPrice } from "@/lib/format";
 import { Badge, Button, FormField } from "@/components/ui";
 
@@ -131,7 +133,7 @@ export default function AdminPage() {
       <header className="border-b border-border bg-cream-50">
         <div className="mx-auto flex max-w-page flex-wrap items-center justify-between gap-3 px-4 py-4 lg:px-6">
           <div className="flex items-baseline gap-3">
-            <span className="font-display text-xl font-semibold text-bark-900">chien et chat</span>
+            <span className="font-display text-xl font-semibold text-bark-900">{company.tradeName}</span>
             <span className="text-caption rounded-full bg-pine-700 px-2.5 py-0.5 text-cream-50">Back-office</span>
           </div>
           <div className="flex items-center gap-4">
@@ -167,8 +169,8 @@ export default function AdminPage() {
                   aria-current={active === id ? "page" : undefined}
                   className={
                     active === id
-                      ? "text-label flex min-h-11 w-full items-center gap-2.5 rounded-md bg-pine-700 px-4 text-white"
-                      : "text-label flex min-h-11 w-full items-center gap-2.5 rounded-md px-4 text-bark-700 transition-colors duration-150 hover:bg-cream-300 hover:text-bark-900"
+                      ? "text-label flex min-h-11 w-full items-center gap-2.5 bg-pine-700 px-4 text-white"
+                      : "text-label flex min-h-11 w-full items-center gap-2.5 px-4 text-bark-700 transition-colors duration-150 hover:bg-cream-300 hover:text-bark-900"
                   }
                 >
                   <Icon aria-hidden="true" className="size-4 shrink-0" strokeWidth={1.75} />
@@ -196,8 +198,8 @@ export default function AdminPage() {
 function Gate({ children }: { children: ReactNode }) {
   return (
     <div className="mx-auto max-w-page px-4 py-10 lg:px-6">
-      <h1 className="font-display text-h1 font-[560] text-bark-900">Back-office</h1>
-      <div className="mt-8 max-w-xl rounded-lg bg-cream-50 p-6 shadow-card">{children}</div>
+      <h1 className="font-display text-h1 leading-none text-bark-900">Back-office</h1>
+      <div className="mt-8 max-w-xl border border-border bg-cream-50 p-6">{children}</div>
     </div>
   );
 }
@@ -207,7 +209,7 @@ function SectionHeader({ title, description, action }: { title: string; descript
   return (
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="font-display text-h2 font-[560] text-bark-900">{title}</h1>
+        <h1 className="font-display text-h2 leading-none text-bark-900">{title}</h1>
         {description && <p className="mt-1 max-w-2xl text-body-sm text-bark-700">{description}</p>}
       </div>
       {action}
@@ -271,13 +273,13 @@ function Dashboard({ admin, go }: { admin: AdminUser; go: (s: SectionId) => void
             key={card.label}
             type="button"
             onClick={() => go(card.section)}
-            className="group rounded-lg bg-cream-50 p-5 text-left shadow-card transition-shadow duration-150 hover:shadow-lg focus-visible:outline-2"
+            className="group border border-border bg-cream-50 p-5 text-left transition-colors duration-250 hover:border-bark-900 focus-visible:outline-2"
           >
             <p className="text-label flex items-center justify-between text-bark-700">
               {card.label}
               <ArrowUpRight aria-hidden="true" className="size-4 text-bark-300 transition-colors duration-150 group-hover:text-action" />
             </p>
-            <p className={`font-display mt-2 text-4xl font-[560] ${card.alert ? "text-terracotta-700" : "text-bark-900"}`}>
+            <p className={`font-display mt-2 text-4xl ${card.alert ? "text-terracotta-700" : "text-bark-900"}`}>
               {card.value}
             </p>
             {card.hint && <p className="text-caption mt-1 text-bark-500">{card.hint}</p>}
@@ -310,7 +312,7 @@ function EditorialSection() {
   }
 
   const emptyGuide: AdminGuideDto = {
-    slug: "", title: "", excerpt: "", animal: "tous", pillar: false,
+    slug: "", title: "", excerpt: "", brand: "tous", pillar: false,
     readingMinutes: 5, relatedSubcategories: [], contentText: "",
   };
 
@@ -330,7 +332,7 @@ function EditorialSection() {
           onDone={() => { setEditing(null); setCreating(false); refresh(); }}
         />
       ) : (
-        <div className="overflow-x-auto rounded-lg bg-cream-50 shadow-card">
+        <div className="overflow-x-auto border border-border bg-cream-50">
           <table className="w-full border-collapse text-body-sm">
             <thead>
               <tr className="border-b border-border text-left">
@@ -343,7 +345,7 @@ function EditorialSection() {
               {guides.map((g) => (
                 <tr key={g.slug} className="border-b border-border last:border-0">
                   <td className="px-4 py-2.5 font-semibold text-bark-900">{g.title}</td>
-                  <td className="px-4 py-2.5">{g.animal}</td>
+                  <td className="px-4 py-2.5">{g.brand === "tous" ? "Toutes marques" : brandLabels[g.brand]}</td>
                   <td className="px-4 py-2.5">{g.pillar ? "Pilier" : "Satellite"}</td>
                   <td className="px-4 py-2.5">{g.readingMinutes} min</td>
                   <td className="px-4 py-2.5">
@@ -361,8 +363,8 @@ function EditorialSection() {
           </table>
         </div>
       )}
-      <div className="rounded-lg bg-cream-50 p-5 shadow-card">
-        <h3 className="font-heading text-h3 font-semibold text-bark-900">Newsletter</h3>
+      <div className="border border-border bg-cream-50 p-5">
+        <h3 className="font-display text-h3 leading-tight text-bark-900">Newsletter</h3>
         <p className="mt-1 text-body-sm text-bark-700">
           {subscribers === null ? "…" : `${subscribers} inscrit${subscribers > 1 ? "s" : ""}`} —
           consentements horodatés (RGPD).
@@ -375,7 +377,7 @@ function EditorialSection() {
             const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
             const a = document.createElement("a");
             a.href = url;
-            a.download = "newsletter-chien-et-chat.csv";
+            a.download = `newsletter-${STORAGE_PREFIX}.csv`;
             a.click();
             URL.revokeObjectURL(url);
             setFeedback(`Export téléchargé (${total} inscrit${total > 1 ? "s" : ""}).`);
@@ -396,7 +398,7 @@ function GuideForm({ guide, isNew, onDone }: { guide: AdminGuideDto; isNew: bool
 
   return (
     <form
-      className="rounded-lg bg-cream-50 p-6 shadow-card"
+      className="border border-border bg-cream-50 p-6"
       onSubmit={async (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
@@ -405,7 +407,7 @@ function GuideForm({ guide, isNew, onDone }: { guide: AdminGuideDto; isNew: bool
           slug: isNew ? String(data.get("slug")) : guide.slug,
           title: String(data.get("title")),
           excerpt: String(data.get("excerpt")),
-          animal: data.get("animal") as AdminGuideDto["animal"],
+          brand: data.get("marque") as AdminGuideDto["brand"],
           pillar: data.get("pillar") === "on",
           readingMinutes: Number(data.get("readingMinutes")),
           contentText: String(data.get("content")),
@@ -416,7 +418,7 @@ function GuideForm({ guide, isNew, onDone }: { guide: AdminGuideDto; isNew: bool
         onDone();
       }}
     >
-      <h3 className="font-heading text-h3 font-semibold text-bark-900">
+      <h3 className="font-display text-h3 leading-tight text-bark-900">
         {isNew ? "Nouveau guide" : guide.title}
       </h3>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -427,10 +429,11 @@ function GuideForm({ guide, isNew, onDone }: { guide: AdminGuideDto; isNew: bool
           <FormField label="Slug (fixe — URL publiée)" name="slug-disabled" defaultValue={guide.slug} disabled />
         )}
         <label className="flex flex-col gap-1.5">
-          <span className="text-label text-bark-900">Univers</span>
-          <select name="animal" defaultValue={guide.animal}
-            className="h-12 rounded-sm border border-border bg-cream-50 px-4 text-body text-bark-900">
-            {["tous", "chien", "chat", "nac"].map((a) => <option key={a} value={a}>{a}</option>)}
+          <span className="text-label text-bark-900">Marque</span>
+          <select name="marque" defaultValue={guide.brand}
+            className="h-12 border border-border bg-cream-50 px-4 text-body text-bark-900">
+            <option value="tous">Toutes marques</option>
+            {brands.map((b) => <option key={b.slug} value={b.slug}>{b.label}</option>)}
           </select>
         </label>
         <FormField label="Temps de lecture (min)" name="readingMinutes" type="number" min="1" max="60"
@@ -443,14 +446,14 @@ function GuideForm({ guide, isNew, onDone }: { guide: AdminGuideDto; isNew: bool
       <label className="mt-4 flex flex-col gap-1.5">
         <span className="text-label text-bark-900">Accroche</span>
         <textarea name="excerpt" rows={2} defaultValue={guide.excerpt} required
-          className="rounded-sm border border-border bg-cream-50 p-4 text-body text-bark-900 focus:border-pine-500" />
+          className="border border-border bg-cream-50 p-4 text-body text-bark-900 focus:border-pine-500" />
       </label>
       <label className="mt-4 flex flex-col gap-1.5">
         <span className="text-label text-bark-900">
           Contenu — un titre de section par ligne « ## », paragraphes séparés par une ligne vide
         </span>
         <textarea name="content" rows={14} defaultValue={guide.contentText}
-          className="rounded-sm border border-border bg-cream-50 p-4 font-mono text-body-sm text-bark-900 focus:border-pine-500" />
+          className="border border-border bg-cream-50 p-4 font-mono text-body-sm text-bark-900 focus:border-pine-500" />
       </label>
       <div className="mt-5 flex flex-wrap items-center gap-3">
         <Button type="submit" loading={saving}>{isNew ? "Créer le guide" : "Enregistrer"}</Button>
@@ -467,7 +470,7 @@ function GuideForm({ guide, isNew, onDone }: { guide: AdminGuideDto; isNew: bool
               if (!result.ok) { setError(result.error ?? "Erreur."); return; }
               onDone();
             }}
-            className="text-label ml-auto min-h-11 rounded-md px-4 text-error transition-colors duration-150 hover:bg-error/10 disabled:opacity-50"
+            className="text-label ml-auto min-h-11 px-4 text-error transition-colors duration-150 hover:bg-error/10 disabled:opacity-50"
           >
             {deleting ? "Suppression…" : "Supprimer ce guide"}
           </button>
@@ -499,7 +502,7 @@ function SettingsSection() {
         description="Config livraison (D-039) : seuil de livraison offerte et tarifs des 3 modes — appliqués au tunnel, au panier, au bandeau et aux pages légales."
       />
       <form
-        className="mt-4 max-w-2xl rounded-lg bg-cream-50 p-6 shadow-card"
+        className="mt-4 max-w-2xl border border-border bg-cream-50 p-6"
         onSubmit={async (event) => {
           event.preventDefault();
           const data = new FormData(event.currentTarget);
@@ -622,14 +625,14 @@ function OrdersSection() {
         {feedback}
       </p>
       {visible.length === 0 ? (
-        <div className="rounded-lg bg-cream-50 p-8 text-center shadow-card">
+        <div className="border border-border bg-cream-50 p-8 text-center">
           <PackageOpen aria-hidden="true" className="mx-auto size-8 text-bark-300" strokeWidth={1.5} />
           <p className="mt-3 text-body-sm text-bark-700">
             {ordersList.length === 0 ? "Aucune commande pour l'instant." : "Aucune commande dans ce filtre."}
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg bg-cream-50 shadow-card">
+        <div className="overflow-x-auto border border-border bg-cream-50">
           <table className="w-full border-collapse text-body-sm">
             <thead>
               <tr className="border-b border-border text-left">
@@ -764,10 +767,10 @@ function Catalogue() {
   const visible = items.filter((p) => {
     // La corbeille est un filtre exclusif : archivés d'un côté, actifs de l'autre.
     if (p.archived !== (stockFilter === "archived")) return false;
-    const stock = p.sizes.reduce((a, s) => a + s.stock, 0);
+    const stock = p.variants.reduce((a, v) => a + v.stock, 0);
     if (!activeStock.match(stock)) return false;
     if (!q) return true;
-    return `${p.name} ${p.brand} ${p.animal} ${p.subcategory} ${p.supplierRef ?? ""}`.toLowerCase().includes(q);
+    return `${p.name} ${p.brand} ${p.subcategory} ${p.supplierRef ?? ""}`.toLowerCase().includes(q);
   });
 
   return (
@@ -783,7 +786,7 @@ function Catalogue() {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Rechercher (nom, marque, univers, réf.)…"
           aria-label="Rechercher un produit"
-          className="h-11 w-full max-w-sm rounded-sm border border-border bg-cream-50 px-4 text-body-sm text-bark-900 placeholder:text-bark-500 focus:border-pine-500 focus:outline-none"
+          className="h-11 w-full max-w-sm border border-border bg-cream-50 px-4 text-body-sm text-bark-900 placeholder:text-bark-500 focus:border-pine-500 focus:outline-none"
         />
         <div className="flex gap-2" role="group" aria-label="Filtrer par stock">
           {STOCK_FILTERS.map((f) => (
@@ -804,12 +807,12 @@ function Catalogue() {
         </div>
       </div>
       {visible.length === 0 ? (
-        <div className="rounded-lg bg-cream-50 p-8 text-center shadow-card">
+        <div className="border border-border bg-cream-50 p-8 text-center">
           <Tags aria-hidden="true" className="mx-auto size-8 text-bark-300" strokeWidth={1.5} />
           <p className="mt-3 text-body-sm text-bark-700">Aucun produit ne correspond à cette recherche.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg bg-cream-50 shadow-card">
+        <div className="overflow-x-auto border border-border bg-cream-50">
           <table className="w-full border-collapse text-body-sm">
             <thead>
               <tr className="border-b border-border text-left">
@@ -820,14 +823,14 @@ function Catalogue() {
             </thead>
             <tbody className="text-bark-700">
               {visible.map((p) => {
-                const stock = p.sizes.reduce((a, s) => a + s.stock, 0);
+                const stock = p.variants.reduce((a, v) => a + v.stock, 0);
                 return (
                   <tr key={p.slug} className="border-b border-border transition-colors duration-150 last:border-0 hover:bg-cream-100/70">
                     <td className="px-4 py-2.5">
                       <span className="font-semibold text-bark-900">{p.name}</span>
                       {p.supplierRef && <span className="text-caption block text-bark-500">import · réf. {p.supplierRef}</span>}
                     </td>
-                    <td className="px-4 py-2.5">{p.animal} / {p.subcategory}</td>
+                    <td className="px-4 py-2.5">{p.brand} / {p.subcategory}</td>
                     <td className="text-price px-4 py-2.5">{formatPrice(p.price)}</td>
                     <td className="px-4 py-2.5">{p.curatedRank}</td>
                     <td className={`px-4 py-2.5 ${stock === 0 ? "font-semibold text-error" : stock <= 5 ? "text-warning" : ""}`}>
@@ -860,7 +863,7 @@ function EditForm({ product, onDone }: { product: AdminProduct; onDone: () => vo
 
   return (
     <form
-      className="max-w-2xl rounded-lg bg-cream-50 p-6 shadow-card"
+      className="max-w-2xl border border-border bg-cream-50 p-6"
       onSubmit={async (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
@@ -871,9 +874,8 @@ function EditForm({ product, onDone }: { product: AdminProduct; onDone: () => vo
           curatedRank: Number(data.get("rank")),
           isNew: data.get("isNew") === "on",
           curatorNote: String(data.get("note") ?? ""),
-          stocks: product.sizes.map((s) => ({ name: s.name, stock: Number(data.get(`stock-${s.name}`)) })),
+          ...readVariantForm(data),
           name: String(data.get("name")),
-          brand: String(data.get("brand")),
           shortDescription: String(data.get("description")),
           features: parseLines(String(data.get("features"))),
           specifications: parseSpecs(String(data.get("specs"))),
@@ -888,7 +890,7 @@ function EditForm({ product, onDone }: { product: AdminProduct; onDone: () => vo
         onDone();
       }}
     >
-      <h3 className="font-heading text-h3 font-semibold text-bark-900">{product.name}</h3>
+      <h3 className="font-display text-h3 leading-tight text-bark-900">{product.name}</h3>
       {product.supplierRef && (
         <p className="text-caption mt-1 text-bark-700">
           Produit importé — réf. AliExpress {product.supplierRef}
@@ -911,18 +913,18 @@ function EditForm({ product, onDone }: { product: AdminProduct; onDone: () => vo
       <label className="mt-4 flex flex-col gap-1.5">
         <span className="text-label text-bark-900">Accroche</span>
         <textarea name="description" rows={2} defaultValue={product.shortDescription} required
-          className="rounded-sm border border-border bg-cream-50 p-4 text-body text-bark-900 focus:border-pine-500" />
+          className="border border-border bg-cream-50 p-4 text-body text-bark-900 focus:border-pine-500" />
       </label>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <label className="flex flex-col gap-1.5">
           <span className="text-label text-bark-900">Points clés (un par ligne)</span>
           <textarea name="features" rows={4} defaultValue={product.features.join("\n")}
-            className="rounded-sm border border-border bg-cream-50 p-4 text-body-sm text-bark-900 focus:border-pine-500" />
+            className="border border-border bg-cream-50 p-4 text-body-sm text-bark-900 focus:border-pine-500" />
         </label>
         <label className="flex flex-col gap-1.5">
           <span className="text-label text-bark-900">Caractéristiques (« libellé : valeur »)</span>
           <textarea name="specs" rows={4} defaultValue={serializeSpecs(product.specifications)}
-            className="rounded-sm border border-border bg-cream-50 p-4 text-body-sm text-bark-900 focus:border-pine-500" />
+            className="border border-border bg-cream-50 p-4 text-body-sm text-bark-900 focus:border-pine-500" />
         </label>
       </div>
       <fieldset className="mt-4">
@@ -942,14 +944,7 @@ function EditForm({ product, onDone }: { product: AdminProduct; onDone: () => vo
           </label>
         </div>
       </fieldset>
-      <fieldset className="mt-4">
-        <legend className="text-label text-bark-900">Stocks par taille</legend>
-        <div className="mt-2 grid gap-4 sm:grid-cols-3">
-          {product.sizes.map((s) => (
-            <FormField key={s.name} label={s.name} name={`stock-${s.name}`} type="number" min="0" defaultValue={String(s.stock)} required />
-          ))}
-        </div>
-      </fieldset>
+      <VariantGrid product={product} />
       <label className="mt-4 flex items-center gap-3 text-body-sm text-bark-900">
         <input type="checkbox" name="isNew" defaultChecked={product.isNew} className="size-4 accent-pine-700" />
         Badge « Nouveau »
@@ -961,7 +956,7 @@ function EditForm({ product, onDone }: { product: AdminProduct; onDone: () => vo
           rows={3}
           defaultValue={product.curatorNote}
           required
-          className="rounded-sm border border-border bg-cream-50 p-4 text-body text-bark-900 focus:border-pine-500"
+          className="border border-border bg-cream-50 p-4 text-body text-bark-900 focus:border-pine-500"
         />
       </label>
       <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -979,7 +974,7 @@ function EditForm({ product, onDone }: { product: AdminProduct; onDone: () => vo
                 if (!result.ok) { setError(result.error ?? "Erreur."); return; }
                 onDone();
               }}
-              className="text-label ml-auto min-h-11 rounded-md px-4 text-action transition-colors duration-150 hover:bg-pine-50 disabled:opacity-50"
+              className="text-label ml-auto min-h-11 px-4 text-action transition-colors duration-150 hover:bg-pine-50 disabled:opacity-50"
             >
               Restaurer en boutique
             </button>
@@ -998,7 +993,7 @@ function EditForm({ product, onDone }: { product: AdminProduct; onDone: () => vo
                 if (!result.ok) { setError(result.error ?? "Erreur."); return; }
                 onDone();
               }}
-              className="text-label min-h-11 rounded-md px-4 text-error transition-colors duration-150 hover:bg-error/10 disabled:opacity-50"
+              className="text-label min-h-11 px-4 text-error transition-colors duration-150 hover:bg-error/10 disabled:opacity-50"
             >
               {deleting ? "…" : "Supprimer définitivement"}
             </button>
@@ -1019,7 +1014,7 @@ function EditForm({ product, onDone }: { product: AdminProduct; onDone: () => vo
               if (!result.ok) { setError(result.error ?? "Erreur."); return; }
               onDone();
             }}
-            className="text-label ml-auto min-h-11 rounded-md px-4 text-error transition-colors duration-150 hover:bg-error/10 disabled:opacity-50"
+            className="text-label ml-auto min-h-11 px-4 text-error transition-colors duration-150 hover:bg-error/10 disabled:opacity-50"
           >
             {deleting ? "…" : "Mettre à la corbeille"}
           </button>
@@ -1058,7 +1053,7 @@ function ImportSection() {
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={(e) => { e.preventDefault(); setDragging(false); if (e.dataTransfer.files.length) void handleFiles(e.dataTransfer.files); }}
-        className={`mt-5 flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 text-center transition-colors duration-150 ${dragging ? "border-pine-700 bg-pine-50" : "border-bark-300 bg-cream-50"}`}
+        className={`mt-5 flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 border-2 border-dashed p-8 text-center transition-colors duration-150 ${dragging ? "border-pine-700 bg-pine-50" : "border-bark-300 bg-cream-50"}`}
       >
         <span className="text-body text-bark-900">
           {busy ? "Analyse en cours…" : "Glissez-déposez vos pages produit ici"}
@@ -1085,7 +1080,7 @@ function ImportSection() {
 
       {drafts.length > 0 && (
         <div className="mt-8 flex flex-col gap-4">
-          <h3 className="font-heading text-h3 font-semibold text-bark-900">
+          <h3 className="font-display text-h3 leading-tight text-bark-900">
             Brouillons à compléter ({drafts.length})
           </h3>
           {drafts.map((d) => (
@@ -1105,7 +1100,7 @@ function DraftCard({ draft, onPublished }: { draft: DraftDto; onPublished: () =>
     .replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 50);
 
   return (
-    <div className="rounded-lg bg-cream-50 p-5 shadow-card">
+    <div className="border border-border bg-cream-50 p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="font-heading max-w-2xl text-body font-semibold text-bark-900">{draft.title}</p>
         <Badge variant="stock">Brouillon</Badge>
@@ -1133,7 +1128,7 @@ function DraftCard({ draft, onPublished }: { draft: DraftDto; onPublished: () =>
             <li key={src}>
               {/* Vignettes fournisseur brutes — <img> volontaire (aperçu admin, hors optimiseur). */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" className="h-16 w-16 rounded-sm border border-border object-cover" loading="lazy" />
+              <img src={src} alt="" className="h-16 w-16 border border-border object-cover" loading="lazy" />
             </li>
           ))}
         </ul>
@@ -1153,12 +1148,11 @@ function DraftCard({ draft, onPublished }: { draft: DraftDto; onPublished: () =>
               draftId: draft.id,
               name: String(data.get("name")),
               slug: String(data.get("slug")),
-              animal: data.get("animal") as "chien" | "chat" | "nac",
-              subcategory: String(data.get("subcategory")),
+              brand: data.get("marque") as Brand,
+              subcategory: String(data.get("subcategory")) as Usage,
               price: Math.round(Number(data.get("price")) * 100),
               shortDescription: String(data.get("description")),
               curatorNote: String(data.get("note")),
-              brand: String(data.get("brand")),
               colorNames: parseLines(String(data.get("colors"))),
               features: parseLines(String(data.get("features"))),
               specifications: parseSpecs(String(data.get("specs"))),
@@ -1177,20 +1171,26 @@ function DraftCard({ draft, onPublished }: { draft: DraftDto; onPublished: () =>
             <FormField label="Nom (réécrit en français)" name="name" defaultValue={draft.title.slice(0, 80)} required />
             <FormField label="Slug" name="slug" defaultValue={suggestedSlug} required />
             <label className="flex flex-col gap-1.5">
-              <span className="text-label text-bark-900">Sous-catégorie</span>
+              <span className="text-label text-bark-900">Marque et usage</span>
+              {/*
+                La marque n'est plus un champ texte libre pré-rempli depuis la
+                page fournisseur (D-055/D-058) : elle se choisit dans le
+                référentiel, en même temps que l'usage — les deux forment la
+                clé de la catégorie.
+              */}
               <select name="subcategory" required
                 onChange={(e) => {
-                  const animal = e.target.selectedOptions[0]?.dataset.animal ?? "chien";
-                  (e.target.form!.elements.namedItem("animal") as HTMLInputElement).value = animal;
+                  const brand = e.target.selectedOptions[0]?.dataset.brand ?? "on";
+                  (e.target.form!.elements.namedItem("marque") as HTMLInputElement).value = brand;
                 }}
-                className="h-12 rounded-sm border border-border bg-cream-50 px-4 text-body text-bark-900">
+                className="h-12 border border-border bg-cream-50 px-4 text-body text-bark-900">
                 {subcategories.map((s) => (
-                  <option key={`${s.animal}-${s.slug}`} value={s.slug} data-animal={s.animal}>
-                    {s.animal} — {s.label}
+                  <option key={`${s.brand}-${s.slug}`} value={s.slug} data-brand={s.brand}>
+                    {brandLabels[s.brand]} — {s.label}
                   </option>
                 ))}
               </select>
-              <input type="hidden" name="animal" defaultValue="chien" />
+              <input type="hidden" name="marque" defaultValue={subcategories[0]!.brand} />
             </label>
             <FormField label="Prix de vente TTC (€)" name="price" type="number" step="0.01" min="1"
               defaultValue={draft.supplierPrice !== null ? ((draft.supplierPrice * 2.5) / 100).toFixed(2) : ""}
@@ -1203,7 +1203,7 @@ function DraftCard({ draft, onPublished }: { draft: DraftDto; onPublished: () =>
             <span className="text-label text-bark-900">Accroche (2–3 phrases, réécrites)</span>
             <textarea name="description" rows={2} required
               defaultValue={draft.description ?? ""}
-              className="rounded-sm border border-border bg-cream-50 p-4 text-body text-bark-900 focus:border-pine-500" />
+              className="border border-border bg-cream-50 p-4 text-body text-bark-900 focus:border-pine-500" />
           </label>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <label className="flex flex-col gap-1.5">
@@ -1211,13 +1211,13 @@ function DraftCard({ draft, onPublished }: { draft: DraftDto; onPublished: () =>
               <textarea name="colors" rows={3}
                 defaultValue={draft.variantNames.join("\n")}
                 placeholder={"Bleu nuit\nSable"}
-                className="rounded-sm border border-border bg-cream-50 p-4 text-body-sm text-bark-900 focus:border-pine-500" />
+                className="border border-border bg-cream-50 p-4 text-body-sm text-bark-900 focus:border-pine-500" />
             </label>
             <label className="flex flex-col gap-1.5">
               <span className="text-label text-bark-900">Points clés (un par ligne)</span>
               <textarea name="features" rows={3}
                 placeholder={"Réservoir 1,2 L\nPompe silencieuse < 30 dB"}
-                className="rounded-sm border border-border bg-cream-50 p-4 text-body-sm text-bark-900 focus:border-pine-500" />
+                className="border border-border bg-cream-50 p-4 text-body-sm text-bark-900 focus:border-pine-500" />
             </label>
           </div>
           <label className="mt-4 flex flex-col gap-1.5">
@@ -1225,7 +1225,7 @@ function DraftCard({ draft, onPublished }: { draft: DraftDto; onPublished: () =>
             <textarea name="specs" rows={4}
               defaultValue={serializeSpecs(draft.specifications)}
               placeholder={"Matière : ABS sans BPA\nCapacité : 1200 ml"}
-              className="rounded-sm border border-border bg-cream-50 p-4 text-body-sm text-bark-900 focus:border-pine-500" />
+              className="border border-border bg-cream-50 p-4 text-body-sm text-bark-900 focus:border-pine-500" />
           </label>
           <fieldset className="mt-4">
             <legend className="text-label text-bark-900">Champs affichés sur la fiche publique</legend>
@@ -1248,7 +1248,7 @@ function DraftCard({ draft, onPublished }: { draft: DraftDto; onPublished: () =>
             <span className="text-label text-bark-900">Note de curation (obligatoire, D-025)</span>
             <textarea name="note" rows={2} required
               placeholder="Pourquoi ce produit passe notre sélection…"
-              className="rounded-sm border border-border bg-cream-50 p-4 text-body text-bark-900 focus:border-pine-500" />
+              className="border border-border bg-cream-50 p-4 text-body text-bark-900 focus:border-pine-500" />
           </label>
           <div className="mt-4 flex gap-3">
             <Button type="submit" loading={saving}>Publier la fiche</Button>
@@ -1258,5 +1258,151 @@ function DraftCard({ draft, onPublished }: { draft: DraftDto; onPublished: () =>
         </form>
       )}
     </div>
+  );
+}
+
+
+/* ------------------------------------------------------------------------- *
+ * Grille de variantes (correctif BL-2, D-057)
+ *
+ * Avant le pivot, la fiche admin n'affichait qu'une ligne de stock par taille,
+ * et `updateProduct` ne savait faire que des UPDATE : la grille d'un produit
+ * était figée à sa création. Un produit publié depuis un brouillon d'import
+ * naissait avec une seule « Taille unique » à zéro et ne pouvait jamais être
+ * vendu, sans qu'aucune erreur ne le signale.
+ *
+ * Cette grille donne les trois gestes manquants : régler le stock d'une
+ * variante, en ajouter une, en supprimer une. La suppression n'est proposée
+ * que sur une ligne à zéro — `reserveStock()` s'appuie sur l'existence de la
+ * ligne, et supprimer une variante en cours de paiement ferait échouer la
+ * restitution silencieusement. Le serveur refait la vérification.
+ * ------------------------------------------------------------------------- */
+
+const VARIANT_SEP = "||";
+
+/** Relit la grille depuis le FormData — clés `stock|{coloris}||{pointure}`. */
+function readVariantForm(data: FormData): {
+  stocks: { color: string; size: string; stock: number }[];
+  removals: { color: string; size: string }[];
+} {
+  const stocks: { color: string; size: string; stock: number }[] = [];
+  const removals: { color: string; size: string }[] = [];
+  for (const [key, value] of data.entries()) {
+    if (key.startsWith("stock|")) {
+      const [color, size] = key.slice("stock|".length).split(VARIANT_SEP);
+      if (color && size) stocks.push({ color, size, stock: Number(value) || 0 });
+    } else if (key.startsWith("remove|")) {
+      const [color, size] = key.slice("remove|".length).split(VARIANT_SEP);
+      if (color && size) removals.push({ color, size });
+    }
+  }
+  // Une ligne marquée pour suppression ne doit pas être réécrite au passage.
+  const dropped = new Set(removals.map((r) => `${r.color}${VARIANT_SEP}${r.size}`));
+  return {
+    stocks: stocks.filter((s) => !dropped.has(`${s.color}${VARIANT_SEP}${s.size}`)),
+    removals,
+  };
+}
+
+function VariantGrid({ product }: { product: AdminProduct }) {
+  const grid = sizesForBrand(product.brand);
+  // Pointures ajoutées dans la session d'édition, par coloris.
+  const [added, setAdded] = useState<Record<string, string[]>>({});
+
+  const linesFor = (color: string) => {
+    const existing = product.variants.filter((v) => v.color === color);
+    const extra = (added[color] ?? [])
+      .filter((size) => !existing.some((v) => v.size === size))
+      .map((size) => ({ color, size, stock: 0 }));
+    return [...existing, ...extra].sort(
+      (a, b) => Number(a.size) - Number(b.size),
+    );
+  };
+
+  return (
+    <fieldset className="mt-4">
+      <legend className="text-label text-bark-900">
+        Stocks par coloris et pointure
+      </legend>
+      <p className="text-caption mt-1 text-bark-700">
+        Une ligne par variante vendable. Une variante à 0 s&apos;affiche
+        « Bientôt de retour » sur la fiche ; la supprimer la retire du
+        sélecteur de pointure.
+      </p>
+      <div className="mt-3 flex flex-col gap-5">
+        {product.colors.map((color) => {
+          const lines = linesFor(color);
+          const missing = grid.filter((size) => !lines.some((l) => l.size === size));
+          return (
+            <div key={color} className="border border-border p-4">
+              <p className="font-heading text-body-sm font-semibold text-bark-900">
+                {color}
+              </p>
+              <div className="mt-2 grid gap-3 sm:grid-cols-4">
+                {lines.map((line) => (
+                  <div key={line.size} className="flex flex-col gap-1">
+                    <FormField
+                      label={formatSize(line.size)}
+                      name={`stock|${color}${VARIANT_SEP}${line.size}`}
+                      type="number"
+                      min="0"
+                      defaultValue={String(line.stock)}
+                      required
+                    />
+                    {line.stock === 0 && (
+                      <label className="text-caption flex items-center gap-1.5 text-bark-700">
+                        <input
+                          type="checkbox"
+                          name={`remove|${color}${VARIANT_SEP}${line.size}`}
+                          className="size-3.5 accent-pine-700"
+                        />
+                        Supprimer
+                      </label>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {missing.length > 0 && (
+                <div className="mt-3 flex items-end gap-2">
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-caption text-bark-700">
+                      Ajouter une pointure
+                    </span>
+                    <select
+                      id={`add-${color}`}
+                      defaultValue={missing[0]}
+                      className="h-10 border border-border bg-cream-50 px-3 text-body-sm text-bark-900"
+                    >
+                      {missing.map((size) => (
+                        <option key={size} value={size}>
+                          {formatSize(size)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      const select = document.getElementById(
+                        `add-${color}`,
+                      ) as HTMLSelectElement | null;
+                      if (!select) return;
+                      const size = select.value;
+                      setAdded((prev) => ({
+                        ...prev,
+                        [color]: [...(prev[color] ?? []), size],
+                      }));
+                    }}
+                  >
+                    Ajouter
+                  </Button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </fieldset>
   );
 }

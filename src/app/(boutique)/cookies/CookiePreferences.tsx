@@ -35,7 +35,7 @@ export function CookiePreferences() {
       {rows.map((row) => (
         <label
           key={row.key}
-          className="flex items-start justify-between gap-4 rounded-lg bg-cream-50 p-5 shadow-card"
+          className="flex items-start justify-between gap-4 border border-border bg-cream-50 p-5"
         >
           <span>
             <span className="font-heading block text-body font-semibold text-bark-900">{row.label}</span>

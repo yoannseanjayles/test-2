@@ -1,9 +1,10 @@
 import { isOutOfStock, productPath, type Product } from "@/lib/catalog";
 import { SITE_URL } from "@/lib/site";
+import { company } from "@/lib/company";
 
 /** Données structurées centralisées (5.0 §4) — URL canonique de lib/site.ts. */
 
-const SITE_NAME = "chien et chat";
+const SITE_NAME = company.tradeName;
 
 /**
  * Sérialisation sûre pour `<script type="application/ld+json">` (audit
@@ -29,7 +30,7 @@ export function organizationJsonLd() {
     "@type": "Organization",
     name: SITE_NAME,
     url: SITE_URL,
-    slogan: "Accessoires d'exception pour chiens, chats et NAC",
+    slogan: "Baskets On, Nike, Saucony, ASICS et Salomon",
   };
 }
 

@@ -11,51 +11,54 @@ type EditorialCardProps = {
   className?: string;
 };
 
-/** Carte guide (partagée Accueil / pages animal / hub guides). */
+/** Carte guide — refonte Azeno : visuel plein cadre, titre condensé, filet bas. */
 export function EditorialCard({ guide, featured = false, className }: EditorialCardProps) {
   return (
     <Link
       href={`/guides/${guide.slug}`}
-      className={cn(
-        "group flex flex-col overflow-hidden rounded-lg border border-border bg-cream-50 transition-shadow duration-250 hover:shadow-card",
-        featured && "sm:flex-row",
-        className,
-      )}
+      className={cn("group flex flex-col", featured && "sm:flex-row sm:items-stretch", className)}
     >
-      {guide.cover ? (
-        <div
-          className={cn("relative overflow-hidden", featured && "sm:w-1/2 sm:shrink-0")}
-          style={{ aspectRatio: featured ? "4 / 3" : "16 / 9" }}
-        >
+      <div
+        className={cn("relative overflow-hidden bg-cream-300", featured && "sm:w-1/2 sm:shrink-0")}
+        style={{ aspectRatio: featured ? "4 / 3" : "16 / 9" }}
+      >
+        {guide.cover ? (
           <Image
             src={guide.cover}
             alt=""
             fill
             sizes="(min-width: 1024px) 50vw, 100vw"
-            className="object-cover transition-transform duration-250 group-hover:scale-[1.03]"
+            className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
           />
-        </div>
-      ) : (
-        <Placeholder
-          tone="sage"
-          ratio={featured ? "4 / 3" : "16 / 9"}
-          className={featured ? "sm:w-1/2 sm:shrink-0" : undefined}
-        />
-      )}
-      <div className={cn("flex flex-col gap-2 p-5", featured && "justify-center sm:p-8")}>
-        <p className="text-caption text-bark-700">
+        ) : (
+          <Placeholder
+            tone="chalk"
+            ratio={featured ? "4 / 3" : "16 / 9"}
+            className="h-full"
+          />
+        )}
+      </div>
+      <div
+        className={cn(
+          "flex flex-col gap-2 pt-4",
+          featured && "justify-center sm:px-8 sm:pt-0",
+        )}
+      >
+        <p className="text-caption uppercase tracking-[0.14em] text-bark-500">
           Guide · {guide.readingMinutes} min de lecture
         </p>
         <h3
           className={cn(
-            "font-heading font-semibold text-bark-900 transition-colors duration-150 group-hover:text-action",
+            "font-display leading-none text-bark-900 transition-colors duration-150 group-hover:text-action",
             featured ? "text-h2" : "text-h3",
           )}
         >
           {guide.title}
         </h3>
         <p className="text-body-sm text-bark-700">{guide.excerpt}</p>
-        <span className="text-label mt-1 text-action">Lire le guide →</span>
+        <span className="text-label mt-2 inline-flex w-fit items-center gap-2 border-b border-bark-900 pb-1 text-bark-900 transition-colors duration-250 group-hover:border-action group-hover:text-action">
+          Lire le guide
+        </span>
       </div>
     </Link>
   );

@@ -2,7 +2,7 @@ import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type ButtonVariant = "primary" | "secondary" | "tertiary" | "ghost";
+export type ButtonVariant = "primary" | "secondary" | "tertiary" | "ghost" | "invert";
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
@@ -10,22 +10,29 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   loading?: boolean;
 };
 
+/*
+ * Refonte Azeno : bouton rectangulaire (rayon 0), libellé en capitales
+ * espacées, hauteur 48px. Le primaire est bleu et bascule au noir au survol —
+ * la signature du thème. Aucun déplacement vertical au survol : le thème
+ * joue sur la couleur, pas sur l'élévation.
+ */
 const base =
-  "text-label inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-6 py-3 " +
-  "transition duration-150 ease-out select-none " +
-  "disabled:pointer-events-none disabled:opacity-45 " +
-  "hover:-translate-y-px active:translate-y-0";
+  "text-label inline-flex min-h-12 items-center justify-center gap-2 px-8 py-3 " +
+  "transition-colors duration-250 ease-out select-none " +
+  "disabled:pointer-events-none disabled:opacity-40";
 
 const variants: Record<ButtonVariant, string> = {
-  primary: "bg-action text-white hover:bg-action-hover",
+  primary: "bg-action text-white hover:bg-volt hover:text-bark-900",
   secondary:
-    "border-[1.5px] border-action text-action hover:bg-pine-50",
-  tertiary: "text-action px-2 hover:text-action-hover",
-  ghost: "text-bark-700 hover:bg-cream-300",
+    "border border-bark-900 text-bark-900 hover:bg-bark-900 hover:text-white",
+  tertiary: "px-0 text-bark-900 underline underline-offset-8 hover:text-action",
+  ghost: "text-bark-700 hover:bg-cream-300 hover:text-bark-900",
+  /* Posé sur fond sombre (pied de page, bandeau bleu) : blanc plein. */
+  invert: "bg-white text-bark-900 hover:bg-volt hover:text-bark-900",
 };
 
 /**
- * Bouton du socle UI — 4 variantes (4.1 §6), hiérarchie D-022 :
+ * Bouton du socle UI — 4 variantes, hiérarchie D-022 :
  * 1 seul `primary` par écran.
  */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(

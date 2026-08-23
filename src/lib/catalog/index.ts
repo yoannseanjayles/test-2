@@ -1,46 +1,40 @@
 import { products, subcategories } from "./data";
-import type { Animal, Product, Subcategory } from "./types";
+import type { Brand, Product, Subcategory, Usage } from "./types";
+import { uniqueSortedSizes } from "./sizes";
+import { brandLabels } from "./brands";
 
 export * from "./types";
+export * from "./sizes";
+export * from "./brands";
 export { products, subcategories };
 
-export const animalLabels: Record<Animal, string> = {
-  chien: "Chien",
-  chat: "Chat",
-  nac: "NAC",
-};
-
-export function isAnimal(value: string): value is Animal {
-  return value === "chien" || value === "chat" || value === "nac";
-}
-
-export function getSubcategories(animal: Animal): Subcategory[] {
-  return subcategories.filter((s) => s.animal === animal);
+export function getSubcategories(brand: Brand): Subcategory[] {
+  return subcategories.filter((s) => s.brand === brand);
 }
 
 export function getSubcategory(
-  animal: Animal,
+  brand: Brand,
   slug: string,
 ): Subcategory | undefined {
-  return subcategories.find((s) => s.animal === animal && s.slug === slug);
+  return subcategories.find((s) => s.brand === brand && s.slug === slug);
 }
 
-export function getProducts(animal?: Animal, subcategory?: string): Product[] {
+export function getProducts(brand?: Brand, subcategory?: Usage): Product[] {
   return products.filter(
     (p) =>
-      (animal === undefined || p.animal === animal) &&
+      (brand === undefined || p.brand === brand) &&
       (subcategory === undefined || p.subcategory === subcategory),
   );
 }
 
 export function getProduct(
-  animal: Animal,
+  brand: Brand,
   subcategory: string,
   slug: string,
 ): Product | undefined {
   return products.find(
     (p) =>
-      p.animal === animal && p.subcategory === subcategory && p.slug === slug,
+      p.brand === brand && p.subcategory === subcategory && p.slug === slug,
   );
 }
 
@@ -49,8 +43,8 @@ export function getProductBySlug(slug: string): Product | undefined {
 }
 
 /** Sélection curée « Nos indispensables » (H17 : ordre manuel). */
-export function getFeatured(count: number, animal?: Animal): Product[] {
-  return getProducts(animal)
+export function getFeatured(count: number, brand?: Brand): Product[] {
+  return getProducts(brand)
     .slice()
     .sort((a, b) => a.curatedRank - b.curatedRank)
     .slice(0, count);
@@ -68,10 +62,62 @@ export function averageRating(product: Product): number | null {
   return Math.round((sum / product.reviews.length) * 10) / 10;
 }
 
+// ——— Variantes (coloris × pointure, D-054) ———
+//
+// Le stock ne vit plus sur la pointure seule : une paire en 42 « triple black »
+// et la même en 42 « white/red » sont deux articles. Ces helpers sont la seule
+// façon d'interroger la disponibilité — additionner `variants[].stock` à la main
+// ailleurs dans le code rouvrirait exactement le trou que D-054 ferme.
+
+/** Toutes les pointures du modèle, tous coloris confondus, ordonnées. */
+export function productSizes(product: Product): string[] {
+  return uniqueSortedSizes(product.variants.map((v) => v.size));
+}
+
+/** Pointures déclinées dans un coloris donné, ordonnées (y compris à zéro). */
+export function sizesForColor(product: Product, color: string): string[] {
+  return uniqueSortedSizes(
+    product.variants.filter((v) => v.color === color).map((v) => v.size),
+  );
+}
+
+/** Stock d'une variante précise — 0 si la combinaison n'existe pas au catalogue. */
+export function stockFor(product: Product, color: string, size: string): number {
+  return product.variants.find((v) => v.color === color && v.size === size)?.stock ?? 0;
+}
+
+/** Stock d'une pointure tous coloris confondus — pour la facette, pas pour la vente. */
+export function stockForSize(product: Product, size: string): number {
+  return product.variants
+    .filter((v) => v.size === size)
+    .reduce((sum, v) => sum + v.stock, 0);
+}
+
+export function isColorOutOfStock(product: Product, color: string): boolean {
+  return product.variants
+    .filter((v) => v.color === color)
+    .every((v) => v.stock === 0);
+}
+
+export function totalStock(product: Product): number {
+  return product.variants.reduce((sum, v) => sum + v.stock, 0);
+}
+
 export function isOutOfStock(product: Product): boolean {
-  return product.sizes.every((s) => s.stock === 0);
+  return product.variants.every((v) => v.stock === 0);
+}
+
+/**
+ * Marque à afficher en surtitre, ou `null` si le nom du modèle la porte déjà.
+ * Les noms du catalogue sont les noms complets (« On Cloudmonster 3 ») parce
+ * que ce sont eux que l'on recherche et que l'on indexe ; les répéter sous une
+ * pastille de marque donnerait « On · On Cloudmonster 3 ».
+ */
+export function brandEyebrow(product: Product): string | null {
+  const label = brandLabels[product.brand];
+  return product.name.toLowerCase().startsWith(label.toLowerCase()) ? null : label;
 }
 
 export function productPath(product: Product): string {
-  return `/${product.animal}/${product.subcategory}/${product.slug}`;
+  return `/${product.brand}/${product.subcategory}/${product.slug}`;
 }

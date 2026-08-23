@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { Search, User } from "lucide-react";
-import { animalCategories, primaryLinks } from "@/lib/navigation";
+import { mainNav } from "@/lib/navigation";
 import { MegaMenu } from "./MegaMenu";
 import { MobileMenu } from "./MobileMenu";
 import { CartLink } from "./CartLink";
+import { company } from "@/lib/company";
 
 const iconLinks = [
   { label: "Rechercher", href: "/recherche", Icon: Search },
@@ -11,36 +12,28 @@ const iconLinks = [
 ];
 
 /**
- * Header boutique (sitemap 1.2 §3) — logotype Fraunces (D-047),
- * navigation par animal avec méga-menu ≥ lg, hamburger < lg.
+ * Header boutique — refonte streetwear : fond blanc, logotype condensé à
+ * gauche, navigation par rayon (Homme, Femme, Chaussures, Ensembles…) avec
+ * méga-menu ≥ lg, icônes à droite. Filet bas fin, aucune ombre.
  */
 export function Header() {
   return (
     // Pas de backdrop-blur ici : backdrop-filter ferait du header le containing block des drawers `fixed` (menu mobile).
-    <header className="sticky top-0 z-40 border-b border-border bg-cream-100">
-      <div className="relative mx-auto flex max-w-page items-center gap-2 px-4 py-3 lg:px-6">
+    <header className="sticky top-0 z-40 border-b border-border bg-cream-50">
+      <div className="relative mx-auto flex max-w-page items-center gap-2 px-4 py-4 lg:px-6">
         <MobileMenu />
 
         <Link
           href="/"
-          className="font-display px-2 text-2xl font-semibold text-bark-900 lg:text-[1.75rem]"
+          aria-label={`${company.tradeName} — accueil`}
+          className="font-display shrink-0 px-2 text-3xl leading-none tracking-[0.04em] text-bark-900 transition-colors duration-250 hover:text-action lg:text-[2rem]"
         >
-          chien et chat
+          {company.tradeName}
+          <span className="text-action">.</span>
         </Link>
 
-        <nav aria-label="Navigation principale" className="ml-6 hidden lg:block">
-          <div className="flex items-center gap-1">
-            <MegaMenu categories={animalCategories} />
-            {primaryLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-label flex min-h-11 items-center rounded-sm px-3 text-bark-900 transition-colors duration-150 hover:bg-cream-300"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
+        <nav aria-label="Navigation principale" className="ml-8 hidden lg:block">
+          <MegaMenu sections={mainNav} />
         </nav>
 
         <div className="ml-auto flex items-center gap-1">
@@ -49,9 +42,9 @@ export function Header() {
               key={href}
               href={href}
               aria-label={label}
-              className="flex size-11 items-center justify-center rounded-sm text-bark-900 transition-colors duration-150 hover:bg-cream-300"
+              className="flex size-11 items-center justify-center text-bark-900 transition-colors duration-250 hover:text-action"
             >
-              <Icon aria-hidden="true" className="size-5" />
+              <Icon aria-hidden="true" className="size-5" strokeWidth={1.75} />
             </Link>
           ))}
           <CartLink />

@@ -33,7 +33,7 @@ function Orders() {
   }
   if (ordersList.length === 0) {
     return (
-      <div className="rounded-lg bg-cream-50 p-6 shadow-card">
+      <div className="border border-border bg-cream-50 p-6">
         <p className="text-body text-bark-700">Aucune commande pour l'instant.</p>
         <Link href="/" className="text-label mt-3 inline-flex min-h-11 items-center gap-2 text-action">
           Découvrir la sélection <span aria-hidden="true">→</span>
@@ -63,8 +63,8 @@ function OrderCard({ order, onDone }: { order: OrderDto; onDone: () => void }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="rounded-lg bg-cream-50 p-6 shadow-card">
-        <h2 className="font-heading text-h3 font-semibold text-bark-900">
+      <section className="border border-border bg-cream-50 p-6">
+        <h2 className="font-display text-h3 leading-tight text-bark-900">
           Commande {order.number}
           <span className="text-body-sm ml-2 font-normal text-bark-700">
             — {new Date(order.createdAt).toLocaleDateString("fr-FR")}
@@ -126,8 +126,8 @@ function ReturnFlow({ order, onDone }: { order: OrderDto; onDone: () => void }) 
   // Retour déjà enregistré (hors confirmation qui vient d'aboutir) : simple rappel.
   if ((order.status === "Retour en cours" || order.status === "Remboursée") && step !== 3) {
     return (
-      <section className="rounded-lg bg-cream-50 p-6 shadow-card">
-        <h2 className="font-heading text-h3 font-semibold text-bark-900">Votre retour</h2>
+      <section className="border border-border bg-cream-50 p-6">
+        <h2 className="font-display text-h3 leading-tight text-bark-900">Votre retour</h2>
         <p className="mt-2 text-body-sm text-bark-700">
           {order.status === "Remboursée"
             ? "Retour terminé — la commande est remboursée."
@@ -138,8 +138,8 @@ function ReturnFlow({ order, onDone }: { order: OrderDto; onDone: () => void }) 
   }
 
   return (
-    <section className="rounded-lg bg-cream-50 p-6 shadow-card">
-      <h2 className="font-heading text-h3 font-semibold text-bark-900">Besoin d'un retour ?</h2>
+    <section className="border border-border bg-cream-50 p-6">
+      <h2 className="font-display text-h3 leading-tight text-bark-900">Besoin d'un retour ?</h2>
       {step === 0 && (
         <>
           <p className="mt-2 text-body-sm text-bark-700">
@@ -163,7 +163,7 @@ function ReturnFlow({ order, onDone }: { order: OrderDto; onDone: () => void }) 
           <legend className="text-label text-bark-900">1/3 — Motif du retour</legend>
           <div className="mt-2 flex flex-col gap-2">
             {["Taille trop petite", "Taille trop grande", "Ne convient pas à mon animal", "Autre raison"].map((r) => (
-              <label key={r} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-border px-4 text-body-sm text-bark-900 hover:border-bark-300">
+              <label key={r} className="flex min-h-11 cursor-pointer items-center gap-3 border border-border px-4 text-body-sm text-bark-900 hover:border-bark-300">
                 <input type="radio" name="motif" className="size-4 accent-pine-700" onChange={() => setReason(r)} checked={reason === r} />
                 {r}
               </label>

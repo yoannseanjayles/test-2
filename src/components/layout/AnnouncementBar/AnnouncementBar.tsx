@@ -1,25 +1,53 @@
+import Link from "next/link";
+import { Mail, Truck } from "lucide-react";
 import { announcementMessages } from "@/lib/navigation";
 import { getShippingConfig } from "@/lib/admin-settings";
 import { formatPrice } from "@/lib/format";
 
 /**
- * Bandeau fin de réassurance au-dessus du header (sitemap 1.2).
- * Statique — pas de rotation automatique (esprit D-020) : 1 message mobile,
- * 3 messages séparés desktop. Jamais injecté après coup (CLS, 5.0 §3).
- * Seuil de livraison offerte lu depuis les réglages boutique (jalon 4).
+ * Haut de page du thème Azeno, en deux étages :
+ * 1. bandeau bleu de marque, message principal centré ;
+ * 2. barre utilitaire noire (≥ lg) : réassurance à gauche, liens de service
+ *    à droite.
+ *
+ * Statique — pas de rotation automatique (esprit D-020), jamais injecté après
+ * coup (CLS, 5.0 §3). Le seuil de livraison offerte vient des réglages
+ * boutique (jalon 4).
  */
 export async function AnnouncementBar() {
   const { freeShippingCents } = await getShippingConfig();
-  const messages = [`Livraison offerte dès ${formatPrice(freeShippingCents)}`, ...announcementMessages];
+  const [secondary, tertiary] = announcementMessages;
+
   return (
-    <div className="bg-pine-700 text-cream-50">
-      <p className="text-label mx-auto flex max-w-page items-center justify-center gap-8 px-4 py-2 text-center">
-        {messages.map((message, index) => (
-          <span key={message} className={index > 0 ? "hidden lg:inline" : undefined}>
-            {message}
-          </span>
-        ))}
-      </p>
+    <div>
+      <div className="bg-pine-700 text-white">
+        <p className="text-label mx-auto flex max-w-page items-center justify-center gap-2 px-4 py-2.5 text-center">
+          <Truck aria-hidden="true" className="size-4 shrink-0" strokeWidth={1.75} />
+          Livraison offerte dès {formatPrice(freeShippingCents)}
+        </p>
+      </div>
+
+      <div className="hidden bg-bark-900 text-white/70 lg:block">
+        <div className="text-caption mx-auto flex max-w-page items-center justify-between gap-6 px-4 py-2 uppercase tracking-[0.14em] lg:px-6">
+          <p>{secondary}</p>
+          <div className="flex items-center gap-6">
+            {tertiary && <p className="hidden xl:block">{tertiary}</p>}
+            <Link
+              href="/suivi-commande"
+              className="transition-colors duration-250 hover:text-white"
+            >
+              Suivi de commande
+            </Link>
+            <Link
+              href="/contact"
+              className="inline-flex items-center gap-2 transition-colors duration-250 hover:text-white"
+            >
+              <Mail aria-hidden="true" className="size-3.5" strokeWidth={1.75} />
+              Contact
+            </Link>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

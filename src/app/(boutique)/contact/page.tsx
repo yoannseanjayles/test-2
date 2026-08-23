@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ContactForm } from "./ContactForm";
+import { PageHero } from "@/components/layout/PageHero/PageHero";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -9,13 +10,16 @@ export const metadata: Metadata = {
 /** Contact écrit uniquement — pas de téléphone, choix assumé (H29). */
 export default function ContactPage() {
   return (
-    <div className="mx-auto max-w-xl px-4 py-12 lg:px-6">
-      <h1 className="font-display text-h1 font-[560] text-bark-900">Contact</h1>
-      <p className="mt-3 text-body text-bark-700">
-        Une question sur un produit, une taille, une commande ? Nous répondons
-        sous 24 h ouvrées, avec de vraies réponses — pas de robot.
-      </p>
-      <ContactForm />
-    </div>
+    <>
+      <PageHero
+        kicker="Aide"
+        title="Contact"
+        intro="Une question sur un produit, une taille, une commande ? Nous répondons sous 24 h ouvrées, avec de vraies réponses — pas de robot."
+        crumbs={[{ name: "Contact", path: "/contact" }]}
+      />
+      <div className="mx-auto max-w-xl px-4 py-12 lg:px-6">
+        <ContactForm />
+      </div>
+    </>
   );
 }

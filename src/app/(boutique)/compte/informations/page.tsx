@@ -21,8 +21,8 @@ function Info() {
   const user = useSession().data?.user;
   return (
     <div className="flex max-w-xl flex-col gap-6">
-      <section className="rounded-lg bg-cream-50 p-6 shadow-card">
-        <h2 className="font-heading text-h3 font-semibold text-bark-900">Coordonnées</h2>
+      <section className="border border-border bg-cream-50 p-6">
+        <h2 className="font-display text-h3 leading-tight text-bark-900">Coordonnées</h2>
         <dl className="mt-4 space-y-3 text-body-sm">
           <div>
             <dt className="text-label text-bark-700">Adresse e-mail</dt>
@@ -42,11 +42,11 @@ function Info() {
         </p>
       </section>
 
-      <section className="rounded-lg border border-border bg-cream-50 p-6">
-        <h2 className="font-heading text-h3 font-semibold text-bark-900">Vos données (RGPD)</h2>
+      <section className="border border-border bg-cream-50 p-6">
+        <h2 className="font-display text-h3 leading-tight text-bark-900">Vos données (RGPD)</h2>
         <p className="mt-2 text-body-sm text-bark-700">
           Vous pouvez demander l'export ou la suppression de l'ensemble de vos
-          données (compte, commandes, profils animaux) via le{" "}
+          données (compte, commandes, pointures enregistrées) via le{" "}
           <Link href="/contact" className="text-action underline-offset-4 hover:underline">
             formulaire de contact
           </Link>

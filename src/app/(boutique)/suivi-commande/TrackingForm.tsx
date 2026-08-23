@@ -29,8 +29,8 @@ export function TrackingForm() {
       </form>
       <div aria-live="polite" className="mt-6">
         {result === "found" && found && (
-          <div className="rounded-lg bg-cream-50 p-6 shadow-card">
-            <h2 className="font-heading text-h3 font-semibold text-bark-900">
+          <div className="border border-border bg-cream-50 p-6">
+            <h2 className="font-display text-h3 leading-tight text-bark-900">
               Commande {found.number}
             </h2>
             {/* Timeline sur le statut réel (D-016) — badge seul hors parcours nominal. */}

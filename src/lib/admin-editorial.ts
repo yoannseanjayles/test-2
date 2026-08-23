@@ -6,6 +6,7 @@ import { getDb } from "@/db";
 import { guides } from "@/db/schema";
 import { newsletterSubscribers } from "@/db/auth-schema";
 import { requireRole } from "@/lib/admin";
+import type { Brand } from "@/lib/catalog";
 import { parseGuideContent, serializeGuideContent } from "@/lib/guide-content";
 
 /**
@@ -17,7 +18,7 @@ export type AdminGuideDto = {
   slug: string;
   title: string;
   excerpt: string;
-  animal: "chien" | "chat" | "nac" | "tous";
+  brand: Brand | "tous";
   pillar: boolean;
   readingMinutes: number;
   relatedSubcategories: string[];
@@ -33,7 +34,7 @@ export async function listAdminGuides(): Promise<AdminGuideDto[]> {
     slug: g.slug,
     title: g.title,
     excerpt: g.excerpt,
-    animal: g.animal,
+    brand: g.brand,
     pillar: g.pillar,
     readingMinutes: g.readingMinutes,
     relatedSubcategories: g.relatedSubcategories,
@@ -45,7 +46,7 @@ export async function saveGuide(input: {
   slug: string;
   title: string;
   excerpt: string;
-  animal: "chien" | "chat" | "nac" | "tous";
+  brand: Brand | "tous";
   pillar: boolean;
   readingMinutes: number;
   contentText: string;
@@ -65,7 +66,7 @@ export async function saveGuide(input: {
   const values = {
     title: input.title.trim().slice(0, 120),
     excerpt: input.excerpt.trim().slice(0, 300),
-    animal: input.animal,
+    brand: input.brand,
     pillar: input.pillar,
     readingMinutes: input.readingMinutes,
     content: parseGuideContent(input.contentText),

@@ -19,7 +19,7 @@ export function SearchForm({ initialQuery }: { initialQuery: string }) {
         label="Que cherchez-vous ?"
         name="q"
         defaultValue={initialQuery}
-        placeholder="collier cuir, couchage, harnais…"
+        placeholder="air max, cloudmonster, xt-6…"
         className="flex-1"
       />
       <Button type="submit" className="shrink-0">
