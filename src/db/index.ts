@@ -191,13 +191,34 @@ async function assertNotLegacySchema(db: Executor) {
   );
   if (rows.length === 0) return;
 
-  if (process.env.ALLOW_LEGACY_PURGE !== "1") {
+  // Valeur saisie dans un formulaire web : un espace ou un guillemet collé
+  // à « 1 » suffisait à faire échouer une comparaison stricte, sans que rien
+  // ne le dise. On accepte donc toute valeur non vide qui ne soit pas un
+  // refus explicite.
+  const brut = process.env.ALLOW_LEGACY_PURGE;
+  const valeur = (brut ?? "").trim().replace(/^["']|["']$/g, "").toLowerCase();
+  const autorise =
+    valeur !== "" && valeur !== "0" && valeur !== "false" && valeur !== "non";
+
+  // Trace de diagnostic : dit ce que ce build voit réellement. La variable
+  // n'est pas un secret, l'afficher ne divulgue rien.
+  console.warn(
+    "[db] Schéma animalier détecté. ALLOW_LEGACY_PURGE = " +
+      (brut === undefined
+        ? "(absente de l'environnement de ce build)"
+        : JSON.stringify(brut)) +
+      " → purge " +
+      (autorise ? "autorisée." : "refusée."),
+  );
+
+  if (!autorise) {
     throw new Error(
       "[db] Schéma animalier détecté (products.animal existe encore). " +
         "Le pivot baskets (D-053) change la forme du catalogue : l'axe est la " +
         "marque et le stock est porté par product_variants. Posez " +
-        "ALLOW_LEGACY_PURGE=1 pour purger la base au prochain démarrage, ou " +
-        "créez une branche Neon neuve et pointez-y DATABASE_URL.",
+        "ALLOW_LEGACY_PURGE=1 sur les périmètres Production ET Preview, puis " +
+        "redéployez en décochant le cache de build. La ligne de trace " +
+        "ci-dessus donne la valeur reçue par ce build.",
     );
   }
 
